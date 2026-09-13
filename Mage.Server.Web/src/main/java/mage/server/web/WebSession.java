@@ -66,8 +66,13 @@ final class WebSession implements AsynchInvokerCallbackHandler {
 
     void close() {
         inbound.shutdownNow();
-        // same path as a lost JBoss connection: the user keeps his tables for a while and may reconnect
-        managerFactory.sessionManager().disconnect(sessionId, DisconnectReason.LostConnection, true);
+        // same path as a lost JBoss connection: the user keeps his tables for a while and may
+        // reconnect by name. If the user already moved to another socket (reconnected before this
+        // one noticed it was gone), do not report a lost connection on his behalf.
+        boolean userStillHere = managerFactory.sessionManager().getUser(sessionId)
+                .map(user -> sessionId.equals(user.getSessionId()))
+                .orElse(false);
+        managerFactory.sessionManager().disconnect(sessionId, DisconnectReason.LostConnection, userStillHere);
     }
 
     void receive(String text) {
@@ -157,7 +162,11 @@ final class WebSession implements AsynchInvokerCallbackHandler {
             // (ChatSession broadcasts one instance), so decompress a private copy, never the original
             ClientCallback copy = copy(call);
             copy.decompressData();
-            json = Frames.callback(copy, copy.getData());
+            JsonObject frame = Frames.callback(copy, copy.getData());
+            if (copy.getMethod().name().startsWith("GAME_")) {
+                StackControllers.enrich(frame, copy.getObjectId(), managerFactory);
+            }
+            json = Frames.GSON.toJson(frame);
         } catch (Throwable ex) {
             // never guess a question: name the callback the door could not forward
             logger.error("Web door: cannot forward " + call.getInfo() + " to " + sessionId, ex);
