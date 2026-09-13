@@ -79,6 +79,14 @@ final class WebSession implements AsynchInvokerCallbackHandler {
         inbound.execute(() -> handle(text));
     }
 
+    /**
+     * The browser answered a ping: the user is here. Same effect as their client's
+     * MageServer.ping (User.updateLastActivity), false until the socket has a user.
+     */
+    boolean pong() {
+        return managerFactory.sessionManager().extendUserSession(sessionId, null);
+    }
+
     private void handle(String text) {
         JsonElement id = null;
         String what = "frame";

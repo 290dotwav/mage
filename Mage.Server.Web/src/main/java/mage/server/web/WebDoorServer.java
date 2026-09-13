@@ -4,6 +4,7 @@ import mage.server.MageServerImpl;
 import mage.server.managers.ManagerFactory;
 import org.apache.log4j.Logger;
 import org.java_websocket.WebSocket;
+import org.java_websocket.framing.Framedata;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
 
@@ -14,10 +15,22 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The WebSocket listener: one {@link WebSession} per connection, text frames only.
+ * <p>
+ * Keepalive: the server pings every socket every {@link #PING_SECONDS} seconds (Java-WebSocket's
+ * connection-lost timer; a browser answers with a pong on its own, no script involved) and each
+ * pong refreshes the user's last activity on the server. Their UserManagerImpl checks every 30 s
+ * and tells the opponents "&lt;name&gt; catch connection problems for N secs" about any user whose
+ * last activity is older than 30 s - and only their own client's MageServer.ping and the
+ * sendPlayer* answers refresh it, so a browser idle while the bots think was called lagging.
+ * A socket that stops answering pongs is closed after 1.5 x PING_SECONDS, which is a lost
+ * connection like any other (the user keeps his seat for 3 minutes and may reconnect by name).
  */
 final class WebDoorServer extends WebSocketServer {
 
     private static final Logger logger = Logger.getLogger(WebDoorServer.class);
+
+    /** -Dxmage.web.pingSeconds: must stay under UserManagerImpl's 30 s inform threshold. */
+    static final int PING_SECONDS = Integer.getInteger("xmage.web.pingSeconds", 15);
 
     private final ManagerFactory managerFactory;
     private final Wire wire;
@@ -30,11 +43,21 @@ final class WebDoorServer extends WebSocketServer {
         this.wire = new Wire(server);
         this.tables = new TableOps(managerFactory, server);
         setReuseAddr(true);
+        setConnectionLostTimeout(PING_SECONDS);
     }
 
     @Override
     public void onStart() {
-        logger.info("Web door listening on ws://" + getAddress().getHostString() + ":" + getPort());
+        logger.info("Web door listening on ws://" + getAddress().getHostString() + ":" + getPort()
+                + " (ping every " + PING_SECONDS + " s)");
+    }
+
+    @Override
+    public void onWebsocketPong(WebSocket conn, Framedata f) {
+        WebSession session = sessions.get(conn);
+        if (session != null) {
+            session.pong();
+        }
     }
 
     @Override
