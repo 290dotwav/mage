@@ -9,7 +9,8 @@ public enum MulliganType {
     PARIS("Paris"),
     LONDON("London"),
     SMOOTHED_LONDON("Smoothed London"),
-    CANADIAN_HIGHLANDER("Canadian Highlander");
+    CANADIAN_HIGHLANDER("Canadian Highlander"),
+    TEN("Mulligan à 10"); // house rule: draw 10 keep 7 (twice), then 9, 8, 7 - see TenMulligan
 
     private final String displayName;
 
@@ -27,6 +28,8 @@ public enum MulliganType {
                 return new VancouverMulligan(freeMulligans);
             case SMOOTHED_LONDON:
                 return new SmoothedLondonMulligan(freeMulligans);
+            case TEN:
+                return new TenMulligan(freeMulligans);
             default:
             case LONDON:
                 return new LondonMulligan(freeMulligans);
