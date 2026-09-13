@@ -28,14 +28,14 @@ final class Frames {
      * { kind: "callback", method, gameId (the callback's objectId: the game id for game
      * callbacks, the chat or table id for the others), messageId, data }
      */
-    static String callback(ClientCallback call, Object data) {
+    static JsonObject callback(ClientCallback call, Object data) {
         JsonObject o = new JsonObject();
         o.addProperty("kind", "callback");
         o.addProperty("method", call.getMethod().name());
         o.addProperty("gameId", call.getObjectId() == null ? null : call.getObjectId().toString());
         o.addProperty("messageId", call.getMessageId());
         o.add("data", GSON.toJsonTree(data));
-        return GSON.toJson(o);
+        return o;
     }
 
     /**
@@ -50,14 +50,20 @@ final class Frames {
     }
 
     /**
-     * { kind: "joined", tableId, playerId, name, id? }
+     * { kind: "joined", tableId, playerId, name, reconnected, deckWarnings[], deckReplaced, id? }
+     * reconnected: the name was already seated there, no new seat was taken (User.onReconnect
+     * replays JOINED_TABLE, START_GAME, GAME_INIT and the open question). deckReplaced counts
+     * the lines whose printing the importer chose by name ("[???:k]").
      */
-    static String joined(UUID tableId, UUID playerId, String name, JsonElement id) {
+    static String joined(UUID tableId, UUID playerId, String name, boolean reconnected, DeckText.Parsed deck, JsonElement id) {
         JsonObject o = new JsonObject();
         o.addProperty("kind", "joined");
         o.addProperty("tableId", tableId.toString());
         o.addProperty("playerId", playerId == null ? null : playerId.toString());
         o.addProperty("name", name);
+        o.addProperty("reconnected", reconnected);
+        o.add("deckWarnings", GSON.toJsonTree(deck == null ? new java.util.ArrayList<String>() : deck.warnings));
+        o.addProperty("deckReplaced", deck == null ? 0 : deck.replaced);
         withId(o, id);
         return GSON.toJson(o);
     }

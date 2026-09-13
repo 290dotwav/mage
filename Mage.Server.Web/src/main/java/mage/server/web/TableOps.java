@@ -18,6 +18,7 @@ import mage.players.net.UserData;
 import mage.server.MageServerImpl;
 import mage.server.Main;
 import mage.server.Session;
+import mage.server.User;
 import mage.server.managers.ManagerFactory;
 import mage.view.TableView;
 import org.apache.log4j.Logger;
@@ -32,6 +33,7 @@ import java.util.UUID;
  * { kind: "table", op: "create", gameType: "Commander Free For All", seats: 4, deck: "&lt;.dck text&gt;", name: "Alice",
  *   seatTypes?: ["Human","Computer - mad","Computer - mad","Computer - mad"], tableName?: "FG", deckType?: "Variant Magic - Commander" }
  * { kind: "table", op: "join",   tableId, deck, name, playerType?: "Human" | "Computer - mad", skill?: 2, password?: "" }
+ *   - a name already seated at tableId re-seats (reconnection): no new seat, deck not needed
  * { kind: "table", op: "start",  tableId }
  * </pre>
  * "name" is the seat's player name. On a socket that has not connected a user yet, create
@@ -81,8 +83,19 @@ final class TableOps {
         return s;
     }
 
+    /**
+     * Connect the socket's session to the user {@code name} (anonymous mode). This is their
+     * own reconnection path: Session.connectUserHandling finds an existing user of that name
+     * (kept 180 s after a lost connection), moves him to this session and replays his tables
+     * and games through User.onReconnect (JOINED_TABLE, START_GAME, GAME_INIT, open question).
+     */
     private void ensureConnected(WebSession web, String name) throws MageException {
-        if (session(web).getUserId() != null) {
+        Session session = session(web);
+        if (session.getUserId() != null) {
+            User user = managerFactory.userManager().getUser(session.getUserId()).orElse(null);
+            if (user != null && !name.equals(user.getName())) {
+                throw new IllegalStateException("this socket is connected as '" + user.getName() + "': a human seat uses that name");
+            }
             return;
         }
         if (!server.connectUser(name, "", web.sessionId, "", Main.getVersion(), "web")) {
@@ -175,8 +188,7 @@ final class TableOps {
             throw new MageException("creator could not take a seat at the new table (see callbacks); table removed");
         }
         logger.info("Web door: " + name + " created table " + table.getTableId() + " (" + gameType + ", " + seats + " seats)");
-        web.send(Frames.joined(table.getTableId(), playerId(table.getTableId(), name), name, id));
-        warn(web, deck);
+        web.send(Frames.joined(table.getTableId(), playerId(table.getTableId(), name), name, false, deck, id));
     }
 
     private void join(WebSession web, JsonObject frame, JsonElement id) throws Exception {
@@ -185,20 +197,27 @@ final class TableOps {
         PlayerType playerType = (PlayerType) Wire.enumValue(PlayerType.class, Frames.optString(frame, "playerType", PlayerType.HUMAN.name()));
         int skill = Frames.optInt(frame, "skill", 2);
         String password = Frames.optString(frame, "password", "");
-        DeckText.Parsed deck = DeckText.parse(Frames.requireString(frame, "deck"));
 
         if (playerType == PlayerType.HUMAN) {
             ensureConnected(web, name);
+            UUID seated = playerId(tableId, name);
+            if (seated != null) {
+                // already at this table: a reconnection, not a second seat. onReconnect (started by
+                // connectUser above) replays the table and game to this socket; nothing to join.
+                logger.info("Web door: " + name + " re-seated at table " + tableId + " (reconnection)");
+                web.send(Frames.joined(tableId, seated, name, true, null, id));
+                return;
+            }
         } else if (session(web).getUserId() == null) {
             throw new IllegalStateException("an AI seat is added by a connected user: create the table (or join as Human) first");
         }
+        DeckText.Parsed deck = DeckText.parse(Frames.requireString(frame, "deck"));
         boolean ok = server.roomJoinTable(web.sessionId, roomId(), tableId, name, playerType, skill, deck.deck, password);
         if (!ok) {
             throw new MageException("join refused for " + name + " at table " + tableId + " (no free seat of type " + playerType + ", bad password, or see callbacks)");
         }
         logger.info("Web door: " + name + " (" + playerType + ") joined table " + tableId);
-        web.send(Frames.joined(tableId, playerId(tableId, name), name, id));
-        warn(web, deck);
+        web.send(Frames.joined(tableId, playerId(tableId, name), name, false, deck, id));
     }
 
     private void start(WebSession web, JsonObject frame, JsonElement id) throws Exception {
@@ -209,12 +228,6 @@ final class TableOps {
         }
         logger.info("Web door: table " + tableId + " starting");
         web.send(Frames.result("table.start", true, id));
-    }
-
-    private void warn(WebSession web, DeckText.Parsed deck) {
-        if (deck.warnings != null) {
-            web.send(Frames.error("deck imported with warnings: " + deck.warnings, null));
-        }
     }
 
     /**
