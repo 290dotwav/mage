@@ -286,10 +286,11 @@ public final class Main {
             // Parameter: serializationtype => jboss
             InvokerLocator serverLocator = new InvokerLocator(connection.getURI());
             if (!isAlreadyRunning(config, serverLocator)) {
+                MageServerImpl mageServer = new MageServerImpl(managerFactory, adminPassword, testMode, detailsMode);
                 server = new MageTransporterServer(
                         managerFactory,
                         serverLocator,
-                        new MageServerImpl(managerFactory, adminPassword, testMode, detailsMode),
+                        mageServer,
                         MageServer.class.getName(),
                         new MageServerInvocationHandler(managerFactory)
                 );
@@ -300,6 +301,11 @@ public final class Main {
                     logger.info("MAGE server running in test mode");
                 }
                 initStatistics();
+
+                // optional extensions from the classpath (e.g. Mage.Server.Web), see ServerExtension
+                for (ServerExtension extension : ServiceLoader.load(ServerExtension.class)) {
+                    extension.onServerStarted(managerFactory, mageServer);
+                }
             } else {
                 logger.fatal("Unable to start MAGE server - another server is already started");
             }
