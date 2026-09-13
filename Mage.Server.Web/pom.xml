@@ -1,0 +1,74 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.mage</groupId>
+        <artifactId>mage-root</artifactId>
+        <version>1.4.61</version>
+    </parent>
+
+    <artifactId>mage-server-web</artifactId>
+    <packaging>jar</packaging>
+    <name>Mage Server Web</name>
+    <description>
+        The web door: a WebSocket server (JSON both ways) living in the same JVM as Mage.Server.
+        Inbound "call" frames become MageServer calls, outbound ClientCallbacks become "callback" frames.
+        Loaded by Mage.Server through java.util.ServiceLoader (mage.server.ServerExtension) when this jar
+        and its dependencies are on the server classpath.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>mage</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>mage-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>mage-server</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <!-- JSON: version managed by the root pom, already a dependency of Mage -->
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+        </dependency>
+        <dependency>
+            <!-- pure Java WebSocket server, no framework -->
+            <groupId>org.java-websocket</groupId>
+            <artifactId>Java-WebSocket</artifactId>
+            <version>1.5.7</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+    <properties>
+        <root.dir>${project.basedir}/..</root.dir>
+    </properties>
+
+</project>
