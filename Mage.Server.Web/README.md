@@ -24,8 +24,24 @@ $HOME/.m2/repository/org/slf4j/slf4j-api/2.0.17/slf4j-api-2.0.17.jar:<the server
 ```
 
 Settings: `-Dxmage.web.port` (default 17172), `-Dxmage.web.host` (default 0.0.0.0),
-`-Dxmage.web.enabled=false` to keep the jar without listening. The log says
-`Web door: 70 MageServer methods wired` then `Web door listening on ws://0.0.0.0:17172`.
+`-Dxmage.web.enabled=false` to keep the jar without listening,
+`-Dxmage.web.pingSeconds` (default 15, see Keepalive), `-Dxmage.web.aiThinkSeconds`
+(default 0 = the AI's own timing; the `thinkSeconds` of a `table join` when the frame has
+none). The log says `Web door: 70 MageServer methods wired` then
+`Web door listening on ws://0.0.0.0:17172 (ping every 15 s)`.
+
+## Keepalive
+
+The door pings every socket every 15 s (WebSocket ping frames; a browser answers with a pong
+by itself, nothing to do in the page) and each pong refreshes the user's last activity on the
+server, exactly as their own client's `MageServer.ping` does. Without it the server's
+`UserManagerImpl` (a check every 30 s) tells the opponents
+`<name> catch connection problems for N secs (left before expire: M secs)` about any user
+idle for more than 30 s — a human waiting for the bots to think, since only `sendPlayer*`
+answers and `ping` refresh the activity. A socket that stops answering pongs is closed after
+1.5 x 15 s, the usual lost-connection path (the seat is kept 3 minutes, reconnect by name).
+A `call ping` frame (`args: ["<info>"]`) still works and also sets the ping info shown in the
+users list.
 
 ## Frames
 
@@ -48,8 +64,9 @@ Browser → server:
 { "kind": "call", "method": "sendPlayerAction", "gameId": "<uuid>", "args": ["PASS_PRIORITY_UNTIL_NEXT_TURN"] }
 { "kind": "call", "method": "gameJoin", "gameId": "<uuid>" }
 { "kind": "table", "op": "create", "gameType": "Commander Free For All", "seats": 4, "deck": "<.dck text>", "name": "Alice",
-  "seatTypes": ["Human", "Computer - mad", "Computer - mad", "Computer - mad"], "tableName": "FG", "deckType": "Variant Magic - Commander" }
-{ "kind": "table", "op": "join", "tableId": "<uuid>", "deck": "<.dck text>", "name": "Bot1", "playerType": "Computer - mad", "skill": 2 }
+  "seatTypes": ["Human", "Computer - mad", "Computer - mad", "Computer - mad"], "tableName": "FG", "deckType": "Variant Magic - Commander",
+  "mulliganType": "TEN" }
+{ "kind": "table", "op": "join", "tableId": "<uuid>", "deck": "<.dck text>", "name": "Bot1", "playerType": "Computer - mad", "skill": 2, "thinkSeconds": 3 }
 { "kind": "table", "op": "join", "tableId": "<uuid>", "name": "Alice" }
 { "kind": "table", "op": "start", "tableId": "<uuid>" }
 ```

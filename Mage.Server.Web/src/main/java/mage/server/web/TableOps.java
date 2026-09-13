@@ -23,17 +23,22 @@ import mage.server.managers.ManagerFactory;
 import mage.view.TableView;
 import org.apache.log4j.Logger;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 /**
  * "table" frames, the three operations a browser needs before a game exists:
  * <pre>
  * { kind: "table", op: "create", gameType: "Commander Free For All", seats: 4, deck: "&lt;.dck text&gt;", name: "Alice",
- *   seatTypes?: ["Human","Computer - mad","Computer - mad","Computer - mad"], tableName?: "FG", deckType?: "Variant Magic - Commander" }
- * { kind: "table", op: "join",   tableId, deck, name, playerType?: "Human" | "Computer - mad", skill?: 2, password?: "" }
+ *   seatTypes?: ["Human","Computer - mad","Computer - mad","Computer - mad"], tableName?: "FG", deckType?: "Variant Magic - Commander",
+ *   mulliganType?: "LONDON" | "TEN" | ... (a MulliganType name; default LONDON) }
+ * { kind: "table", op: "join",   tableId, deck, name, playerType?: "Human" | "Computer - mad", skill?: 2, thinkSeconds?: 3, password?: "" }
  *   - a name already seated at tableId re-seats (reconnection): no new seat, deck not needed
+ *   - thinkSeconds caps an AI seat's simulation time per decision (ComputerPlayer6: skill * 3 s
+ *     by default, 6 s at skill 2); -Dxmage.web.aiThinkSeconds gives the default when the frame has none
  * { kind: "table", op: "start",  tableId }
  * </pre>
  * "name" is the seat's player name. On a socket that has not connected a user yet, create
@@ -45,6 +50,10 @@ import java.util.UUID;
 final class TableOps {
 
     private static final Logger logger = Logger.getLogger(TableOps.class);
+
+    /** Per-decision simulation cap for AI seats when the join frame has no thinkSeconds; 0 = the AI's own (skill * 3 s). */
+    static final int DEFAULT_AI_THINK_SECONDS = Integer.getInteger("xmage.web.aiThinkSeconds", 0);
+    static final int MAX_AI_THINK_SECONDS = 600;
 
     private final ManagerFactory managerFactory;
     private final MageServerImpl server;
@@ -130,12 +139,34 @@ final class TableOps {
         return "Constructed - Freeform";
     }
 
+    /**
+     * A MulliganType by enum name ("LONDON", "TEN", "VANCOUVER"...) or display name ("Mulligan à 10").
+     */
+    static MulliganType mulliganType(String text) {
+        String key = text.trim().toUpperCase(Locale.ENGLISH).replace(' ', '_');
+        for (MulliganType type : MulliganType.values()) {
+            if (type.name().equals(key)) {
+                return type;
+            }
+        }
+        MulliganType byDisplayName = MulliganType.valueByName(text.trim());
+        if (byDisplayName != MulliganType.GAME_DEFAULT) {
+            return byDisplayName;
+        }
+        List<String> names = new ArrayList<>();
+        for (MulliganType type : MulliganType.values()) {
+            names.add(type.name());
+        }
+        throw new IllegalArgumentException("unknown mulliganType '" + text + "' (one of " + names + ")");
+    }
+
     private void create(WebSession web, JsonObject frame, JsonElement id) throws Exception {
         String gameType = Frames.optString(frame, "gameType", "Commander Free For All");
         int seats = Frames.optInt(frame, "seats", 4);
         String name = Frames.requireString(frame, "name");
         String tableName = Frames.optString(frame, "tableName", name);
         String deckType = Frames.optString(frame, "deckType", defaultDeckType(gameType));
+        MulliganType mulliganType = mulliganType(Frames.optString(frame, "mulliganType", MulliganType.LONDON.name()));
         List<PlayerType> seatTypes = new ArrayList<>();
         JsonElement st = frame.get("seatTypes");
         if (st != null && st.isJsonArray()) {
@@ -165,7 +196,7 @@ final class TableOps {
         options.setRange(RangeOfInfluence.ALL);
         options.setWinsNeeded(1);
         options.setFreeMulligans(0);
-        options.setMullgianType(MulliganType.GAME_DEFAULT);
+        options.setMullgianType(mulliganType);
         options.setMatchTimeLimit(MatchTimeLimit.NONE);
         options.setMatchBufferTime(MatchBufferTime.NONE);
         options.setSkillLevel(SkillLevel.CASUAL);
@@ -187,7 +218,7 @@ final class TableOps {
             server.tableRemove(web.sessionId, roomId, table.getTableId());
             throw new MageException("creator could not take a seat at the new table (see callbacks); table removed");
         }
-        logger.info("Web door: " + name + " created table " + table.getTableId() + " (" + gameType + ", " + seats + " seats)");
+        logger.info("Web door: " + name + " created table " + table.getTableId() + " (" + gameType + ", " + seats + " seats, mulligan " + mulliganType.name() + ")");
         web.send(Frames.joined(table.getTableId(), playerId(table.getTableId(), name), name, false, deck, id));
     }
 
@@ -196,6 +227,10 @@ final class TableOps {
         String name = Frames.requireString(frame, "name");
         PlayerType playerType = (PlayerType) Wire.enumValue(PlayerType.class, Frames.optString(frame, "playerType", PlayerType.HUMAN.name()));
         int skill = Frames.optInt(frame, "skill", 2);
+        int thinkSeconds = Frames.optInt(frame, "thinkSeconds", DEFAULT_AI_THINK_SECONDS);
+        if (thinkSeconds < 0 || thinkSeconds > MAX_AI_THINK_SECONDS) {
+            throw new IllegalArgumentException("thinkSeconds must be 1.." + MAX_AI_THINK_SECONDS + " (0 or absent: the AI's own skill * 3)");
+        }
         String password = Frames.optString(frame, "password", "");
 
         if (playerType == PlayerType.HUMAN) {
@@ -217,7 +252,41 @@ final class TableOps {
             throw new MageException("join refused for " + name + " at table " + tableId + " (no free seat of type " + playerType + ", bad password, or see callbacks)");
         }
         logger.info("Web door: " + name + " (" + playerType + ") joined table " + tableId);
+        if (playerType != PlayerType.HUMAN && thinkSeconds > 0) {
+            setThinkTime(tableId, name, thinkSeconds);
+        }
         web.send(Frames.joined(tableId, playerId(tableId, name), name, false, deck, id));
+    }
+
+    /**
+     * Cap the simulation time of the AI seated as {@code name}: ComputerPlayer6 (the "mad" AI,
+     * also the base of every AI type that simulates) exposes setMaxThinkTimeSecs(int) and gives
+     * skill * 3 seconds to each decision (main phases, attackers, blockers - on every player's
+     * turn) by default. The AI classes live in a plugin classloader, hence reflection. The seat's
+     * Player object is the one the game will use (TableController -> MatchImpl.addPlayer ->
+     * GameImpl.addPlayer keep the instance), so setting it here at join time is enough. An AI
+     * without that method (none today) just keeps its own timing.
+     */
+    private void setThinkTime(UUID tableId, String name, int thinkSeconds) {
+        Table table = managerFactory.tableManager().getTable(tableId);
+        if (table == null) {
+            return;
+        }
+        for (Seat seat : table.getSeats()) {
+            if (seat.getPlayer() == null || !name.equals(seat.getPlayer().getName())) {
+                continue;
+            }
+            try {
+                Method setter = seat.getPlayer().getClass().getMethod("setMaxThinkTimeSecs", int.class);
+                setter.invoke(seat.getPlayer(), thinkSeconds);
+                logger.info("Web door: " + name + " thinks at most " + thinkSeconds + " s per decision");
+            } catch (NoSuchMethodException ex) {
+                logger.warn("Web door: " + name + " is a " + seat.getPlayer().getClass().getSimpleName() + " without setMaxThinkTimeSecs: thinkSeconds ignored");
+            } catch (ReflectiveOperationException | RuntimeException ex) {
+                logger.warn("Web door: could not set thinkSeconds on " + name + ": " + ex);
+            }
+            return;
+        }
     }
 
     private void start(WebSession web, JsonObject frame, JsonElement id) throws Exception {
