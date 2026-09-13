@@ -89,6 +89,17 @@ matches the `PlayerType`. A `join` by a name already seated at that table is a
 `User.onReconnect` replays `JOINED_TABLE`, `START_GAME`, `GAME_INIT` and the open
 question (works within their 180 s user-expiry window, by user name).
 
+Player types (`seatTypes` at `create`, `playerType` at `join`): the `PlayerType` enum by name
+or by its description, matched against what the server registered from `config.xml` — a
+`join` with an unknown one is refused with the list. `Human`; `Computer - mad`
+(`ComputerPlayer7`: game-tree simulations on both main phases and the attackers/blockers
+steps of *every* player's turn, `thinkSeconds` caps each one, three of them saturate a
+2-vCPU machine); `Computer - simple` (`ComputerPlayerSimple`: no simulation at all, so it
+answers at once — on its own main phases it plays a land and casts the most expensive
+spell it can pay for, attacks and blocks with the mad bot's static heuristics, and takes
+every other decision with the base AI's heuristics; `skill` and `thinkSeconds` are
+accepted and ignored). `Computer - draftbot` is registered but does nothing in a game.
+
 A game needs, in this order: `table create` → `table join` × seats−1 → `table start` →
 callback `START_GAME` (`data.gameId`, `data.playerId`) → `call gameJoin` with that
 `gameId` → `GAME_INIT`, then `GAME_UPDATE*` and the questions (`GAME_ASK`, `GAME_SELECT`,
