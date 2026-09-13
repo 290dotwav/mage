@@ -26,7 +26,8 @@ import java.util.regex.Pattern;
 final class DeckText {
 
     private static final Pattern ERROR_LINE = Pattern.compile("^(Line \\d+: )?ERROR");
-    private static final Pattern REPLACED_LINE = Pattern.compile("^(Line \\d+: )?((can't find card by number|found outdated card number or name), will try to replace|replaced to \\[)");
+    private static final Pattern REPLACED_LINE = Pattern.compile("^(Line \\d+: )?replaced to \\[");
+    private static final Pattern WILL_REPLACE_LINE = Pattern.compile("^(Line \\d+: )?(can't find card by number|found outdated card number or name), will try to replace");
 
     private DeckText() {
     }
@@ -61,7 +62,9 @@ final class DeckText {
                 if (ERROR_LINE.matcher(line).find()) {
                     errors.add(line);
                 } else if (REPLACED_LINE.matcher(line).find()) {
-                    replaced++;
+                    replaced++; // one per replaced line
+                } else if (WILL_REPLACE_LINE.matcher(line).find()) {
+                    // the announcement before "replaced to", nothing to report
                 } else {
                     warnings.add(line);
                 }
