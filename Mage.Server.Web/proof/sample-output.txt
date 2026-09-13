@@ -1,0 +1,73 @@
+[   0.1s] connected to ws://localhost:17172
+[   0.1s] <- hello session=web-9bece19b-c02b-41a4-ba42-e947c87ff07a version=1.4.61-V1 (build: 2026-09-13 18:15) testMode=true methods=70
+[   0.1s] -> {"kind":"table","op":"create","gameType":"Commander Free For All","seats":4,"seatTypes":["Human","Computer - mad","Computer - mad","Computer - mad"],"deck":"<2409 chars of .dck>","name":"WebProof4080","tableName":"web door proof","id":1}
+[   0.6s] <- callback JOINED_TABLE msg#1 gameId=5f2a7d0f-c712-48a3-940e-11ee0e258e51 (303 bytes)
+[   0.7s] <- {"kind":"joined","tableId":"5f2a7d0f-c712-48a3-940e-11ee0e258e51","playerId":"bcc1266c-4551-4920-9d84-265dce453a5c","name":"WebProof4080","reconnected":false,"deckWarnings":[],"deckReplaced":0,"id":1}
+[   0.7s]    table 5f2a7d0f-c712-48a3-940e-11ee0e258e51, my seat playerId bcc1266c-4551-4920-9d84-265dce453a5c
+[   0.7s] -> {"kind":"table","op":"join","tableId":"5f2a7d0f-c712-48a3-940e-11ee0e258e51","deck":"<2297 chars of .dck>","name":"Bot1","playerType":"Computer - mad","skill":2,"id":2}
+[   0.9s] <- {"kind":"joined","tableId":"5f2a7d0f-c712-48a3-940e-11ee0e258e51","playerId":"8cedbcd1-5fdc-4eb6-95f5-8b626a4bf9c2","name":"Bot1","reconnected":false,"deckWarnings":[],"deckReplaced":0,"id":2}
+[   0.9s] -> {"kind":"table","op":"join","tableId":"5f2a7d0f-c712-48a3-940e-11ee0e258e51","deck":"<2423 chars of .dck>","name":"Bot2","playerType":"Computer - mad","skill":2,"id":3}
+[   1.0s] <- {"kind":"joined","tableId":"5f2a7d0f-c712-48a3-940e-11ee0e258e51","playerId":"56f70e28-4483-4266-a9f7-3c25f88a366f","name":"Bot2","reconnected":false,"deckWarnings":[],"deckReplaced":0,"id":3}
+[   1.0s] -> {"kind":"table","op":"join","tableId":"5f2a7d0f-c712-48a3-940e-11ee0e258e51","deck":"<2245 chars of .dck>","name":"Bot3","playerType":"Computer - mad","skill":2,"id":4}
+[   1.1s] <- {"kind":"joined","tableId":"5f2a7d0f-c712-48a3-940e-11ee0e258e51","playerId":"6c1d98eb-93ba-4bf8-9d1f-897f13019575","name":"Bot3","reconnected":false,"deckWarnings":[],"deckReplaced":0,"id":4}
+[   1.1s] -> {"kind":"table","op":"start","tableId":"5f2a7d0f-c712-48a3-940e-11ee0e258e51","id":5}
+[   1.1s] <- {"kind":"result","method":"table.start","data":true,"id":5}
+[   1.3s] <- callback START_GAME msg#2 gameId=9763edae-6175-470e-85fd-3fbca160a018 (335 bytes)
+[   1.3s]    game 9763edae-6175-470e-85fd-3fbca160a018 started for playerId bcc1266c-4551-4920-9d84-265dce453a5c; joining the game
+[   1.3s] -> {"kind":"call","method":"gameJoin","gameId":"9763edae-6175-470e-85fd-3fbca160a018","args":[],"id":6}
+[   1.4s] <- {"kind":"result","method":"gameJoin","data":null,"id":6}
+[   1.6s] <- callback GAME_INIT msg#3 gameId=9763edae-6175-470e-85fd-3fbca160a018 (16589 bytes)
+            turn 1 null/null active= priority= | Bot2 life=40 hand=0 bf=0 lib=99 | Bot3 life=40 hand=0 bf=0 lib=99 | Bot1 life=40 hand=0 bf=0 lib=99 | WebProof4080 life=40 hand=0 bf=0 lib=99 | myHand=0 stack=0
+[   1.6s]    first GameView keys: priorityTime, bufferTime, players, myPlayerId, myHand, myHelperEmblems, canPlayObjects, opponentHands, watchedHands, stack, exiles, revealed, lookedAt, companion, combat, phase, step, activePlayerId, activePlayerName, priorityPlayerName, turn, special, rollbackTurnsAllowed, totalErrorsCount, totalEffectsCount, gameCycle
+[   1.6s]    contract keys missing: none; myPlayerId=bcc1266c-4551-4920-9d84-265dce453a5c (seat playerId from joined: bcc1266c-4551-4920-9d84-265dce453a5c)
+[   1.6s]    PlayerView keys (WebProof4080): playerId, name, controlled, isHuman, life, counters, wins, winsNeeded, libraryCount, handCount, isActive, hasPriority, timerActive, hasLeft, manaPool, graveyard, exile, sideboard, helperCards, battlefield, topCard, userData, commandList, attachments, statesSavedSize, priorityTimeSavedTimeMs, priorityTimeLeftSecs, bufferTimeLeft, passedTurn, passedUntilE
+[   2.6s] <- callback GAME_ASK msg#4 gameId=9763edae-6175-470e-85fd-3fbca160a018 (30254 bytes)
+            turn 1 null/null active= priority= | Bot2 life=40 hand=7 bf=0 lib=92 | Bot3 life=40 hand=7 bf=0 lib=92 | Bot1 life=40 hand=7 bf=0 lib=92 | WebProof4080 life=40 hand=7 bf=0 lib=92 | myHand=7 stack=0
+            message: Mulligan <font color=#ffff00>down to 6 cards</font>?
+[   2.6s]    raw frame: {"kind":"callback","method":"GAME_ASK","gameId":"9763edae-6175-470e-85fd-3fbca160a018","messageId":4,"data":{"gameView":{"priorityTime":0,"bufferTime":0,"players":[{"playerId":"56f70e28-4483-4266-a9f7-3c25f88a366f","name":"Bot2","controlled":false,"isHuman":false,"life":40,"counters":[],"wins":0,"winsNeeded":1,"libraryCount":92,"handCount":7,"isActive":false,"hasPriority":f
+[   2.6s] -> {"kind":"call","method":"sendPlayerBoolean","gameId":"9763edae-6175-470e-85fd-3fbca160a018","args":[false],"id":7}
+[   2.9s] <- callback GAME_UPDATE msg#5 gameId=9763edae-6175-470e-85fd-3fbca160a018 (35616 bytes)
+            turn 1 BEGINNING/UPKEEP active=Bot2 priority= | Bot2 life=40 hand=5 bf=0 lib=94 | Bot3 life=40 hand=5 bf=0 lib=94 | Bot1 life=40 hand=7 bf=0 lib=92 | WebProof4080 life=40 hand=7 bf=0 lib=92 | myHand=7 stack=0
+[   2.9s]    === dropping the socket on purpose (reconnection test) ===
+[   2.9s] socket closed (1000)
+[   2.9s]    === reopening and re-seating with table join { tableId, name } (no deck) ===
+[   3.4s] connected to ws://localhost:17172
+[   3.4s] <- hello session=web-a34f960f-d869-4503-8313-aa47c789e71c version=1.4.61-V1 (build: 2026-09-13 18:15) testMode=true methods=70
+[   3.4s] -> {"kind":"table","op":"join","tableId":"5f2a7d0f-c712-48a3-940e-11ee0e258e51","name":"WebProof4080","id":8}
+[   3.4s] <- callback CHATMESSAGE msg#1 gameId=c01cdb81-75c4-4d07-8a6c-c4c1baf37ca0 (272 bytes)
+            message: WebProof4080 has joined
+[   3.5s] <- callback JOINED_TABLE msg#2 gameId=5f2a7d0f-c712-48a3-940e-11ee0e258e51 (303 bytes)
+[   3.5s] <- callback GAME_SELECT msg#3 gameId=9763edae-6175-470e-85fd-3fbca160a018 (35856 bytes)
+            turn 1 PRECOMBAT_MAIN/PRECOMBAT_MAIN active=Bot2 priority=WebProof4080 | Bot2 life=40 hand=6 bf=0 lib=93 | Bot3 life=40 hand=5 bf=0 lib=94 | Bot1 life=40 hand=7 bf=0 lib=92 | WebProof4080* life=40 hand=7 bf=0 lib=92 | myHand=7 stack=0
+            message: Play instants and activated abilities
+[   3.5s]    raw frame: {"kind":"callback","method":"GAME_SELECT","gameId":"9763edae-6175-470e-85fd-3fbca160a018","messageId":3,"data":{"gameView":{"priorityTime":0,"bufferTime":0,"players":[{"playerId":"56f70e28-4483-4266-a9f7-3c25f88a366f","name":"Bot2","controlled":false,"isHuman":false,"life":40,"counters":[],"wins":0,"winsNeeded":1,"libraryCount":93,"handCount":6,"isActive":true,"hasPriority"
+[   3.5s] -> {"kind":"call","method":"sendPlayerAction","gameId":"9763edae-6175-470e-85fd-3fbca160a018","args":["PASS_PRIORITY_UNTIL_NEXT_TURN"],"id":9}
+[   3.5s] <- callback CHATMESSAGE msg#4 gameId=c01cdb81-75c4-4d07-8a6c-c4c1baf37ca0 (277 bytes)
+            message: WebProof4080 has reconnected
+[   3.5s] <- callback START_GAME msg#5 gameId=9763edae-6175-470e-85fd-3fbca160a018 (335 bytes)
+[   3.5s]    game 9763edae-6175-470e-85fd-3fbca160a018 started for playerId bcc1266c-4551-4920-9d84-265dce453a5c; joining the game
+[   3.5s] -> {"kind":"call","method":"gameJoin","gameId":"9763edae-6175-470e-85fd-3fbca160a018","args":[],"id":10}
+[   3.5s] <- {"kind":"joined","tableId":"5f2a7d0f-c712-48a3-940e-11ee0e258e51","playerId":"bcc1266c-4551-4920-9d84-265dce453a5c","name":"WebProof4080","reconnected":true,"deckWarnings":[],"deckReplaced":0,"id":8}
+[   3.5s]    re-seated: reconnected=true playerId=bcc1266c-4551-4920-9d84-265dce453a5c (was bcc1266c-4551-4920-9d84-265dce453a5c)
+[   3.5s] <- {"kind":"result","method":"sendPlayerAction","data":null,"id":9}
+[   3.5s] <- {"kind":"result","method":"gameJoin","data":null,"id":10}
+[   3.5s] <- callback GAME_UPDATE_AND_INFORM msg#6 gameId=9763edae-6175-470e-85fd-3fbca160a018 (35890 bytes)
+            turn 1 PRECOMBAT_MAIN/PRECOMBAT_MAIN active=Bot2 priority=Bot1 | Bot2 life=40 hand=6 bf=0 lib=93 | Bot3 life=40 hand=5 bf=0 lib=94 | Bot1* life=40 hand=7 bf=0 lib=92 | WebProof4080 life=40 hand=7 bf=0 lib=92 | myHand=7 stack=0
+            message: Precombat Main - Waiting for <font color='#20B2AA'>Bot1</font>
+[   3.6s] <- callback GAME_INIT msg#7 gameId=9763edae-6175-470e-85fd-3fbca160a018 (35648 bytes)
+            turn 1 PRECOMBAT_MAIN/PRECOMBAT_MAIN active=Bot2 priority=WebProof4080 | Bot2 life=40 hand=6 bf=0 lib=93 | Bot3 life=40 hand=5 bf=0 lib=94 | Bot1 life=40 hand=7 bf=0 lib=92 | WebProof4080* life=40 hand=7 bf=0 lib=92 | myHand=7 stack=0
+[   3.7s] <- callback GAME_UPDATE_AND_INFORM msg#8 gameId=9763edae-6175-470e-85fd-3fbca160a018 (35890 bytes)
+            turn 1 PRECOMBAT_MAIN/PRECOMBAT_MAIN active=Bot2 priority=Bot3 | Bot2 life=40 hand=6 bf=0 lib=93 | Bot3* life=40 hand=5 bf=0 lib=94 | Bot1 life=40 hand=7 bf=0 lib=92 | WebProof4080 life=40 hand=7 bf=0 lib=92 | myHand=7 stack=0
+            message: Precombat Main - Waiting for <font color='#20B2AA'>Bot3</font>
+[   4.0s] <- callback GAME_UPDATE msg#9 gameId=9763edae-6175-470e-85fd-3fbca160a018 (35621 bytes)
+[...]
+[   6.8s]    stack entry ca432aa3 "Ability" controllerId=8cedbcd1-5fdc-4eb6-95f5-8b626a4bf9c2 (Bot1)
+[...]
+
+===== proof summary =====
+received callbacks: {"JOINED_TABLE":2,"START_GAME":2,"GAME_INIT":2,"GAME_ASK":1,"GAME_UPDATE":33,"CHATMESSAGE":2,"GAME_SELECT":3,"GAME_UPDATE_AND_INFORM":97,"GAME_TARGET":1}
+sent frames       : {"table create":1,"table join":4,"table start":1,"call gameJoin":2,"call sendPlayerBoolean":1,"call sendPlayerAction":4,"call sendPlayerUUID":1,"call matchQuit":1}
+complete GameViews received: 137; questions answered: 5; PASS_PRIORITY_UNTIL_NEXT_TURN sent: 3; error frames: 0
+reconnection: joined.reconnected=true, game frames after re-seat: 133
+PROOF OK
+[  10.1s] socket closed (1000)
