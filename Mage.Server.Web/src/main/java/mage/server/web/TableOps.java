@@ -14,6 +14,7 @@ import mage.game.Table;
 import mage.game.match.MatchOptions;
 import mage.game.mulligan.MulliganType;
 import mage.players.PlayerType;
+import mage.players.net.SkipPrioritySteps;
 import mage.players.net.UserData;
 import mage.server.MageServerImpl;
 import mage.server.Main;
@@ -110,8 +111,32 @@ final class TableOps {
         if (!server.connectUser(name, "", web.sessionId, "", Main.getVersion(), "web")) {
             throw new MageException("connect refused for user '" + name + "' (the reason came as a SHOW_USERMESSAGE callback)");
         }
-        server.connectSetUserData(web.sessionId, UserData.getDefaultUserDataView(), Main.getVersion().toString(), "web");
+        server.connectSetUserData(web.sessionId, webUserData(), Main.getVersion().toString(), "web");
         logger.info("Web door: " + web.sessionId + " connected as " + name);
+    }
+
+    /**
+     * The seat's preferences, as the desktop client would send them — except that
+     * every step stops. The default {@link mage.players.net.SkipPrioritySteps}
+     * stops at the two main phases only, so during another player's turn the
+     * web seat was never asked at upkeep, draw, combat or end: the whole turn
+     * went by in one frame against instant bots (the site's owner: « mon
+     * adversaire fait presque ses tours en instantané »). The site paces every
+     * step it is asked about (0.7 s when there is nothing to do), so the one
+     * thing the door has to do is make sure it is asked.
+     */
+    static UserData webUserData() {
+        UserData data = UserData.getDefaultUserDataView();
+        for (SkipPrioritySteps steps : new SkipPrioritySteps[]{data.getUserSkipPrioritySteps().getYourTurn(), data.getUserSkipPrioritySteps().getOpponentTurn()}) {
+            steps.setUpkeep(true);
+            steps.setDraw(true);
+            steps.setMain1(true);
+            steps.setBeforeCombat(true);
+            steps.setEndOfCombat(true);
+            steps.setMain2(true);
+            steps.setEndOfTurn(true);
+        }
+        return data;
     }
 
     static String defaultDeckType(String gameType) {
