@@ -13,7 +13,8 @@ import java.util.UUID;
 /**
  * The JSON frames of the wire (docs/XMAGE-WIRE.md, "The wire we add").
  * <p>
- * Server to browser: callback, error, joined, result, hello.
+ * Server to browser: callback, error, joined, result, hello - and decks ({@link Decks}), sent
+ * right after a START_GAME callback.
  * Gson is configured exactly like the GameView dumps the interface was written against
  * (serializeNulls), so a browser sees the same shape as /tmp/xmage-gameview-A.json.
  */

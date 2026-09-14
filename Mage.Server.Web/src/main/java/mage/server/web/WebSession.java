@@ -5,9 +5,11 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import mage.interfaces.callback.ClientCallback;
+import mage.interfaces.callback.ClientCallbackMethod;
 import mage.server.DisconnectReason;
 import mage.server.Main;
 import mage.server.managers.ManagerFactory;
+import mage.view.TableClientMessage;
 import org.apache.log4j.Logger;
 import org.java_websocket.WebSocket;
 import org.jboss.remoting.callback.AsynchInvokerCallbackHandler;
@@ -165,6 +167,9 @@ final class WebSession implements AsynchInvokerCallbackHandler {
         }
         ClientCallback call = (ClientCallback) payload;
         String json;
+        // START_GAME is followed by a "decks" frame (Decks): every seat's deck as printings, so
+        // the site can fetch every picture of the game before its first view (GAME_INIT) shows.
+        String decks = null;
         try {
             // data is compressed (ClientCallback.setData) and the object may be shared between users
             // (ChatSession broadcasts one instance), so decompress a private copy, never the original
@@ -175,6 +180,9 @@ final class WebSession implements AsynchInvokerCallbackHandler {
                 StackControllers.enrich(frame, copy.getObjectId(), managerFactory);
             }
             json = Frames.GSON.toJson(frame);
+            if (copy.getMethod() == ClientCallbackMethod.START_GAME && copy.getData() instanceof TableClientMessage) {
+                decks = decksFrame((TableClientMessage) copy.getData(), copy.getObjectId());
+            }
         } catch (Throwable ex) {
             // never guess a question: name the callback the door could not forward
             logger.error("Web door: cannot forward " + call.getInfo() + " to " + sessionId, ex);
@@ -182,8 +190,25 @@ final class WebSession implements AsynchInvokerCallbackHandler {
         }
         try {
             conn.send(json);
+            if (decks != null) {
+                conn.send(decks);
+            }
         } catch (Exception ex) {
             throw new HandleCallbackException("web socket send failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    /** The decks frame for a game that starts, or null (and a log line) when the table cannot be read: the game goes on without it. */
+    private String decksFrame(TableClientMessage started, UUID gameId) {
+        try {
+            String frame = Decks.frame(started, gameId, managerFactory);
+            if (frame == null) {
+                logger.warn("Web door: no decks frame for game " + gameId + " to " + sessionId + " (table " + started.getCurrentTableId() + " not found)");
+            }
+            return frame;
+        } catch (RuntimeException ex) {
+            logger.warn("Web door: decks frame for game " + gameId + " to " + sessionId + " failed: " + ex, ex);
+            return null;
         }
     }
 
