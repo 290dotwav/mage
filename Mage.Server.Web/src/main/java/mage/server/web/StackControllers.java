@@ -3,9 +3,7 @@ package mage.server.web;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import mage.game.Game;
-import mage.game.Table;
 import mage.game.stack.StackObject;
-import mage.server.game.GameController;
 import mage.server.managers.ManagerFactory;
 
 import java.util.HashMap;
@@ -16,7 +14,7 @@ import java.util.UUID;
  * A GameView does not say who controls an object on the stack (a spell's CardView has no
  * controller). Asked by the interface (docs/XMAGE-WIRE.md, piece B): each entry of
  * {@code stack{}} gets a {@code controllerId} (the controlling player's UUID), read on the
- * server from the live game ({@code game.getStack()} → {@code StackObject.getControllerId()})
+ * server from the live game ({@code game.getStack()} -> {@code StackObject.getControllerId()})
  * and added to the JSON tree only - their view classes are untouched.
  * <p>
  * Game callbacks are fired on the game thread, which also owns the stack, so the read is
@@ -29,13 +27,9 @@ final class StackControllers {
     }
 
     static void enrich(JsonObject frame, UUID gameId, ManagerFactory managerFactory) {
-        JsonElement data = frame.get("data");
-        if (gameId == null || data == null || !data.isJsonObject()) {
+        JsonObject view = Frames.gameView(frame);
+        if (view == null) {
             return;
-        }
-        JsonObject view = data.getAsJsonObject();
-        if (!view.has("stack") && view.has("gameView") && view.get("gameView").isJsonObject()) {
-            view = view.getAsJsonObject("gameView");
         }
         JsonElement stackEl = view.get("stack");
         if (stackEl == null || !stackEl.isJsonObject() || stackEl.getAsJsonObject().size() == 0) {
@@ -59,16 +53,8 @@ final class StackControllers {
     }
 
     private static Map<String, String> controllers(UUID gameId, ManagerFactory managerFactory) {
-        GameController controller = managerFactory.gameManager().getGameController().get(gameId);
-        if (controller == null) {
-            return null;
-        }
-        Table table = managerFactory.tableManager().getTable(controller.getTableId());
-        if (table == null || table.getMatch() == null) {
-            return null;
-        }
-        Game game = table.getMatch().getGame();
-        if (game == null || !gameId.equals(game.getId())) {
+        Game game = LiveGame.of(gameId, managerFactory);
+        if (game == null) {
             return null;
         }
         Map<String, String> out = new HashMap<>();

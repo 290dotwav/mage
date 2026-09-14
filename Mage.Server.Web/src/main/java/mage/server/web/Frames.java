@@ -99,6 +99,24 @@ final class Frames {
         return GSON.toJson(o);
     }
 
+    /**
+     * The GameView inside a callback frame, or null when the frame carries none. A GAME_UPDATE
+     * carries the view as its whole {@code data}; a question (GAME_ASK, GAME_TARGET...) carries a
+     * GameClientMessage, which holds the view in {@code data.gameView}. The enrichments the door
+     * adds ({@link StackControllers}, {@link Commanders}) start here, so both shapes get them.
+     */
+    static JsonObject gameView(JsonObject frame) {
+        JsonElement data = frame == null ? null : frame.get("data");
+        if (data == null || !data.isJsonObject()) {
+            return null;
+        }
+        JsonObject view = data.getAsJsonObject();
+        if (!view.has("players") && view.has("gameView") && view.get("gameView").isJsonObject()) {
+            return view.getAsJsonObject("gameView");
+        }
+        return view;
+    }
+
     private static void withId(JsonObject o, JsonElement id) {
         if (id != null && !id.isJsonNull()) {
             o.add("id", id);

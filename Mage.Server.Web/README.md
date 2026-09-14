@@ -114,6 +114,16 @@ refused only on an importer `ERROR` line (unknown card name).
 read from the live game), added to the JSON only — their view classes are untouched.
 It is left out when the object is already gone from the stack.
 
+`GameView.players[]` entries get two more, the same way (`Commanders.java`), in a commander
+game only: `commanderDamage` — `{ "<commander card id>": 7, … }`, the combat damage that
+player has TAKEN, by the card id of the commander that dealt it, zero left out — and
+`commanderIds`, that player's own commander card ids in every zone, sorted. Both are read
+off the live game (`Game.getCommandersIds`, then the `CommanderInfoWatcher` of each
+commander card, which is where their own 903.10a check reads it); nothing in a `PlayerView`
+carries the count otherwise, only an English line the watcher pins on the commander's card.
+`commanderIds` is what names the damage keys: `commandList` holds a commander only while it
+waits in the command zone, and a commander deals its damage from the battlefield.
+
 ## Proof
 
 ```sh
