@@ -18,9 +18,10 @@ import java.util.UUID;
  * surplus goes on the bottom of the library, chosen by the player, when the hand is kept - so
  * the player decides to keep or mulligan again after seeing all the cards.
  * <p>
- * The n-th mulligan draws {@code max(keep, keep + 3 - floor((n - 1) / 2))} cards, keep being
- * the starting hand size: with 7 that is 10, 10, 9, 9, 8, 8, then 7. The first two mulligans
- * therefore cost nothing (see 10, keep 7); {@code freeMulligans} is ignored.
+ * The opening hand is {@code keep + 3} cards, keep being the starting hand size (ten, keep
+ * seven); the n-th mulligan draws {@code max(keep, keep + 3 - floor((n - 1) / 2))} cards: with 7
+ * that is 10, 10, 9, 9, 8, 8, then 7. The first two mulligans therefore cost nothing (see 10,
+ * keep 7, as the opening hand did); {@code freeMulligans} is ignored.
  * <p>
  * A player may take at most {@link #MAX_MULLIGANS} mulligans: that is where London leaves a
  * player with no cards, and it keeps an AI that always mulligans (a land-only deck) from
@@ -53,13 +54,19 @@ public class TenMulligan extends Mulligan {
         return Math.max(keep, keep + EXTRA_CARDS - (n - 1) / 2);
     }
 
+    /**
+     * The opening hand itself is ten (keep + EXTRA_CARDS), kept down to seven like a mulligan's
+     * hand is: the house rule starts with the big hand, it does not wait for a mulligan to show
+     * it (the site's owner: « il me met 7 cartes au lancement de la partie alors que j'ai
+     * sélectionné mulligan à 10 »). The kept size stays the game's starting hand size.
+     */
     @Override
     public void executeMulliganPhase(Game game, int startingHandSize) {
         for (UUID playerId : game.getState().getPlayerList(game.getStartingPlayerId())) {
             keepSizes.put(playerId, startingHandSize);
             takenMulligans.put(playerId, 0);
         }
-        super.executeMulliganPhase(game, startingHandSize);
+        super.executeMulliganPhase(game, startingHandSize + EXTRA_CARDS);
     }
 
     private int keepSize(UUID playerId) {
