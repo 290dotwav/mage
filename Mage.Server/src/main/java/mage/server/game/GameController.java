@@ -286,7 +286,12 @@ public class GameController implements GameCallback {
         return timer;
     }
 
-    private UUID getPlayerId(UUID userId) {
+    /**
+     * The seat this user holds at this game, or null when he holds none (a watcher).
+     * Public for the web door (Mage.Server.Web, "game" frames): its pause is only for a
+     * player seated at the game he asks about.
+     */
+    public UUID getPlayerId(UUID userId) {
         return userPlayerMap.get(userId);
     }
 

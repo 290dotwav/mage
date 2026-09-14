@@ -69,6 +69,9 @@ Browser → server:
 { "kind": "table", "op": "join", "tableId": "<uuid>", "deck": "<.dck text>", "name": "Bot1", "playerType": "Computer - mad", "skill": 2, "thinkSeconds": 3 }
 { "kind": "table", "op": "join", "tableId": "<uuid>", "name": "Alice" }
 { "kind": "table", "op": "start", "tableId": "<uuid>" }
+{ "kind": "game", "op": "pause", "gameId": "<uuid>", "seconds": 120 }
+{ "kind": "game", "op": "resume", "gameId": "<uuid>" }
+{ "kind": "game", "op": "status", "gameId": "<uuid>" }
 ```
 
 `call`: `method` is the exact `MageServer` name (see `hello.methods`, or
@@ -123,6 +126,26 @@ commander card, which is where their own 903.10a check reads it); nothing in a `
 carries the count otherwise, only an English line the watcher pins on the commander's card.
 `commanderIds` is what names the damage keys: `commandList` holds a commander only while it
 waits in the command zone, and a commander deals its damage from the battlefield.
+
+## Holding the game (`game` frames)
+
+`pause` holds the running game for every seat but the one asking, `resume`
+gives it back, `status` says how it stands; each answers
+`{ kind: "result", method: "game.pause", data: { paused, by, playerId, millisLeft } }`
+and the first two say so to every seat in the game's chat
+(`⏸ <name> paused the game` / `⏸ <name> resumed the game`).
+
+Guards: the game must be running, the asker must hold a seat at it (a watcher
+cannot stop a table), a hold lapses by itself after `GameHold.MAX_MILLIS`
+(two minutes) so a lost browser cannot freeze a table, and anybody at the
+table may lift it.
+
+`Game.pause()` is **not** used: every loop of `GameImpl` *returns* on it, so
+`Game.start()` returns to `GameWorker`, which ends the game there and then
+(`endGameWithResult`), and `resume()` runs the rest of the match on the thread
+that calls it. `mage.game.GameHold` instead is read by the game thread itself
+just before `player.priority(game)` in `GameImpl.playPriority`, and waits
+there; simulated games are never held.
 
 ## Proof
 

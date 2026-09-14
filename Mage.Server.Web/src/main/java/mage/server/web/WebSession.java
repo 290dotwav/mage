@@ -47,13 +47,15 @@ final class WebSession implements AsynchInvokerCallbackHandler {
     private final ManagerFactory managerFactory;
     private final Wire wire;
     private final TableOps tables;
+    private final GameOps games;
     private final ExecutorService inbound;
 
-    WebSession(WebSocket conn, ManagerFactory managerFactory, Wire wire, TableOps tables) {
+    WebSession(WebSocket conn, ManagerFactory managerFactory, Wire wire, TableOps tables, GameOps games) {
         this.conn = conn;
         this.managerFactory = managerFactory;
         this.wire = wire;
         this.tables = tables;
+        this.games = games;
         this.inbound = Executors.newSingleThreadExecutor(r -> {
             Thread t = new Thread(r, "web-door " + sessionId);
             t.setDaemon(true);
@@ -110,8 +112,12 @@ final class WebSession implements AsynchInvokerCallbackHandler {
                     what = "table " + Frames.optString(frame, "op", "?");
                     tables.handle(this, frame, id);
                     break;
+                case "game":
+                    what = "game " + Frames.optString(frame, "op", "?");
+                    games.handle(this, frame, id);
+                    break;
                 default:
-                    throw new IllegalArgumentException("unknown frame kind '" + kind + "' (call or table)");
+                    throw new IllegalArgumentException("unknown frame kind '" + kind + "' (call, table or game)");
             }
         } catch (Throwable ex) {
             String message = ex.getMessage() == null ? ex.toString() : ex.getMessage();

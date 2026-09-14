@@ -1585,6 +1585,12 @@ public abstract class GameImpl implements Game {
 
     @Override
     public void end() {
+        // A seat's hold (the web door's pause) dies with the game it was holding.
+        // Never on a simulation: an AI copies the game WITH its id, and ending
+        // the copy would let go of the real table's hold.
+        if (!simulation) {
+            GameHold.forget(this.getId());
+        }
         if (!state.isGameOver()) {
             logger.debug("END of gameId: " + this.getId());
             endTime = new Date();
@@ -1755,6 +1761,12 @@ public abstract class GameImpl implements Game {
                                 if (isPaused() || checkIfGameIsOver()) {
                                     return;
                                 }
+                                // A seat is holding the table (the web door's pause: someone is
+                                // reading a card). The game thread waits here, before anybody
+                                // acts, rather than unwinding the way pause() does - see
+                                // GameHold. It returns at once when nothing is held, and never
+                                // holds the seat that took the hold.
+                                GameHold.await(this, player.getId());
                                 // resetPassed should be called if player performs any action
                                 if (player.priority(this)) {
                                     if (executingRollback()) {
