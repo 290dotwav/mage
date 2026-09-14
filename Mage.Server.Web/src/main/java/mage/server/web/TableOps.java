@@ -16,6 +16,7 @@ import mage.game.mulligan.MulliganType;
 import mage.players.PlayerType;
 import mage.players.net.SkipPrioritySteps;
 import mage.players.net.UserData;
+import mage.server.DisconnectReason;
 import mage.server.MageServerImpl;
 import mage.server.Main;
 import mage.server.Session;
@@ -139,6 +140,32 @@ final class TableOps {
         return data;
     }
 
+    /**
+     * A name that a previous socket left seated (the server keeps a user 180 s after his connection
+     * dropped, tables and games included) and that now asks for a NEW table: his old tables are left
+     * and his old games conceded first. Otherwise connectUser (ensureConnected) finds that user,
+     * calls it a reconnection, and User.onReconnect replays the OLD table, the OLD game and its open
+     * question to this socket — the browser then shows last game's "Select a noncreature artifact"
+     * over this game's opening hand. A join by that name to a table he already sits at is the
+     * reconnection it looks like and keeps everything ({@code keepTableId}); on a socket that already
+     * has a user nothing is done (a second create on one socket is the server's business).
+     */
+    private void leaveOldTables(WebSession web, String name, UUID keepTableId) {
+        Session session = session(web);
+        if (session.getUserId() != null) {
+            return;
+        }
+        User user = managerFactory.userManager().getUserByName(name).orElse(null);
+        if (user == null) {
+            return;
+        }
+        if (keepTableId != null && playerId(keepTableId, name) != null) {
+            return;
+        }
+        logger.info("Web door: " + name + " asks for a new table while still seated from an earlier connection: leaving the old tables");
+        user.removeUserFromAllTables(DisconnectReason.DisconnectedByUserButKeepTables);
+    }
+
     static String defaultDeckType(String gameType) {
         if (gameType.startsWith("Freeform Unlimited Commander")) {
             return "Variant Magic - Freeform Unlimited Commander";
@@ -211,6 +238,7 @@ final class TableOps {
         }
         DeckText.Parsed deck = DeckText.parse(Frames.requireString(frame, "deck"));
 
+        leaveOldTables(web, name, null);
         ensureConnected(web, name);
 
         MatchOptions options = new MatchOptions(tableName, gameType, false);
@@ -259,6 +287,7 @@ final class TableOps {
         String password = Frames.optString(frame, "password", "");
 
         if (playerType == PlayerType.HUMAN) {
+            leaveOldTables(web, name, tableId);
             ensureConnected(web, name);
             UUID seated = playerId(tableId, name);
             if (seated != null) {
