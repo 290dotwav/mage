@@ -137,6 +137,15 @@ final class TableOps {
             steps.setMain2(true);
             steps.setEndOfTurn(true);
         }
+        // Several triggers of the SAME ability, with the same rule text and the
+        // same targets, are put on the stack in any order without asking:
+        // `HumanPlayer.chooseTriggeredAbility` honours this flag and orders
+        // them itself. The site's owner, with a board full of one trigger
+        // repeated: « quand plusieurs triggers identiques sont mis sur la
+        // stack, il faut pouvoir valider l'ordre d'un coup ». For identical
+        // ones there is no order to validate, so nothing is asked at all; a
+        // list that really differs is still the player's to order.
+        data.setAutoOrderTrigger(true);
         return data;
     }
 
