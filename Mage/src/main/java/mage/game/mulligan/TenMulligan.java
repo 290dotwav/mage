@@ -58,15 +58,23 @@ public class TenMulligan extends Mulligan {
      * The opening hand itself is ten (keep + EXTRA_CARDS), kept down to seven like a mulligan's
      * hand is: the house rule starts with the big hand, it does not wait for a mulligan to show
      * it (the site's owner: « il me met 7 cartes au lancement de la partie alors que j'ai
-     * sélectionné mulligan à 10 »). The kept size stays the game's starting hand size.
+     * sélectionné mulligan à 10 »). GameImpl deals that first hand with {@link #drawHand} before
+     * {@link #executeMulliganPhase} runs, so the extra cards are added there, while no keep size
+     * is recorded yet; a mulligan's redraw (a keep size recorded) draws exactly what it asks.
      */
+    @Override
+    public void drawHand(int numCards, Player player, Game game) {
+        int extra = keepSizes.containsKey(player.getId()) ? 0 : EXTRA_CARDS;
+        super.drawHand(numCards + extra, player, game);
+    }
+
     @Override
     public void executeMulliganPhase(Game game, int startingHandSize) {
         for (UUID playerId : game.getState().getPlayerList(game.getStartingPlayerId())) {
             keepSizes.put(playerId, startingHandSize);
             takenMulligans.put(playerId, 0);
         }
-        super.executeMulliganPhase(game, startingHandSize + EXTRA_CARDS);
+        super.executeMulliganPhase(game, startingHandSize);
     }
 
     private int keepSize(UUID playerId) {
