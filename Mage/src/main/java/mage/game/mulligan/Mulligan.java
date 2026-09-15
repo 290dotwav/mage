@@ -255,7 +255,11 @@ public abstract class Mulligan implements Serializable {
             Runnable ask = () -> {
                 List<UUID> cards = new ArrayList<>();
                 try {
-                    Target target = new TargetCardInHand(n, n, new FilterCard("card" + (n == 1 ? "" : "s") + " (" + n + ") to put on the bottom of your library"));
+                    // The wording is theirs, unchanged on purpose: the site
+                    // reads "(N more) to put on the bottom of your library"
+                    // off the message to show the pick on the opening-hand
+                    // sheet (dialogs.ts, `bottomPutCount`).
+                    Target target = new TargetCardInHand(n, n, new FilterCard("card (" + n + " more) to put on the bottom of your library"));
                     player.chooseTarget(Outcome.Discard, target, null, game);
                     cards.addAll(target.getTargets());
                 } catch (Throwable error) {
