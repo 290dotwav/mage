@@ -42,6 +42,12 @@ import java.util.UUID;
  *   - thinkSeconds caps an AI seat's simulation time per decision (ComputerPlayer6: skill * 3 s
  *     by default, 6 s at skill 2); -Dxmage.web.aiThinkSeconds gives the default when the frame has none
  * { kind: "table", op: "start",  tableId }
+ * { kind: "table", op: "close",  tableId, name }
+ *   - ends the game running at that table and takes the table away, for everyone. Any player
+ *     seated there may ask for it: the site puts the decision to a vote among the players
+ *     first (a majority), and sends this once it is carried. Their own tableRemove is the
+ *     table owner's alone, which would leave a table nobody could close once its host had
+ *     gone.
  * { kind: "table", op: "watch",  tableId, name }
  *   - sits nobody down: the socket connects under "name" and asks to watch the game running at
  *     that table (roomWatchTable). The server answers with a WATCHGAME callback carrying the
@@ -85,8 +91,11 @@ final class TableOps {
             case "watch":
                 watch(session, frame, id);
                 break;
+            case "close":
+                close(session, frame, id);
+                break;
             default:
-                throw new IllegalArgumentException("unknown table op '" + op + "' (create, join, start, watch)");
+                throw new IllegalArgumentException("unknown table op '" + op + "' (create, join, start, watch, close)");
         }
     }
 
@@ -375,6 +384,30 @@ final class TableOps {
      * DUELING or when this user is playing at it, which is the rule we want: a
      * player at the table plays it, he does not watch it.
      */
+    /**
+     * End the game and take the table away — the site's "close the room".
+     * <p>
+     * The owner: « si je suis joueur dans la partie le menu doit me proposer de
+     * terminer la partie et fermer le salon. Si je suis le seul joueur, la
+     * partie se ferme instantanément. Si on est plusieurs, ça lance un vote, la
+     * majorité l'emporte. » The vote is the site's; this is what carries it out.
+     * <p>
+     * Their own {@code tableRemove} belongs to the table's owner and nobody
+     * else, which at this door means a table whose host has closed his browser
+     * can never be closed at all. So the check here is the one that fits: the
+     * name asking must hold a seat at that table.
+     */
+    private void close(WebSession web, JsonObject frame, JsonElement id) throws Exception {
+        UUID tableId = UUID.fromString(Frames.requireString(frame, "tableId"));
+        String name = Frames.requireString(frame, "name");
+        if (playerId(tableId, name) == null) {
+            throw new IllegalStateException("only a player seated at table " + tableId + " can end it");
+        }
+        managerFactory.tableManager().removeTable(tableId);
+        logger.info("Web door: table " + tableId + " ended by " + name);
+        web.send(Frames.result("table.close", true, id));
+    }
+
     private void watch(WebSession web, JsonObject frame, JsonElement id) throws Exception {
         UUID tableId = UUID.fromString(Frames.requireString(frame, "tableId"));
         String name = Frames.requireString(frame, "name");

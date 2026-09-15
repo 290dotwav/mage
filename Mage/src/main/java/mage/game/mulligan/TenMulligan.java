@@ -1,13 +1,7 @@
 package mage.game.mulligan;
 
-import mage.cards.CardsImpl;
-import mage.constants.Outcome;
-import mage.filter.FilterCard;
 import mage.game.Game;
 import mage.players.Player;
-import mage.target.Target;
-import mage.target.common.TargetCardInHand;
-import org.apache.log4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,8 +22,6 @@ import java.util.UUID;
  * looping forever - London's {@code openingHandSizes > 0} guard plays the same role.
  */
 public class TenMulligan extends Mulligan {
-
-    private static final Logger logger = Logger.getLogger(TenMulligan.class);
 
     public static final int EXTRA_CARDS = 3;
     public static final int MAX_MULLIGANS = 7;
@@ -113,20 +105,25 @@ public class TenMulligan extends Mulligan {
         drawHand(draw, player, game);
     }
 
+    /**
+     * The hand is kept: the surplus goes on the bottom — chosen by the player,
+     * at the same time as every other player who owes cards this round
+     * (`Mulligan.chooseBottomTogether`), and moved before the keep is final.
+     * The owner: « puis sélectionner les cartes qui partent en dessous, en meme
+     * temps, et quand ils ont terminé, la main disparaît ».
+     */
+    @Override
+    protected int cardsToBottom(Game game, UUID playerId, boolean kept) {
+        if (!kept) {
+            return 0;
+        }
+        Player player = game.getPlayer(playerId);
+        return player == null ? 0 : Math.max(0, player.getHand().size() - keepSize(playerId));
+    }
+
     @Override
     public void endMulligan(Game game, UUID playerId) {
-        // the hand is kept: the surplus goes on the bottom, one card at a time like London does
-        Player player = game.getPlayer(playerId);
-        int keep = keepSize(playerId);
-        while (player.canRespond() && player.getHand().size() > keep) {
-            Target target = new TargetCardInHand(new FilterCard("card (" + (player.getHand().size() - keep) + " more) to put on the bottom of your library"));
-            player.chooseTarget(Outcome.Discard, target, null, game);
-            if (target.getTargets().isEmpty()) {
-                logger.warn("TenMulligan: " + player.getName() + " chose no card for the bottom, keeps " + player.getHand().size() + " cards");
-                break;
-            }
-            player.putCardsOnBottomOfLibrary(new CardsImpl(target.getTargets()), game, null, true);
-        }
+        // Nothing left to do: the surplus went on the bottom before the keep.
     }
 
     @Override

@@ -1,8 +1,13 @@
 package mage.game.mulligan;
 
+import mage.cards.CardsImpl;
+import mage.constants.Outcome;
+import mage.filter.FilterCard;
 import mage.game.Game;
 import mage.game.events.GameEvent;
 import mage.players.Player;
+import mage.target.Target;
+import mage.target.common.TargetCardInHand;
 import mage.util.ThreadUtils;
 
 import java.io.Serializable;
@@ -68,6 +73,7 @@ public abstract class Mulligan implements Serializable {
              * (`prepareForResponse`/`waitForResponse` in HumanPlayer).
              */
             List<UUID> asking = new ArrayList<>();
+            List<UUID> keptNow = new ArrayList<>();
             for (UUID playerId : game.getState().getPlayerList(game.getStartingPlayerId())) {
                 if (keepPlayers.contains(playerId)) {
                     continue;
@@ -89,9 +95,7 @@ public abstract class Mulligan implements Serializable {
                     asking.add(playerId);
                 } else {
                     // Nothing to ask: this hand is kept where it stands.
-                    game.endMulligan(playerId);
-                    keepPlayers.add(playerId);
-                    game.informPlayers(game.getPlayer(playerId).getLogName() + " keeps hand");
+                    keptNow.add(playerId);
                 }
             }
 
@@ -103,13 +107,49 @@ public abstract class Mulligan implements Serializable {
                     mulliganPlayers.add(playerId);
                     game.informPlayers(player.getLogName() + " decides to take mulligan");
                 } else {
-                    game.endMulligan(player.getId());
-                    keepPlayers.add(playerId);
-                    game.informPlayers(player.getLogName() + " keeps hand");
+                    keptNow.add(playerId);
                 }
             }
+            // The redraws, on this thread and in turn order. They ask nothing
+            // any more: the cards that go to the bottom are chosen below, by
+            // everybody at once.
             for (UUID mulliganPlayerId : mulliganPlayers) {
                 mulligan(game, mulliganPlayerId);
+            }
+            /*
+             * The cards that go to the bottom, TOGETHER — the other half of
+             * the owner's rule: « Les 6 doivent pouvoir mulligan, puis valider
+             * puis sélectionner les cartes qui partent en dessous, en meme
+             * temps ». Who owes how many depends on the variant and on what
+             * has just happened to that player: London trims right after a
+             * redraw, the house rule "à 10" trims when the hand is kept.
+             */
+            Map<UUID, Integer> owed = new LinkedHashMap<>();
+            for (UUID playerId : keptNow) {
+                int n = cardsToBottom(game, playerId, true);
+                if (n > 0) {
+                    owed.put(playerId, n);
+                }
+            }
+            for (UUID playerId : mulliganPlayers) {
+                int n = cardsToBottom(game, playerId, false);
+                if (n > 0) {
+                    owed.put(playerId, n);
+                }
+            }
+            Map<UUID, List<UUID>> bottoms = chooseBottomTogether(game, owed);
+            // Chosen on their own threads; moved on this one, in turn order.
+            for (Map.Entry<UUID, List<UUID>> chosen : bottoms.entrySet()) {
+                Player player = game.getPlayer(chosen.getKey());
+                if (player != null && !chosen.getValue().isEmpty()) {
+                    player.putCardsOnBottomOfLibrary(new CardsImpl(chosen.getValue()), game, null, true);
+                }
+            }
+            // And only now is a kept hand final: the surplus is gone from it.
+            for (UUID playerId : keptNow) {
+                game.endMulligan(playerId);
+                keepPlayers.add(playerId);
+                game.informPlayers(game.getPlayer(playerId).getLogName() + " keeps hand");
             }
             game.saveState(false);
         } while (!mulliganPlayers.isEmpty());
@@ -171,6 +211,102 @@ public abstract class Mulligan implements Serializable {
             answers.putIfAbsent(playerId, Boolean.FALSE);
         }
         return answers;
+    }
+
+    /**
+     * How many cards this player must put on the bottom of their library right
+     * now: after their redraw ({@code kept} false — London), or as the price of
+     * keeping the hand they are looking at ({@code kept} true — the house rule
+     * "à 10"). Zero for a variant that asks for none, which is every other one.
+     * <p>
+     * It exists so the question can be asked away from the game thread: the
+     * variants used to move the cards themselves, one player at a time, inside
+     * a loop that blocked the whole table on each answer.
+     */
+    protected int cardsToBottom(Game game, UUID playerId, boolean kept) {
+        return 0;
+    }
+
+    /**
+     * Ask every player who owes cards to the bottom which ones, all at the same
+     * time, and come back with the answers. Nothing here touches the game: the
+     * cards are moved by the caller, on the game thread, in turn order.
+     * <p>
+     * Same shape as {@link #askTogether}, and for the same reason — one thread
+     * per player, named as a game thread because everything a player question
+     * touches insists on it. A player who answers nothing (a client that went
+     * away, a question that broke) has the choice made for them: the first
+     * cards of their hand, since a hand left too big would stop the game.
+     */
+    private Map<UUID, List<UUID>> chooseBottomTogether(Game game, Map<UUID, Integer> owed) {
+        Map<UUID, List<UUID>> chosen = new LinkedHashMap<>();
+        if (owed.isEmpty()) {
+            return chosen;
+        }
+        Map<UUID, List<UUID>> answers = new ConcurrentHashMap<>();
+        List<Thread> asks = new ArrayList<>();
+        for (Map.Entry<UUID, Integer> entry : owed.entrySet()) {
+            UUID playerId = entry.getKey();
+            int n = entry.getValue();
+            Player player = game.getPlayer(playerId);
+            if (player == null) {
+                continue;
+            }
+            Runnable ask = () -> {
+                List<UUID> cards = new ArrayList<>();
+                try {
+                    Target target = new TargetCardInHand(n, n, new FilterCard("card" + (n == 1 ? "" : "s") + " (" + n + ") to put on the bottom of your library"));
+                    player.chooseTarget(Outcome.Discard, target, null, game);
+                    cards.addAll(target.getTargets());
+                } catch (Throwable error) {
+                    // fall through to the hand's own order below
+                }
+                if (cards.size() < n) {
+                    for (UUID cardId : player.getHand()) {
+                        if (cards.size() >= n) {
+                            break;
+                        }
+                        if (!cards.contains(cardId)) {
+                            cards.add(cardId);
+                        }
+                    }
+                }
+                answers.put(playerId, cards);
+            };
+            if (owed.size() == 1) {
+                // One player owing: no thread, and he is the choosing player as
+                // he has always been.
+                game.getState().setChoosingPlayerId(playerId);
+                ask.run();
+                continue;
+            }
+            Thread thread = new Thread(ask, ThreadUtils.THREAD_PREFIX_GAME + " bottom " + player.getName());
+            thread.setDaemon(true);
+            asks.add(thread);
+        }
+        if (!asks.isEmpty()) {
+            // Nobody in particular is "the choosing player" while everyone chooses.
+            game.getState().setChoosingPlayerId(null);
+            for (Thread thread : asks) {
+                thread.start();
+            }
+            for (Thread thread : asks) {
+                try {
+                    thread.join();
+                } catch (InterruptedException interrupted) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+        }
+        // Turn order, whatever order the answers came back in.
+        for (UUID playerId : owed.keySet()) {
+            List<UUID> cards = answers.get(playerId);
+            if (cards != null && !cards.isEmpty()) {
+                chosen.put(playerId, cards);
+            }
+        }
+        return chosen;
     }
 
     public abstract int mulliganDownTo(Game game, UUID playerId);

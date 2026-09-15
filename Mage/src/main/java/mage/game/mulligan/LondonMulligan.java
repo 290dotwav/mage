@@ -1,12 +1,7 @@
 package mage.game.mulligan;
 
-import mage.cards.CardsImpl;
-import mage.constants.Outcome;
-import mage.filter.FilterCard;
 import mage.game.Game;
 import mage.players.Player;
-import mage.target.Target;
-import mage.target.common.TargetCardInHand;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -108,12 +103,22 @@ public class LondonMulligan extends Mulligan {
                     (newHandSize == 1 ? " card" : " cards"));
         }
         drawHand(numCards, player, game);
+        // The cards that go to the bottom are NOT chosen here any more: the
+        // phase asks every player who owes some at the same time
+        // (`Mulligan.cardsToBottom` / `chooseBottomTogether`) and moves them
+        // once every answer is in. Chosen here, a table of six waited for one
+        // player's picks before the next was even shown his hand.
+    }
 
-        while (player.canRespond() && player.getHand().size() > newHandSize) {
-            Target target = new TargetCardInHand(new FilterCard("card (" + (player.getHand().size() - newHandSize) + " more) to put on the bottom of your library"));
-            player.chooseTarget(Outcome.Discard, target, null, game);
-            player.putCardsOnBottomOfLibrary(new CardsImpl(target.getTargets()), game, null, true);
+    /** London trims right after the redraw, down to the hand this mulligan leaves. */
+    @Override
+    protected int cardsToBottom(Game game, UUID playerId, boolean kept) {
+        if (kept) {
+            return 0;
         }
+        Player player = game.getPlayer(playerId);
+        Integer size = openingHandSizes.get(playerId);
+        return player == null || size == null ? 0 : Math.max(0, player.getHand().size() - size);
     }
 
     @Override
