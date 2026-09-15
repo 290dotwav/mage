@@ -42,6 +42,11 @@ import java.util.UUID;
  *   - thinkSeconds caps an AI seat's simulation time per decision (ComputerPlayer6: skill * 3 s
  *     by default, 6 s at skill 2); -Dxmage.web.aiThinkSeconds gives the default when the frame has none
  * { kind: "table", op: "start",  tableId }
+ * { kind: "table", op: "watch",  tableId, name }
+ *   - sits nobody down: the socket connects under "name" and asks to watch the game running at
+ *     that table (roomWatchTable). The server answers with a WATCHGAME callback carrying the
+ *     game id, and the browser then calls gameWatchStart(gameId) as their own client does.
+ *     Refused for a table that is not DUELING, and for a name already playing at it.
  * </pre>
  * "name" is the seat's player name. On a socket that has not connected a user yet, create
  * and a human join connect one under that name first (anonymous mode, as their own client
@@ -77,8 +82,11 @@ final class TableOps {
             case "start":
                 start(session, frame, id);
                 break;
+            case "watch":
+                watch(session, frame, id);
+                break;
             default:
-                throw new IllegalArgumentException("unknown table op '" + op + "' (create, join, start)");
+                throw new IllegalArgumentException("unknown table op '" + op + "' (create, join, start, watch)");
         }
     }
 
@@ -350,6 +358,33 @@ final class TableOps {
             }
             return;
         }
+    }
+
+    /**
+     * Watch a table nobody offered us a chair at: the front door's spectator mode
+     * (the owner: « sinon je suis en mode spectateur et je ne peux rien faire,
+     * uniquement voir ce que voit un adversaire »).
+     * <p>
+     * Their own client does exactly this — {@code roomWatchTable}, which for a
+     * running match calls {@code User.ccWatchGame} and so sends this socket a
+     * WATCHGAME callback with the game id; the browser answers it with
+     * {@code gameWatchStart(gameId)} and from then on receives the game's views
+     * as a watcher: the board, the log, nobody's hand, and no question ever.
+     * <p>
+     * Refused by their {@code TableController.watchTable} when the table is not
+     * DUELING or when this user is playing at it, which is the rule we want: a
+     * player at the table plays it, he does not watch it.
+     */
+    private void watch(WebSession web, JsonObject frame, JsonElement id) throws Exception {
+        UUID tableId = UUID.fromString(Frames.requireString(frame, "tableId"));
+        String name = Frames.requireString(frame, "name");
+        ensureConnected(web, name);
+        boolean ok = server.roomWatchTable(web.sessionId, roomId(), tableId);
+        if (!ok) {
+            throw new MageException("watch refused for table " + tableId + " (no game running there, you are seated at it, or watching is not allowed)");
+        }
+        logger.info("Web door: " + name + " is watching table " + tableId);
+        web.send(Frames.result("table.watch", true, id));
     }
 
     private void start(WebSession web, JsonObject frame, JsonElement id) throws Exception {
