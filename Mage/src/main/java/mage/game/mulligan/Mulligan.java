@@ -197,6 +197,19 @@ public abstract class Mulligan implements Serializable {
                     // A question that broke is a hand kept: never a game stuck here.
                     answers.put(playerId, Boolean.FALSE);
                 }
+                /*
+                 * That this player has answered — not what he answered.
+                 *
+                 * Everyone declares at the same time, so no declaration may be
+                 * revealed before the last one is in: that is the whole point
+                 * of 103.4, and saying "X keeps hand" early would hand the
+                 * players still thinking the information the rule protects.
+                 * But that somebody has put their hand down is a thing you see
+                 * at a kitchen table, and it is what the other five screens
+                 * need to name who they are still waiting on (the site reads
+                 * this line — xmage/table.ts, `mulliganSaid`).
+                 */
+                game.informPlayers(player.getLogName() + " has decided");
                 // The name matters: `ThreadUtils.isRunGameThread` reads it, and
                 // everything a player question touches insists on being on a
                 // game thread ("GAME…"). A thread named anything else throws
