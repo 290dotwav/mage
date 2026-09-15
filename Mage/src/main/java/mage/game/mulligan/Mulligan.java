@@ -96,6 +96,7 @@ public abstract class Mulligan implements Serializable {
                 } else {
                     // Nothing to ask: this hand is kept where it stands.
                     keptNow.add(playerId);
+                    game.informPlayers(player.getLogName() + " keeps hand");
                 }
             }
 
@@ -108,6 +109,13 @@ public abstract class Mulligan implements Serializable {
                     game.informPlayers(player.getLogName() + " decides to take mulligan");
                 } else {
                     keptNow.add(playerId);
+                    // Said here, as the declaration comes in, and not at the
+                    // end of the round: while everybody declares at the same
+                    // time this line is how the other players' screens know
+                    // who they are still waiting on (the site reads it —
+                    // xmage/table.ts, `mulliganSaid`). The keep itself is not
+                    // final until the surplus has gone to the bottom, below.
+                    game.informPlayers(player.getLogName() + " keeps hand");
                 }
             }
             // The redraws, on this thread and in turn order. They ask nothing
@@ -146,10 +154,10 @@ public abstract class Mulligan implements Serializable {
                 }
             }
             // And only now is a kept hand final: the surplus is gone from it.
+            // (The line saying so was said as the declaration came in.)
             for (UUID playerId : keptNow) {
                 game.endMulligan(playerId);
                 keepPlayers.add(playerId);
-                game.informPlayers(game.getPlayer(playerId).getLogName() + " keeps hand");
             }
             game.saveState(false);
         } while (!mulliganPlayers.isEmpty());
