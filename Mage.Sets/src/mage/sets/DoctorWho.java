@@ -793,10 +793,10 @@ public final class DoctorWho extends ExpansionSet {
         cards.add(new SetCardInfo("Sunken Hollow", 903, Rarity.RARE, mage.cards.s.SunkenHollow.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Surge of Brilliance", 57, Rarity.UNCOMMON, mage.cards.s.SurgeOfBrilliance.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Surge of Brilliance", 662, Rarity.UNCOMMON, mage.cards.s.SurgeOfBrilliance.class, NON_FULL_USE_VARIOUS));
-        //cards.add(new SetCardInfo("Susan Foreman", 110, Rarity.RARE, mage.cards.s.SusanForeman.class, NON_FULL_USE_VARIOUS));
-        //cards.add(new SetCardInfo("Susan Foreman", 400, Rarity.RARE, mage.cards.s.SusanForeman.class, NON_FULL_USE_VARIOUS));
-        //cards.add(new SetCardInfo("Susan Foreman", 715, Rarity.RARE, mage.cards.s.SusanForeman.class, NON_FULL_USE_VARIOUS));
-        //cards.add(new SetCardInfo("Susan Foreman", 991, Rarity.RARE, mage.cards.s.SusanForeman.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Susan Foreman", 110, Rarity.RARE, mage.cards.s.SusanForeman.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Susan Foreman", 400, Rarity.RARE, mage.cards.s.SusanForeman.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Susan Foreman", 715, Rarity.RARE, mage.cards.s.SusanForeman.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Susan Foreman", 991, Rarity.RARE, mage.cards.s.SusanForeman.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Swamp", 1160, Rarity.LAND, mage.cards.basiclands.Swamp.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Swamp", 1161, Rarity.LAND, mage.cards.basiclands.Swamp.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Swamp", 200, Rarity.LAND, mage.cards.basiclands.Swamp.class, NON_FULL_USE_VARIOUS));
