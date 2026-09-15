@@ -3,6 +3,7 @@ package mage.game.mulligan;
 import mage.game.Game;
 import mage.game.events.GameEvent;
 import mage.players.Player;
+import mage.util.ThreadUtils;
 
 import java.io.Serializable;
 import java.util.*;
@@ -148,7 +149,12 @@ public abstract class Mulligan implements Serializable {
                     // A question that broke is a hand kept: never a game stuck here.
                     answers.put(playerId, Boolean.FALSE);
                 }
-            }, "mulligan-" + player.getName());
+                // The name matters: `ThreadUtils.isRunGameThread` reads it, and
+                // everything a player question touches insists on being on a
+                // game thread ("GAME…"). A thread named anything else throws
+                // there, which is how the first attempt at this left every
+                // table stuck at "GAME started" with no hand dealt.
+            }, ThreadUtils.THREAD_PREFIX_GAME + " mulligan " + player.getName());
             ask.setDaemon(true);
             asks.add(ask);
             ask.start();
