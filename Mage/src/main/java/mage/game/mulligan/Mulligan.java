@@ -6,7 +6,6 @@ import mage.players.Player;
 
 import java.io.Serializable;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class Mulligan implements Serializable {
 
@@ -41,70 +40,32 @@ public abstract class Mulligan implements Serializable {
         List<UUID> mulliganPlayers = new ArrayList<>();
         do {
             mulliganPlayers.clear();
-            /*
-             * The declarations happen TOGETHER.
-             *
-             * The rule asks each player in turn order, and this used to do it
-             * literally: the loop blocked on one player's answer before the
-             * next was even asked, so at a table of four the last player sat
-             * watching three other people think before his own hand was worth
-             * looking at. The owner of this door: « le mulligan doit etre
-             * indépendant des autres joueurs, chacun fait son truc de son côté
-             * en meme temps que les autres et puis valide pour attendre les
-             * autres joueurs. »
-             *
-             * What the rule protects — that no player mulligans before every
-             * declaration is in — is kept exactly: the questions go out at
-             * once, every answer is waited for, and only then does anybody
-             * shuffle. What is lost is the small amount of information a later
-             * player had from hearing an earlier one declare first, which at a
-             * kitchen table nobody waits for either.
-             *
-             * Everything that touches the game — the replacement event, the
-             * log, the mulligans themselves — stays on this thread, in turn
-             * order. The only thing on the other threads is the question and
-             * the wait for its answer, which is per-player state
-             * (`prepareForResponse`/`waitForResponse` in HumanPlayer).
-             */
-            List<UUID> asking = new ArrayList<>();
             for (UUID playerId : game.getState().getPlayerList(game.getStartingPlayerId())) {
-                if (keepPlayers.contains(playerId)) {
-                    continue;
-                }
-                Player player = game.getPlayer(playerId);
-                boolean ask = false;
-                while (true) {
-                    if (!canTakeMulligan(game, player)) {
-                        break;
+                if (!keepPlayers.contains(playerId)) {
+                    Player player = game.getPlayer(playerId);
+                    boolean keep = true;
+                    while (true) {
+                        if (!canTakeMulligan(game, player)) {
+                            break;
+                        }
+                        GameEvent event = new GameEvent(GameEvent.EventType.CAN_TAKE_MULLIGAN, null, null, playerId);
+                        if (!game.replaceEvent(event)) {
+                            game.fireEvent(event);
+                            game.getState().setChoosingPlayerId(playerId);
+                            if (player.chooseMulligan(game)) {
+                                keep = false;
+                            }
+                            break;
+                        }
                     }
-                    GameEvent event = new GameEvent(GameEvent.EventType.CAN_TAKE_MULLIGAN, null, null, playerId);
-                    if (!game.replaceEvent(event)) {
-                        game.fireEvent(event);
-                        ask = true;
-                        break;
+                    if (keep) {
+                        game.endMulligan(player.getId());
+                        keepPlayers.add(playerId);
+                        game.informPlayers(player.getLogName() + " keeps hand");
+                    } else {
+                        mulliganPlayers.add(playerId);
+                        game.informPlayers(player.getLogName() + " decides to take mulligan");
                     }
-                }
-                if (ask) {
-                    asking.add(playerId);
-                } else {
-                    // Nothing to ask: this hand is kept where it stands.
-                    game.endMulligan(playerId);
-                    keepPlayers.add(playerId);
-                    game.informPlayers(game.getPlayer(playerId).getLogName() + " keeps hand");
-                }
-            }
-
-            Map<UUID, Boolean> takesMulligan = askTogether(game, asking);
-
-            for (UUID playerId : asking) {
-                Player player = game.getPlayer(playerId);
-                if (Boolean.TRUE.equals(takesMulligan.get(playerId))) {
-                    mulliganPlayers.add(playerId);
-                    game.informPlayers(player.getLogName() + " decides to take mulligan");
-                } else {
-                    game.endMulligan(player.getId());
-                    keepPlayers.add(playerId);
-                    game.informPlayers(player.getLogName() + " keeps hand");
                 }
             }
             for (UUID mulliganPlayerId : mulliganPlayers) {
@@ -112,59 +73,6 @@ public abstract class Mulligan implements Serializable {
             }
             game.saveState(false);
         } while (!mulliganPlayers.isEmpty());
-    }
-
-    /**
-     * Ask every player at once whether they take a mulligan, and come back
-     * when they have all answered.
-     *
-     * One thread per player, each doing nothing but `chooseMulligan` — which
-     * fires that player's own question and waits on that player's own monitor.
-     * A player who never answers is a player whose client has gone: their own
-     * timer concedes them and the wait ends with it, so there is no wait here
-     * that their server does not already end. A seat that answers at once (a
-     * bot) simply returns first.
-     */
-    private Map<UUID, Boolean> askTogether(Game game, List<UUID> playerIds) {
-        Map<UUID, Boolean> answers = new ConcurrentHashMap<>();
-        if (playerIds.isEmpty()) {
-            return answers;
-        }
-        if (playerIds.size() == 1) {
-            UUID only = playerIds.get(0);
-            game.getState().setChoosingPlayerId(only);
-            answers.put(only, game.getPlayer(only).chooseMulligan(game));
-            return answers;
-        }
-        // Nobody in particular is "the choosing player" while everyone chooses.
-        game.getState().setChoosingPlayerId(null);
-        List<Thread> asks = new ArrayList<>();
-        for (UUID playerId : playerIds) {
-            Player player = game.getPlayer(playerId);
-            Thread ask = new Thread(() -> {
-                try {
-                    answers.put(playerId, player.chooseMulligan(game));
-                } catch (Throwable error) {
-                    // A question that broke is a hand kept: never a game stuck here.
-                    answers.put(playerId, Boolean.FALSE);
-                }
-            }, "mulligan-" + player.getName());
-            ask.setDaemon(true);
-            asks.add(ask);
-            ask.start();
-        }
-        for (Thread ask : asks) {
-            try {
-                ask.join();
-            } catch (InterruptedException interrupted) {
-                Thread.currentThread().interrupt();
-                break;
-            }
-        }
-        for (UUID playerId : playerIds) {
-            answers.putIfAbsent(playerId, Boolean.FALSE);
-        }
-        return answers;
     }
 
     public abstract int mulliganDownTo(Game game, UUID playerId);
