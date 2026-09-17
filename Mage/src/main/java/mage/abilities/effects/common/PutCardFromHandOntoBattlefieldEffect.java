@@ -73,6 +73,14 @@ public class PutCardFromHandOntoBattlefieldEffect extends OneShotEffect {
         if (player == null) {
             return false;
         }
+        // Nothing in hand that this could take: the trigger still resolves, it
+        // simply does nothing, and asking "do you want to?" of a player who has
+        // no such card is a question with one answer. Burgeoning asked a player
+        // with no land in hand whether they wanted to put a land onto the
+        // battlefield; there was nothing to say yes with.
+        if (player.getHand().count(filter, player.getId(), source, game) == 0) {
+            return false;
+        }
         if (!player.chooseUse(Outcome.PutCardInPlay, "Put " + filter.getMessage() + " from your hand onto the battlefield?", source, game)) {
             return false;
         }
