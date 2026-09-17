@@ -270,6 +270,44 @@ public abstract class Mulligan implements Serializable {
     }
 
     /**
+     * Ask ONE player which cards go on the bottom, and come back with them.
+     * Nothing here touches the game — it is a question and its answer — so it
+     * may be asked from a thread of its own, which is the whole point: every
+     * player who owes cards is asked at the same time, and (for the house rule
+     * "à 10") each player is asked the moment THEY keep, without waiting for
+     * anybody else's declaration.
+     * <p>
+     * A player who answers nothing — a client that went away, a question that
+     * broke — has the choice made for them out of the front of their hand: a
+     * hand left too big would stop the game.
+     */
+    protected List<UUID> askForBottom(Game game, Player player, int n) {
+        List<UUID> cards = new ArrayList<>();
+        try {
+            // The wording is theirs, unchanged on purpose: the site reads
+            // "(N more) to put on the bottom of your library" off the message
+            // to show the pick on the opening-hand sheet (dialogs.ts,
+            // `bottomPutCount`).
+            Target target = new TargetCardInHand(n, n, new FilterCard("card (" + n + " more) to put on the bottom of your library"));
+            player.chooseTarget(Outcome.Discard, target, null, game);
+            cards.addAll(target.getTargets());
+        } catch (Throwable error) {
+            // fall through to the hand's own order below
+        }
+        if (cards.size() < n) {
+            for (UUID cardId : player.getHand()) {
+                if (cards.size() >= n) {
+                    break;
+                }
+                if (!cards.contains(cardId)) {
+                    cards.add(cardId);
+                }
+            }
+        }
+        return cards;
+    }
+
+    /**
      * Ask every player who owes cards to the bottom which ones, all at the same
      * time, and come back with the answers. Nothing here touches the game: the
      * cards are moved by the caller, on the game thread, in turn order.
@@ -294,31 +332,7 @@ public abstract class Mulligan implements Serializable {
             if (player == null) {
                 continue;
             }
-            Runnable ask = () -> {
-                List<UUID> cards = new ArrayList<>();
-                try {
-                    // The wording is theirs, unchanged on purpose: the site
-                    // reads "(N more) to put on the bottom of your library"
-                    // off the message to show the pick on the opening-hand
-                    // sheet (dialogs.ts, `bottomPutCount`).
-                    Target target = new TargetCardInHand(n, n, new FilterCard("card (" + n + " more) to put on the bottom of your library"));
-                    player.chooseTarget(Outcome.Discard, target, null, game);
-                    cards.addAll(target.getTargets());
-                } catch (Throwable error) {
-                    // fall through to the hand's own order below
-                }
-                if (cards.size() < n) {
-                    for (UUID cardId : player.getHand()) {
-                        if (cards.size() >= n) {
-                            break;
-                        }
-                        if (!cards.contains(cardId)) {
-                            cards.add(cardId);
-                        }
-                    }
-                }
-                answers.put(playerId, cards);
-            };
+            Runnable ask = () -> answers.put(playerId, askForBottom(game, player, n));
             if (owed.size() == 1) {
                 // One player owing: no thread, and he is the choosing player as
                 // he has always been.

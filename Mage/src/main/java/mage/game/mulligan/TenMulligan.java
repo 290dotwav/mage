@@ -1,9 +1,14 @@
 package mage.game.mulligan;
 
+import mage.cards.CardsImpl;
 import mage.game.Game;
+import mage.game.events.GameEvent;
 import mage.players.Player;
+import mage.util.ThreadUtils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -60,13 +65,144 @@ public class TenMulligan extends Mulligan {
         super.drawHand(numCards + extra, player, game);
     }
 
+    /**
+     * **Everybody mulligans at their own pace, and nobody waits for anybody.**
+     *
+     * The rules mulligan (103.4, and the base class) goes in ROUNDS: every
+     * player declares, the round closes when the LAST declaration is in, only
+     * then does anybody redraw, and round two asks again. It is simultaneous in
+     * the sense the rule means — no player hears another's declaration before
+     * making their own — and it still makes three people sit in front of a
+     * screen while the fourth thinks about its first hand. The owner, who plays
+     * this house rule precisely so that a table of four is not an evening of
+     * waiting: « Fais le pour celui a 10 ».
+     *
+     * So, for THIS variant only: one thread per player, each running its own
+     * mulligan from the first question to the cards that go under, at the speed
+     * of the person in the chair. A player who keeps their first hand is done
+     * while another is on their third. The phase ends when the last player has
+     * kept — which is the only thing everybody still waits for, because the
+     * game cannot start before it.
+     *
+     * What this trades away, said plainly: a player who keeps is announced
+     * ("X keeps hand") while others are still deciding, so a late decider can
+     * hear that three hands are already down. At a kitchen table that is what
+     * happens anyway, and the house rule is the owner's to set. London
+     * (`LondonMulligan`) keeps the rules' rounds, untouched.
+     *
+     * The questions run on those threads; **everything that touches the game —
+     * the shuffle, the draw, the cards moved under, the end of a mulligan —
+     * runs under one lock**, so the state is mutated by one thread at a time
+     * whatever order the answers come back in.
+     */
     @Override
     public void executeMulliganPhase(Game game, int startingHandSize) {
+        List<UUID> players = new ArrayList<>();
         for (UUID playerId : game.getState().getPlayerList(game.getStartingPlayerId())) {
             keepSizes.put(playerId, startingHandSize);
             takenMulligans.put(playerId, 0);
+            players.add(playerId);
         }
-        super.executeMulliganPhase(game, startingHandSize);
+        if (players.size() < 2) {
+            // One player: there is nobody to wait for, and the rounds of the
+            // base class are the simpler path through the same thing.
+            super.executeMulliganPhase(game, startingHandSize);
+            return;
+        }
+        // Nobody in particular is "the choosing player" while everyone chooses.
+        game.getState().setChoosingPlayerId(null);
+        Object lock = new Object();
+        List<Thread> running = new ArrayList<>();
+        for (UUID playerId : players) {
+            Player player = game.getPlayer(playerId);
+            if (player == null) {
+                continue;
+            }
+            // The name matters: `ThreadUtils.isRunGameThread` reads it, and
+            // everything a player question touches insists on being on a game
+            // thread ("GAME…"). A thread named anything else throws there.
+            Thread own = new Thread(() -> ownMulligan(game, player, lock), ThreadUtils.THREAD_PREFIX_GAME + " mulligan " + player.getName());
+            own.setDaemon(true);
+            running.add(own);
+        }
+        for (Thread thread : running) {
+            thread.start();
+        }
+        for (Thread thread : running) {
+            try {
+                thread.join();
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+        synchronized (lock) {
+            game.saveState(false);
+        }
+    }
+
+    /** One player's whole mulligan, from the first question to the cards that go under. */
+    private void ownMulligan(Game game, Player player, Object lock) {
+        UUID playerId = player.getId();
+        try {
+            while (true) {
+                boolean mayMulligan;
+                synchronized (lock) {
+                    mayMulligan = mayAsk(game, player);
+                }
+                if (!mayMulligan) {
+                    break;
+                }
+                // The question, off the lock: this is where the person thinks,
+                // and holding the lock here is exactly the queue being removed.
+                if (!player.chooseMulligan(game)) {
+                    break;
+                }
+                synchronized (lock) {
+                    game.informPlayers(player.getLogName() + " decides to take mulligan");
+                    mulligan(game, playerId);
+                }
+            }
+            // Kept. The surplus goes under — chosen off the lock, moved on it.
+            int owed;
+            synchronized (lock) {
+                game.informPlayers(player.getLogName() + " keeps hand");
+                owed = cardsToBottom(game, playerId, true);
+            }
+            List<UUID> under = owed > 0 ? askForBottom(game, player, owed) : new ArrayList<>();
+            synchronized (lock) {
+                if (!under.isEmpty()) {
+                    // `false`: the three cards go under shuffled among
+                    // themselves. `true` would ask this player, card by card,
+                    // for the order — a second question nobody wants.
+                    player.putCardsOnBottomOfLibrary(new CardsImpl(under), game, null, false);
+                }
+                game.endMulligan(playerId);
+            }
+        } catch (Throwable error) {
+            // A question that broke is a hand kept: never a table stuck here.
+            synchronized (lock) {
+                game.endMulligan(playerId);
+            }
+        }
+    }
+
+    /**
+     * May this player be asked again? The hand must be one a mulligan can be
+     * taken from, and something may have replaced the chance to take one.
+     * Called under the lock: it fires events into the game.
+     */
+    private boolean mayAsk(Game game, Player player) {
+        while (true) {
+            if (!canTakeMulligan(game, player)) {
+                return false;
+            }
+            GameEvent event = new GameEvent(GameEvent.EventType.CAN_TAKE_MULLIGAN, null, null, player.getId());
+            if (!game.replaceEvent(event)) {
+                game.fireEvent(event);
+                return true;
+            }
+        }
     }
 
     private int keepSize(UUID playerId) {
