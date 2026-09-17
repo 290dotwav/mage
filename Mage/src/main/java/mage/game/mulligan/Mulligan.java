@@ -146,11 +146,32 @@ public abstract class Mulligan implements Serializable {
                 }
             }
             Map<UUID, List<UUID>> bottoms = chooseBottomTogether(game, owed);
-            // Chosen on their own threads; moved on this one, in turn order.
+            /*
+             * Chosen on their own threads, all at once; moved on this one.
+             *
+             * `anyOrder = false`, and that flag is the whole of the second
+             * half of this bug. It does NOT mean "any order you like": true
+             * means the PLAYER IS ASKED, card by card, for the order the cards
+             * land in ("Select a card ORDER to put on the BOTTOM of your
+             * library") — and asked HERE, on this thread, so the three players
+             * who had just chosen their three cards at the same time were then
+             * questioned one after the other, each waiting for the one before
+             * to finish. Measured on the live door: the choices land together
+             * at 8.3 s, and the ordering runs 9.1→10.0 s, 10.0→10.9 s,
+             * 11.0→12.0 s, one seat at a time.
+             *
+             * That is both of the things the owner has been saying: « il m'a
+             * demandé 2x de virer des cartes » — the choice, then the order —
+             * and « c'est quoi que tu captes pas dans le mot simultané ? ».
+             * The order three cards take at the bottom of a ninety-card
+             * library is worth nobody's question, let alone a queue: they go
+             * down shuffled among themselves, which is what the paper rule
+             * does when nobody is watching.
+             */
             for (Map.Entry<UUID, List<UUID>> chosen : bottoms.entrySet()) {
                 Player player = game.getPlayer(chosen.getKey());
                 if (player != null && !chosen.getValue().isEmpty()) {
-                    player.putCardsOnBottomOfLibrary(new CardsImpl(chosen.getValue()), game, null, true);
+                    player.putCardsOnBottomOfLibrary(new CardsImpl(chosen.getValue()), game, null, false);
                 }
             }
             // And only now is a kept hand final: the surplus is gone from it.
