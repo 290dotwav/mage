@@ -126,6 +126,7 @@ public final class Visions extends ExpansionSet {
         cards.add(new SetCardInfo("Necromancy", 64, Rarity.UNCOMMON, mage.cards.n.Necromancy.class, RETRO_ART));
         cards.add(new SetCardInfo("Necrosavant", 65, Rarity.RARE, mage.cards.n.Necrosavant.class, RETRO_ART));
         cards.add(new SetCardInfo("Nekrataal", 66, Rarity.UNCOMMON, mage.cards.n.Nekrataal.class, RETRO_ART));
+        cards.add(new SetCardInfo("Ogre Enforcer", 89, Rarity.RARE, mage.cards.o.OgreEnforcer.class));
         cards.add(new SetCardInfo("Ovinomancer", 39, Rarity.UNCOMMON, mage.cards.o.Ovinomancer.class, RETRO_ART));
         cards.add(new SetCardInfo("Panther Warriors", 115, Rarity.COMMON, mage.cards.p.PantherWarriors.class, RETRO_ART));
         cards.add(new SetCardInfo("Parapet", 14, Rarity.COMMON, mage.cards.p.Parapet.class, RETRO_ART));
