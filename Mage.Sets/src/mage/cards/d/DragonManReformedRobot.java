@@ -87,7 +87,7 @@ enum DragonManReformedRobotValue implements DynamicValue {
         }
         Player player = game.getPlayer(sourceAbility.getControllerId());
         if (player != null) {
-            for (Card card : player.getGraveyard().getCards(StaticFilters.FILTER_CARD_NON_CREATURE, game)) {
+            for (Card card : player.getGraveyard().getCards(StaticFilters.FILTER_CARD_NON_CREATURE, player.getId(), sourceAbility, game)) {
                 max = Math.max(max, card.getManaValue());
             }
         }
