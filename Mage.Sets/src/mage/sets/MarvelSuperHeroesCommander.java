@@ -805,5 +805,15 @@ public final class MarvelSuperHeroesCommander extends ExpansionSet {
         cards.add(new SetCardInfo("Okoye, Mighty and Adored", 410, Rarity.RARE, mage.cards.o.OkoyeMightyAndAdored.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("The Spear of Bashenga", 25, Rarity.RARE, mage.cards.t.TheSpearOfBashenga.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("The Spear of Bashenga", 322, Rarity.RARE, mage.cards.t.TheSpearOfBashenga.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Strategic Intervention", 609, Rarity.UNCOMMON, mage.cards.s.StrategicIntervention.class));
+        cards.add(new SetCardInfo("Nick Fury, Spymaster", 603, Rarity.RARE, mage.cards.n.NickFurySpymaster.class));
+        cards.add(new SetCardInfo("Photon, Mighty Marvel", 58, Rarity.RARE, mage.cards.p.PhotonMightyMarvel.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Photon, Mighty Marvel", 369, Rarity.RARE, mage.cards.p.PhotonMightyMarvel.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Silver Surfer, Galactus's Herald", 10, Rarity.RARE, mage.cards.s.SilverSurferGalactussHerald.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Silver Surfer, Galactus's Herald", 293, Rarity.RARE, mage.cards.s.SilverSurferGalactussHerald.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Willie Lumpkin, Postman", 101, Rarity.RARE, mage.cards.w.WillieLumpkinPostman.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Willie Lumpkin, Postman", 425, Rarity.RARE, mage.cards.w.WillieLumpkinPostman.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Archnemesis", 74, Rarity.RARE, mage.cards.a.Archnemesis.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Archnemesis", 391, Rarity.RARE, mage.cards.a.Archnemesis.class, NON_FULL_USE_VARIOUS));
     }
 }
