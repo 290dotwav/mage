@@ -218,11 +218,14 @@ public final class TheHobbit extends ExpansionSet {
         cards.add(new SetCardInfo("Ravenhill Flock", 52, Rarity.UNCOMMON, mage.cards.r.RavenhillFlock.class));
         cards.add(new SetCardInfo("Ravening Warg", 80, Rarity.COMMON, mage.cards.r.RaveningWarg.class));
         cards.add(new SetCardInfo("Reverent Howl", 81, Rarity.COMMON, mage.cards.r.ReverentHowl.class));
+        cards.add(new SetCardInfo("Rhovanion Rampager", 82, Rarity.RARE, mage.cards.r.RhovanionRampager.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Rhovanion Rampager", 298, Rarity.RARE, mage.cards.r.RhovanionRampager.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Riddles in the Dark", 292, Rarity.RARE, mage.cards.r.RiddlesInTheDark.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Riddles in the Dark", 53, Rarity.RARE, mage.cards.r.RiddlesInTheDark.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Roll-Roll-Roll-Roll", 54, Rarity.RARE, mage.cards.r.RollRollRollRoll.class));
         cards.add(new SetCardInfo("Settle the Wreckage", 26, Rarity.RARE, mage.cards.s.SettleTheWreckage.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Settle the Wreckage", 288, Rarity.RARE, mage.cards.s.SettleTheWreckage.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Silvan Reveler", 163, Rarity.UNCOMMON, mage.cards.s.SilvanReveler.class));
         cards.add(new SetCardInfo("Smaug's Fury", 111, Rarity.COMMON, mage.cards.s.SmaugsFury.class));
         cards.add(new SetCardInfo("Smaug, the Great Calamity", 109, Rarity.COMMON, mage.cards.s.SmaugTheGreatCalamity.class));
         cards.add(new SetCardInfo("Smaug the Magnificent", 110, Rarity.MYTHIC, mage.cards.s.SmaugTheMagnificent.class, NON_FULL_USE_VARIOUS));
@@ -306,6 +309,9 @@ public final class TheHobbit extends ExpansionSet {
         cards.add(new SetCardInfo("Wargling", 140, Rarity.COMMON, mage.cards.w.Wargling.class));
         cards.add(new SetCardInfo("Well-Worn Spatula", 180, Rarity.COMMON, mage.cards.w.WellWornSpatula.class));
         cards.add(new SetCardInfo("Wilderland Scrounger", 141, Rarity.UNCOMMON, mage.cards.w.WilderlandScrounger.class));
+        cards.add(new SetCardInfo("Wizard's Staff", 59, Rarity.RARE, mage.cards.w.WizardsStaff.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Wizard's Staff", 294, Rarity.RARE, mage.cards.w.WizardsStaff.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Wood Elves", 142, Rarity.COMMON, mage.cards.w.WoodElves.class));
+        cards.add(new SetCardInfo("Woodland Weavemaster", 143, Rarity.UNCOMMON, mage.cards.w.WoodlandWeavemaster.class));
     }
 }
