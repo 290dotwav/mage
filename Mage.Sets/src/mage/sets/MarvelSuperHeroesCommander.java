@@ -772,5 +772,8 @@ public final class MarvelSuperHeroesCommander extends ExpansionSet {
         // cards-batch-C
         cards.add(new SetCardInfo("The Frightful Four", 349, Rarity.RARE, mage.cards.t.TheFrightfulFour.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("The Frightful Four", 44, Rarity.RARE, mage.cards.t.TheFrightfulFour.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Virtual Assistant", 643, Rarity.UNCOMMON, mage.cards.v.VirtualAssistant.class));
+        cards.add(new SetCardInfo("Intrepid Ace", 691, Rarity.UNCOMMON, mage.cards.i.IntrepidAce.class));
+        cards.add(new SetCardInfo("Origin of Iron Man", 633, Rarity.UNCOMMON, mage.cards.o.OriginOfIronMan.class));
     }
 }
