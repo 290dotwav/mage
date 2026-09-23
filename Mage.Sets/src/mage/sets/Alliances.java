@@ -189,6 +189,7 @@ public final class Alliances extends ExpansionSet {
         cards.add(new SetCardInfo("Storm Shaman", "81a", Rarity.COMMON, mage.cards.s.StormShaman.class, RETRO_ART_USE_VARIOUS));
         cards.add(new SetCardInfo("Storm Shaman", "81b", Rarity.COMMON, mage.cards.s.StormShaman.class, RETRO_ART_USE_VARIOUS));
         cards.add(new SetCardInfo("Stromgald Spy", 62, Rarity.UNCOMMON, mage.cards.s.StromgaldSpy.class, RETRO_ART));
+        cards.add(new SetCardInfo("Suffocation", 38, Rarity.UNCOMMON, mage.cards.s.Suffocation.class));
         cards.add(new SetCardInfo("Surge of Strength", 109, Rarity.UNCOMMON, mage.cards.s.SurgeOfStrength.class, RETRO_ART));
         cards.add(new SetCardInfo("Sustaining Spirit", 18, Rarity.RARE, mage.cards.s.SustainingSpirit.class, RETRO_ART));
         cards.add(new SetCardInfo("Swamp Mosquito", "63a", Rarity.COMMON, mage.cards.s.SwampMosquito.class, RETRO_ART_USE_VARIOUS));
