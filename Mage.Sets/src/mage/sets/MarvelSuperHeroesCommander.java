@@ -788,5 +788,9 @@ public final class MarvelSuperHeroesCommander extends ExpansionSet {
         cards.add(new SetCardInfo("Daredevil, Fearless Fighter", 685, Rarity.RARE, mage.cards.d.DaredevilFearlessFighter.class));
         cards.add(new SetCardInfo("Iron Monger, Sadistic Tycoon", 45, Rarity.RARE, mage.cards.i.IronMongerSadisticTycoon.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Iron Monger, Sadistic Tycoon", 350, Rarity.RARE, mage.cards.i.IronMongerSadisticTycoon.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Typhoid Mary, Fractured", 99, Rarity.RARE, mage.cards.t.TyphoidMaryFractured.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Typhoid Mary, Fractured", 421, Rarity.RARE, mage.cards.t.TyphoidMaryFractured.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Living Laser", 55, Rarity.RARE, mage.cards.l.LivingLaser.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Living Laser", 366, Rarity.RARE, mage.cards.l.LivingLaser.class, NON_FULL_USE_VARIOUS));
     }
 }
