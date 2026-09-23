@@ -470,5 +470,7 @@ public final class MarvelSuperHeroes extends ExpansionSet {
         // cards-batch-C
         cards.add(new SetCardInfo("Spider-Man, To the Rescue", 228, Rarity.UNCOMMON, mage.cards.s.SpiderManToTheRescue.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Spider-Man, To the Rescue", 335, Rarity.UNCOMMON, mage.cards.s.SpiderManToTheRescue.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Taskmaster, Mercenary Mimic", 232, Rarity.RARE, mage.cards.t.TaskmasterMercenaryMimic.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Taskmaster, Mercenary Mimic", 425, Rarity.RARE, mage.cards.t.TaskmasterMercenaryMimic.class, NON_FULL_USE_VARIOUS));
     }
 }

@@ -204,6 +204,7 @@ public enum CounterType {
     ROPE("rope"),
     RUST("rust"),
     QUEST("quest"),
+    SAURIAN("saurian"), // cards-batch-C
     SILVER("silver"),
     SCREAM("scream"),
     SHADOW("shadow"),

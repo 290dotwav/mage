@@ -825,5 +825,14 @@ public final class MarvelSuperHeroesCommander extends ExpansionSet {
         cards.add(new SetCardInfo("Negative Zone Portal", 111, Rarity.RARE, mage.cards.n.NegativeZonePortal.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Negative Zone Portal", 445, Rarity.RARE, mage.cards.n.NegativeZonePortal.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Pick Up the Pace", 702, Rarity.RARE, mage.cards.p.PickUpThePace.class));
+        cards.add(new SetCardInfo("Klaw, Master of Sound", 46, Rarity.RARE, mage.cards.k.KlawMasterOfSound.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Klaw, Master of Sound", 352, Rarity.RARE, mage.cards.k.KlawMasterOfSound.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Scarlet Witch, Chaotic Avenger", 93, Rarity.RARE, mage.cards.s.ScarletWitchChaoticAvenger.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Scarlet Witch, Chaotic Avenger", 414, Rarity.RARE, mage.cards.s.ScarletWitchChaoticAvenger.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Lady Loki, Agent of Chaos", 54, Rarity.RARE, mage.cards.l.LadyLokiAgentOfChaos.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Lady Loki, Agent of Chaos", 365, Rarity.RARE, mage.cards.l.LadyLokiAgentOfChaos.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Impossible Man", 625, Rarity.UNCOMMON, mage.cards.i.ImpossibleMan.class));
+        cards.add(new SetCardInfo("Hulkling, Young Avenger", 689, Rarity.RARE, mage.cards.h.HulklingYoungAvenger.class));
+        cards.add(new SetCardInfo("Sauron, Dino Devotee", 731, Rarity.MYTHIC, mage.cards.s.SauronDinoDevotee.class));
     }
 }
