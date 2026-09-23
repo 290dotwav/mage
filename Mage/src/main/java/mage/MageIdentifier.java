@@ -89,6 +89,7 @@ public enum MageIdentifier {
     PrimalPrayersAlternateCast,
     QuilledGreatwurmAlternateCast,
     WickerfolkIndomitableAlternateCast,
+    DragonManReformedRobotAlternateCast, // cards-batch-C
     UriangerAugureltAlternateCast,
     ValgavothTerrorEaterAlternateCast,
     LightstallInquisitorAlternateCast,

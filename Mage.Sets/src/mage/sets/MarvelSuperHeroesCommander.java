@@ -815,5 +815,15 @@ public final class MarvelSuperHeroesCommander extends ExpansionSet {
         cards.add(new SetCardInfo("Willie Lumpkin, Postman", 425, Rarity.RARE, mage.cards.w.WillieLumpkinPostman.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Archnemesis", 74, Rarity.RARE, mage.cards.a.Archnemesis.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Archnemesis", 391, Rarity.RARE, mage.cards.a.Archnemesis.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Hulk's Thunderclap", 725, Rarity.UNCOMMON, mage.cards.h.HulksThunderclap.class));
+        cards.add(new SetCardInfo("Dragon Man, Reformed Robot", 82, Rarity.RARE, mage.cards.d.DragonManReformedRobot.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Dragon Man, Reformed Robot", 400, Rarity.RARE, mage.cards.d.DragonManReformedRobot.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Molecule Man", 9, Rarity.RARE, mage.cards.m.MoleculeMan.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Molecule Man", 292, Rarity.RARE, mage.cards.m.MoleculeMan.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Doom's Time Platform", 103, Rarity.RARE, mage.cards.d.DoomsTimePlatform.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Doom's Time Platform", 431, Rarity.RARE, mage.cards.d.DoomsTimePlatform.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Negative Zone Portal", 111, Rarity.RARE, mage.cards.n.NegativeZonePortal.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Negative Zone Portal", 445, Rarity.RARE, mage.cards.n.NegativeZonePortal.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Pick Up the Pace", 702, Rarity.RARE, mage.cards.p.PickUpThePace.class));
     }
 }
