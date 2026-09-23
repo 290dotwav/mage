@@ -389,6 +389,7 @@ public final class IceAge extends ExpansionSet {
         cards.add(new SetCardInfo("Wild Growth", 277, Rarity.COMMON, mage.cards.w.WildGrowth.class, RETRO_ART));
         cards.add(new SetCardInfo("Wind Spirit", 106, Rarity.UNCOMMON, mage.cards.w.WindSpirit.class, RETRO_ART));
         cards.add(new SetCardInfo("Wings of Aesthir", 305, Rarity.UNCOMMON, mage.cards.w.WingsOfAesthir.class, RETRO_ART));
+        cards.add(new SetCardInfo("Winter's Chill", 107, Rarity.RARE, mage.cards.w.WintersChill.class));
         cards.add(new SetCardInfo("Withering Wisps", 168, Rarity.UNCOMMON, mage.cards.w.WitheringWisps.class, RETRO_ART));
         cards.add(new SetCardInfo("Woolly Mammoths", 278, Rarity.COMMON, mage.cards.w.WoollyMammoths.class, RETRO_ART));
         cards.add(new SetCardInfo("Woolly Spider", 279, Rarity.COMMON, mage.cards.w.WoollySpider.class, RETRO_ART));
