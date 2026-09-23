@@ -16,6 +16,7 @@ import mage.constants.*;
 import mage.game.Game;
 import mage.players.Player;
 import mage.util.CardUtil;
+import mage.watchers.common.MiracleWatcher;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,10 +40,8 @@ public final class AminatouVeilPiercer extends CardImpl {
         this.addAbility(new BeginningOfUpkeepTriggeredAbility(new SurveilEffect(2)));
 
         // Each enchantment card in your hand has miracle. Its miracle cost is equal to its mana cost reduced by {4}.
-        // TODO: MiracleWatcher looks at the drawn card's abilities in the DREW_CARD event handler, which
-        //  runs before the continuous effects are applied again, so a granted miracle is not offered on
-        //  the draw yet. It needs a game.applyEffects() call before MiracleWatcher.checkMiracleAbility.
-        this.addAbility(new SimpleStaticAbility(new AminatouVeilPiercerEffect()));
+        // (the watcher is needed even if no card had miracle when the game began)
+        this.addAbility(new SimpleStaticAbility(new AminatouVeilPiercerEffect()), new MiracleWatcher());
     }
 
     private AminatouVeilPiercer(final AminatouVeilPiercer card) {

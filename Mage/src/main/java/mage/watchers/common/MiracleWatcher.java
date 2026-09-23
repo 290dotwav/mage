@@ -51,6 +51,11 @@ public class MiracleWatcher extends Watcher {
     private void checkMiracleAbility(GameEvent event, Game game) {
         Card card = game.getCard(event.getTargetId());
         if (card != null) {
+            if (card.getAbilities(game).stream().noneMatch(MiracleAbility.class::isInstance)) {
+                // miracle can be granted to cards in hand (Aminatou, Veil Piercer; Lorehold, the Historian):
+                // the card just moved to the hand, so the effects must be applied again to see it
+                game.applyEffects();
+            }
             for (Ability ability : card.getAbilities(game)) {
                 if (ability instanceof MiracleAbility) {
                     Player controller = game.getPlayer(ability.getControllerId());
