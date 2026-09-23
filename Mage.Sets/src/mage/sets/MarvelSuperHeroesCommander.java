@@ -297,6 +297,8 @@ public final class MarvelSuperHeroesCommander extends ExpansionSet {
         cards.add(new SetCardInfo("Grim Reaper's Scythe", 658, Rarity.RARE, mage.cards.g.GrimReapersScythe.class));
         cards.add(new SetCardInfo("H.E.R.B.I.E., Lovable Robot", 106, Rarity.RARE, mage.cards.h.HERBIELovableRobot.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("H.E.R.B.I.E., Lovable Robot", 436, Rarity.RARE, mage.cards.h.HERBIELovableRobot.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Heart-Shaped Herb", 105, Rarity.RARE, mage.cards.h.HeartShapedHerb.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Heart-Shaped Herb", 435, Rarity.RARE, mage.cards.h.HeartShapedHerb.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Helmut Zemo, Mastermind", 32, Rarity.RARE, mage.cards.h.HelmutZemoMastermind.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Helmut Zemo, Mastermind", 331, Rarity.RARE, mage.cards.h.HelmutZemoMastermind.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Heroic Return", 17, Rarity.RARE, mage.cards.h.HeroicReturn.class, NON_FULL_USE_VARIOUS));
@@ -402,6 +404,8 @@ public final class MarvelSuperHeroesCommander extends ExpansionSet {
         cards.add(new SetCardInfo("Loki's Scepter", 367, Rarity.RARE, mage.cards.l.LokisScepter.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Loki, the Deceiver", 86, Rarity.MYTHIC, mage.cards.l.LokiTheDeceiver.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Loki, the Deceiver", 407, Rarity.MYTHIC, mage.cards.l.LokiTheDeceiver.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Love on the Battlefield", 87, Rarity.RARE, mage.cards.l.LoveOnTheBattlefield.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Love on the Battlefield", 408, Rarity.RARE, mage.cards.l.LoveOnTheBattlefield.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Loyal Guardian", 176, Rarity.UNCOMMON, mage.cards.l.LoyalGuardian.class));
         cards.add(new SetCardInfo("Loyal Retainers", 136, Rarity.MYTHIC, mage.cards.l.LoyalRetainers.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Loyal Retainers", 313, Rarity.MYTHIC, mage.cards.l.LoyalRetainers.class, NON_FULL_USE_VARIOUS));
@@ -530,6 +534,7 @@ public final class MarvelSuperHeroesCommander extends ExpansionSet {
         cards.add(new SetCardInfo("Quantum Entanglement", 607, Rarity.RARE, mage.cards.q.QuantumEntanglement.class));
         cards.add(new SetCardInfo("Quantum Misalignment", 152, Rarity.RARE, mage.cards.q.QuantumMisalignment.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Quantum Misalignment", 339, Rarity.RARE, mage.cards.q.QuantumMisalignment.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Quantum Reduction", 635, Rarity.COMMON, mage.cards.q.QuantumReduction.class));
         cards.add(new SetCardInfo("Queen Mother Ramonda", 23, Rarity.RARE, mage.cards.q.QueenMotherRamonda.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Queen Mother Ramonda", 320, Rarity.RARE, mage.cards.q.QueenMotherRamonda.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Quicksilver, Pietro Maximoff", 551, Rarity.COMMON, mage.cards.q.QuicksilverPietroMaximoff.class, NON_FULL_USE_VARIOUS));

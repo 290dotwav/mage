@@ -3,6 +3,7 @@ package mage.abilities.keyword;
 import mage.abilities.Ability;
 import mage.abilities.SpellAbility;
 import mage.abilities.StaticAbility;
+import mage.abilities.common.CastWithTeamworkAsThoughItHadFlashAbility;
 import mage.abilities.costs.Cost;
 import mage.abilities.costs.Costs;
 import mage.abilities.costs.OptionalAdditionalCost;
@@ -91,8 +92,12 @@ public class TeamworkAbility extends StaticAbility implements OptionalAdditional
         }
 
         this.resetCost();
-        if (!additionalCost.canPay(ability, this, ability.getControllerId(), game)
-                || !player.chooseUse(Outcome.Tap, "Teamwork " + amount.calculate(game, ability, null) + '?', ability, game)) {
+        // cast as though it had flash because it's cast using teamwork: the teamwork cost is mandatory
+        // (if it can't be paid, casting fails like with any unpayable cost)
+        boolean required = ability instanceof CastWithTeamworkAsThoughItHadFlashAbility;
+        if (!required
+                && (!additionalCost.canPay(ability, this, ability.getControllerId(), game)
+                || !player.chooseUse(Outcome.Tap, "Teamwork " + amount.calculate(game, ability, null) + '?', ability, game))) {
             return;
         }
 
