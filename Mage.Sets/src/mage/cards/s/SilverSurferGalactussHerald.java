@@ -18,13 +18,13 @@ import mage.constants.SuperType;
 import mage.filter.FilterCard;
 import mage.filter.predicate.mageobject.NamePredicate;
 import mage.game.Game;
-import mage.game.events.DeclareAttackerEvent;
 import mage.game.permanent.Permanent;
-import mage.players.Player;
 import mage.target.common.TargetCardInLibrary;
 import mage.target.common.TargetCreaturePermanent;
 import mage.target.targetpointer.FixedTarget;
 
+import java.util.Collections;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -123,17 +123,7 @@ class SilverSurferGalactussHeraldRequirementEffect extends RequirementEffect {
 
     @Override
     public boolean applies(Permanent permanent, Ability source, Game game) {
-        if (!permanent.getId().equals(getTargetPointer().getFirst(game, source))) {
-            return false;
-        }
-        // "attacks that player if able": when it can't attack that player, nothing forces it to attack anyone else
-        Player defender = game.getPlayer(defenderId);
-        return defender != null
-                && defender.isInGame()
-                && game.getOpponents(permanent.getControllerId()).contains(defenderId)
-                && permanent.canAttack(defenderId, game)
-                && !game.getContinuousEffects().checkIfThereArePayCostToAttackBlockEffects(
-                new DeclareAttackerEvent(defenderId, permanent.getId(), permanent.getControllerId()), game);
+        return permanent.getId().equals(getTargetPointer().getFirst(game, source));
     }
 
     @Override
@@ -146,8 +136,12 @@ class SilverSurferGalactussHeraldRequirementEffect extends RequirementEffect {
         return false;
     }
 
+    /**
+     * "attacks that player each combat if able": when it can't attack that player, nothing forces it to attack
+     * anyone else (RequirementEffect.mustAttackDefenders, from cards-batch-B)
+     */
     @Override
-    public UUID mustAttackDefender(Ability source, Game game) {
-        return defenderId;
+    public Set<UUID> mustAttackDefenders(Ability source, Game game) {
+        return Collections.singleton(defenderId);
     }
 }
