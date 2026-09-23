@@ -1,6 +1,7 @@
 
 package mage.abilities.effects;
 
+import java.util.Set;
 import java.util.UUID;
 
 import mage.abilities.Ability;
@@ -65,6 +66,18 @@ public abstract class RequirementEffect extends ContinuousEffectImpl {
      * @return
      */
     public UUID mustAttackDefender(Ability source, Game game) {
+        return null;
+    }
+
+    /**
+     * Defines a set of defenders the creature must attack one of (e.g. "attacks an opponent with the most life
+     * among your opponents each combat if able").
+     * If none of them can be attacked, the creature isn't forced to attack at all.
+     *
+     * @return null if not used by the effect (then {@link #mustAttackDefender(Ability, Game)} is used),
+     * otherwise the players/permanents the creature must attack one of
+     */
+    public Set<UUID> mustAttackDefenders(Ability source, Game game) {
         return null;
     }
 
