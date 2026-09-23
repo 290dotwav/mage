@@ -374,6 +374,8 @@ public final class MarvelSuperHeroesCommander extends ExpansionSet {
         cards.add(new SetCardInfo("Kindred Discovery", 334, Rarity.RARE, mage.cards.k.KindredDiscovery.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Kindred Dominance", 156, Rarity.RARE, mage.cards.k.KindredDominance.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Kindred Dominance", 351, Rarity.RARE, mage.cards.k.KindredDominance.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("King Solomon's Frogs", 20, Rarity.RARE, mage.cards.k.KingSolomonsFrogs.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("King Solomon's Frogs", 312, Rarity.RARE, mage.cards.k.KingSolomonsFrogs.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Kingpin, Wilson Fisk", 661, Rarity.RARE, mage.cards.k.KingpinWilsonFisk.class));
         cards.add(new SetCardInfo("Lady Spider, Maybelle Reilly", 695, Rarity.UNCOMMON, mage.cards.l.LadySpiderMaybelleReilly.class));
         cards.add(new SetCardInfo("Lethal Scheme", 157, Rarity.RARE, mage.cards.l.LethalScheme.class, NON_FULL_USE_VARIOUS));
@@ -387,6 +389,8 @@ public final class MarvelSuperHeroesCommander extends ExpansionSet {
         cards.add(new SetCardInfo("Loki, God of Lies", 512, Rarity.RARE, mage.cards.l.LokiGodOfLies.class));
         cards.add(new SetCardInfo("Loki's Scepter", 56, Rarity.RARE, mage.cards.l.LokisScepter.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Loki's Scepter", 367, Rarity.RARE, mage.cards.l.LokisScepter.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Loki, the Deceiver", 86, Rarity.MYTHIC, mage.cards.l.LokiTheDeceiver.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Loki, the Deceiver", 407, Rarity.MYTHIC, mage.cards.l.LokiTheDeceiver.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Loyal Guardian", 176, Rarity.UNCOMMON, mage.cards.l.LoyalGuardian.class));
         cards.add(new SetCardInfo("Loyal Retainers", 136, Rarity.MYTHIC, mage.cards.l.LoyalRetainers.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Loyal Retainers", 313, Rarity.MYTHIC, mage.cards.l.LoyalRetainers.class, NON_FULL_USE_VARIOUS));
@@ -508,6 +512,8 @@ public final class MarvelSuperHeroesCommander extends ExpansionSet {
         cards.add(new SetCardInfo("Propaganda", 151, Rarity.UNCOMMON, mage.cards.p.Propaganda.class));
         cards.add(new SetCardInfo("Prowler, Clawed Thief", 186, Rarity.UNCOMMON, mage.cards.p.ProwlerClawedThief.class));
         cards.add(new SetCardInfo("Pumpkin Bombardment", 822, Rarity.COMMON, mage.cards.p.PumpkinBombardment.class));
+        cards.add(new SetCardInfo("Puppet Master, String Puller", 59, Rarity.RARE, mage.cards.p.PuppetMasterStringPuller.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Puppet Master, String Puller", 370, Rarity.RARE, mage.cards.p.PuppetMasterStringPuller.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Quantum Entanglement", 607, Rarity.RARE, mage.cards.q.QuantumEntanglement.class));
         cards.add(new SetCardInfo("Quantum Misalignment", 152, Rarity.RARE, mage.cards.q.QuantumMisalignment.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Quantum Misalignment", 339, Rarity.RARE, mage.cards.q.QuantumMisalignment.class, NON_FULL_USE_VARIOUS));
