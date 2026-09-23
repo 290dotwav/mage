@@ -775,5 +775,13 @@ public final class MarvelSuperHeroesCommander extends ExpansionSet {
         cards.add(new SetCardInfo("Virtual Assistant", 643, Rarity.UNCOMMON, mage.cards.v.VirtualAssistant.class));
         cards.add(new SetCardInfo("Intrepid Ace", 691, Rarity.UNCOMMON, mage.cards.i.IntrepidAce.class));
         cards.add(new SetCardInfo("Origin of Iron Man", 633, Rarity.UNCOMMON, mage.cards.o.OriginOfIronMan.class));
+        cards.add(new SetCardInfo("Panther Habit", 112, Rarity.RARE, mage.cards.p.PantherHabit.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Panther Habit", 446, Rarity.RARE, mage.cards.p.PantherHabit.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Whirlwind, Killer Cyclone", 709, Rarity.UNCOMMON, mage.cards.w.WhirlwindKillerCyclone.class));
+        cards.add(new SetCardInfo("Hercules, Olympian Hero", 16, Rarity.RARE, mage.cards.h.HerculesOlympianHero.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Hercules, Olympian Hero", 308, Rarity.RARE, mage.cards.h.HerculesOlympianHero.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Storm, Queen of Wakanda", 97, Rarity.RARE, mage.cards.s.StormQueenOfWakanda.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Storm, Queen of Wakanda", 418, Rarity.RARE, mage.cards.s.StormQueenOfWakanda.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Daredevil, Fearless Fighter", 685, Rarity.RARE, mage.cards.d.DaredevilFearlessFighter.class));
     }
 }
