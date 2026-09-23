@@ -138,6 +138,7 @@ public final class MurdersAtKarlovManorCommander extends ExpansionSet {
         cards.add(new SetCardInfo("Hot Pursuit", 32, Rarity.RARE, mage.cards.h.HotPursuit.class));
         cards.add(new SetCardInfo("Hydroid Krasis", 212, Rarity.RARE, mage.cards.h.HydroidKrasis.class));
         cards.add(new SetCardInfo("Idol of Oblivion", 229, Rarity.RARE, mage.cards.i.IdolOfOblivion.class));
+        cards.add(new SetCardInfo("Immortal Obligation", 10, Rarity.RARE, mage.cards.i.ImmortalObligation.class));
         cards.add(new SetCardInfo("Imperial Hellkite", 155, Rarity.RARE, mage.cards.i.ImperialHellkite.class));
         cards.add(new SetCardInfo("Innocuous Researcher", 38, Rarity.RARE, mage.cards.i.InnocuousResearcher.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Innocuous Researcher", 348, Rarity.RARE, mage.cards.i.InnocuousResearcher.class, NON_FULL_USE_VARIOUS));
@@ -207,6 +208,7 @@ public final class MurdersAtKarlovManorCommander extends ExpansionSet {
         cards.add(new SetCardInfo("On the Trail", 349, Rarity.RARE, mage.cards.o.OnTheTrail.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Organic Extinction", 76, Rarity.RARE, mage.cards.o.OrganicExtinction.class));
         cards.add(new SetCardInfo("Orzhov Advokist", 77, Rarity.UNCOMMON, mage.cards.o.OrzhovAdvokist.class));
+        cards.add(new SetCardInfo("Otherworldly Escort", 12, Rarity.RARE, mage.cards.o.OtherworldlyEscort.class));
         cards.add(new SetCardInfo("Otherworldly Gaze", 115, Rarity.COMMON, mage.cards.o.OtherworldlyGaze.class));
         cards.add(new SetCardInfo("Overseer of the Damned", 132, Rarity.RARE, mage.cards.o.OverseerOfTheDamned.class));
         cards.add(new SetCardInfo("Panoptic Projektor", 44, Rarity.RARE, mage.cards.p.PanopticProjektor.class));
