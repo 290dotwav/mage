@@ -27,6 +27,9 @@ public final class TheHobbit extends ExpansionSet {
         cards.add(new SetCardInfo("An Unexpected Party", 29, Rarity.RARE, mage.cards.a.AnUnexpectedParty.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("An Unexpected Party", 289, Rarity.RARE, mage.cards.a.AnUnexpectedParty.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Attercop", 116, Rarity.COMMON, mage.cards.a.Attercop.class));
+        cards.add(new SetCardInfo("Azog, Moria's Ruin", 61, Rarity.RARE, mage.cards.a.AzogMoriasRuin.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Azog, Moria's Ruin", 222, Rarity.RARE, mage.cards.a.AzogMoriasRuin.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Azog, Moria's Ruin", 258, Rarity.RARE, mage.cards.a.AzogMoriasRuin.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Balin, Loremaster", 87, Rarity.RARE, mage.cards.b.BalinLoremaster.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Balin, Loremaster", 301, Rarity.RARE, mage.cards.b.BalinLoremaster.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Bard, King of Dale", 144, Rarity.MYTHIC, mage.cards.b.BardKingOfDale.class, NON_FULL_USE_VARIOUS));
@@ -56,6 +59,7 @@ public final class TheHobbit extends ExpansionSet {
         cards.add(new SetCardInfo("Bofur, Reliable Guardian", 215, Rarity.UNCOMMON, mage.cards.b.BofurReliableGuardian.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Bofur, Reliable Guardian", 251, Rarity.UNCOMMON, mage.cards.b.BofurReliableGuardian.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Bofur, Reliable Guardian", 6, Rarity.UNCOMMON, mage.cards.b.BofurReliableGuardian.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Bolg of the North", 148, Rarity.UNCOMMON, mage.cards.b.BolgOfTheNorth.class));
         cards.add(new SetCardInfo("Bolg's Company", 149, Rarity.RARE, mage.cards.b.BolgsCompany.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Bolg's Company", 211, Rarity.RARE, mage.cards.b.BolgsCompany.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Bombur, Gentle Dreamer", 88, Rarity.UNCOMMON, mage.cards.b.BomburGentleDreamer.class));
@@ -115,6 +119,7 @@ public final class TheHobbit extends ExpansionSet {
         cards.add(new SetCardInfo("Forest", 193, Rarity.LAND, mage.cards.basiclands.Forest.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Forest", 198, Rarity.LAND, mage.cards.basiclands.Forest.class, FULL_ART_USE_VARIOUS));
         cards.add(new SetCardInfo("Front Porch Sentries", 67, Rarity.COMMON, mage.cards.f.FrontPorchSentries.class));
+        cards.add(new SetCardInfo("Galion, Elvenking's Butler", 125, Rarity.UNCOMMON, mage.cards.g.GalionElvenkingsButler.class));
         cards.add(new SetCardInfo("Gandalf, Goblins' Bane", 96, Rarity.MYTHIC, mage.cards.g.GandalfGoblinsBane.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Gandalf, Goblins' Bane", 242, Rarity.MYTHIC, mage.cards.g.GandalfGoblinsBane.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Gandalf, Goblins' Bane", 278, Rarity.MYTHIC, mage.cards.g.GandalfGoblinsBane.class, NON_FULL_USE_VARIOUS));
@@ -163,6 +168,7 @@ public final class TheHobbit extends ExpansionSet {
         cards.add(new SetCardInfo("Iron Hills Stalwart", 102, Rarity.COMMON, mage.cards.i.IronHillsStalwart.class));
         cards.add(new SetCardInfo("Island", 190, Rarity.LAND, mage.cards.basiclands.Island.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Island", 195, Rarity.LAND, mage.cards.basiclands.Island.class, FULL_ART_USE_VARIOUS));
+        cards.add(new SetCardInfo("Key to the Side-Door", 175, Rarity.UNCOMMON, mage.cards.k.KeyToTheSideDoor.class));
         cards.add(new SetCardInfo("Kili the Resourceful", 17, Rarity.RARE, mage.cards.k.KiliTheResourceful.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Kili the Resourceful", 287, Rarity.RARE, mage.cards.k.KiliTheResourceful.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Lake-town", 186, Rarity.COMMON, mage.cards.l.LakeTown.class));
