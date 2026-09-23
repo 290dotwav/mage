@@ -213,6 +213,7 @@ public enum CounterType {
     SHRED("shred"),
     SKEWER("skewer"),
     SLEEP("sleep"),
+    SLEIGHT("sleight"),
     SLIME("slime"),
     SLUMBER("slumber"),
     SOOT("soot"),
