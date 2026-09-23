@@ -97,6 +97,8 @@ public final class TheHobbit extends ExpansionSet {
         cards.add(new SetCardInfo("Dwarven Shortsword", 10, Rarity.COMMON, mage.cards.d.DwarvenShortsword.class));
         cards.add(new SetCardInfo("Eagle of the Great Shelf", 11, Rarity.UNCOMMON, mage.cards.e.EagleOfTheGreatShelf.class));
         cards.add(new SetCardInfo("Eagle's Rescue", 155, Rarity.UNCOMMON, mage.cards.e.EaglesRescue.class));
+        cards.add(new SetCardInfo("Elrond, Moon-Reader", 36, Rarity.MYTHIC, mage.cards.e.ElrondMoonReader.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Elrond, Moon-Reader", 290, Rarity.MYTHIC, mage.cards.e.ElrondMoonReader.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Elven Passage", 274, Rarity.RARE, mage.cards.e.ElvenPassage.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Elven Passage", 238, Rarity.RARE, mage.cards.e.ElvenPassage.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Elven Passage", 181, Rarity.RARE, mage.cards.e.ElvenPassage.class, NON_FULL_USE_VARIOUS));
@@ -222,6 +224,7 @@ public final class TheHobbit extends ExpansionSet {
         cards.add(new SetCardInfo("Rhovanion Rampager", 298, Rarity.RARE, mage.cards.r.RhovanionRampager.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Riddles in the Dark", 292, Rarity.RARE, mage.cards.r.RiddlesInTheDark.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Riddles in the Dark", 53, Rarity.RARE, mage.cards.r.RiddlesInTheDark.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Roads Go Ever, Ever On", 25, Rarity.RARE, mage.cards.r.RoadsGoEverEverOn.class));
         cards.add(new SetCardInfo("Roll-Roll-Roll-Roll", 54, Rarity.RARE, mage.cards.r.RollRollRollRoll.class));
         cards.add(new SetCardInfo("Settle the Wreckage", 26, Rarity.RARE, mage.cards.s.SettleTheWreckage.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Settle the Wreckage", 288, Rarity.RARE, mage.cards.s.SettleTheWreckage.class, NON_FULL_USE_VARIOUS));
