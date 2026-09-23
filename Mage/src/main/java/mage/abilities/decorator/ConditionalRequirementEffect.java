@@ -10,6 +10,7 @@ import mage.constants.EffectType;
 import mage.game.Game;
 import mage.game.permanent.Permanent;
 
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -141,6 +142,16 @@ public class ConditionalRequirementEffect extends RequirementEffect {
             return effect.mustAttackDefender(source, game);
         } else if (otherwiseEffect != null) {
             return otherwiseEffect.mustAttackDefender(source, game);
+        }
+        return null;
+    }
+
+    @Override
+    public Set<UUID> mustAttackDefenders(Ability source, Game game) {
+        if (conditionState) {
+            return effect.mustAttackDefenders(source, game);
+        } else if (otherwiseEffect != null) {
+            return otherwiseEffect.mustAttackDefenders(source, game);
         }
         return null;
     }
