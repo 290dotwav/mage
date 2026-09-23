@@ -198,6 +198,7 @@ public final class MastersEditionIV extends ExpansionSet {
         cards.add(new SetCardInfo("Plateau", 249, Rarity.RARE, mage.cards.p.Plateau.class, new CardGraphicInfo(FrameStyle.LEA_ORIGINAL_DUAL_LAND_ART_BASIC, false)));
         cards.add(new SetCardInfo("Power Artifact", 57, Rarity.RARE, mage.cards.p.PowerArtifact.class, RETRO_ART));
         cards.add(new SetCardInfo("Primal Clay", 222, Rarity.COMMON, mage.cards.p.PrimalClay.class, RETRO_ART));
+        cards.add(new SetCardInfo("Primitive Justice", 130, Rarity.UNCOMMON, mage.cards.p.PrimitiveJustice.class));
         cards.add(new SetCardInfo("Prodigal Sorcerer", 58, Rarity.UNCOMMON, mage.cards.p.ProdigalSorcerer.class, RETRO_ART));
         cards.add(new SetCardInfo("Prowling Nightstalker", 93, Rarity.COMMON, mage.cards.p.ProwlingNightstalker.class, RETRO_ART));
         cards.add(new SetCardInfo("Radjan Spirit", 162, Rarity.UNCOMMON, mage.cards.r.RadjanSpirit.class, RETRO_ART));
