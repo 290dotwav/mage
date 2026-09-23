@@ -792,5 +792,18 @@ public final class MarvelSuperHeroesCommander extends ExpansionSet {
         cards.add(new SetCardInfo("Typhoid Mary, Fractured", 421, Rarity.RARE, mage.cards.t.TyphoidMaryFractured.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Living Laser", 55, Rarity.RARE, mage.cards.l.LivingLaser.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Living Laser", 366, Rarity.RARE, mage.cards.l.LivingLaser.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Batroc the Leaper", 49, Rarity.RARE, mage.cards.b.BatrocTheLeaper.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Batroc the Leaper", 357, Rarity.RARE, mage.cards.b.BatrocTheLeaper.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Hawkeye, Avenging Archer", 84, Rarity.RARE, mage.cards.h.HawkeyeAvengingArcher.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Hawkeye, Avenging Archer", 405, Rarity.RARE, mage.cards.h.HawkeyeAvengingArcher.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Mister Immortal", 727, Rarity.RARE, mage.cards.m.MisterImmortal.class));
+        cards.add(new SetCardInfo("First Family", 83, Rarity.RARE, mage.cards.f.FirstFamily.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("First Family", 401, Rarity.RARE, mage.cards.f.FirstFamily.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("M'Baku, Jabari Chieftain", 67, Rarity.RARE, mage.cards.m.MBakuJabariChieftain.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("M'Baku, Jabari Chieftain", 382, Rarity.RARE, mage.cards.m.MBakuJabariChieftain.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Okoye, Mighty and Adored", 89, Rarity.RARE, mage.cards.o.OkoyeMightyAndAdored.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Okoye, Mighty and Adored", 410, Rarity.RARE, mage.cards.o.OkoyeMightyAndAdored.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("The Spear of Bashenga", 25, Rarity.RARE, mage.cards.t.TheSpearOfBashenga.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("The Spear of Bashenga", 322, Rarity.RARE, mage.cards.t.TheSpearOfBashenga.class, NON_FULL_USE_VARIOUS));
     }
 }
