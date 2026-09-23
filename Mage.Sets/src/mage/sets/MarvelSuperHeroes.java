@@ -463,5 +463,9 @@ public final class MarvelSuperHeroes extends ExpansionSet {
         cards.add(new SetCardInfo("Worlds Within Worlds", 241, Rarity.RARE, mage.cards.w.WorldsWithinWorlds.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Worlds Within Worlds", 426, Rarity.RARE, mage.cards.w.WorldsWithinWorlds.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Yellowjacket, Heartless Marauder", 123, Rarity.UNCOMMON, mage.cards.y.YellowjacketHeartlessMarauder.class));
+
+        // cards-batch-C
+        cards.add(new SetCardInfo("Spider-Man, To the Rescue", 228, Rarity.UNCOMMON, mage.cards.s.SpiderManToTheRescue.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Spider-Man, To the Rescue", 335, Rarity.UNCOMMON, mage.cards.s.SpiderManToTheRescue.class, NON_FULL_USE_VARIOUS));
     }
 }

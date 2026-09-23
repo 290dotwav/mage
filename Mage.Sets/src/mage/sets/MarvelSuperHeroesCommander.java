@@ -768,5 +768,9 @@ public final class MarvelSuperHeroesCommander extends ExpansionSet {
         cards.add(new SetCardInfo("Zarda, the Power Princess", 615, Rarity.UNCOMMON, mage.cards.z.ZardaThePowerPrincess.class));
         cards.add(new SetCardInfo("Zuri, Warrior of Wakanda", 389, Rarity.RARE, mage.cards.z.ZuriWarriorOfWakanda.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Zuri, Warrior of Wakanda", 72, Rarity.RARE, mage.cards.z.ZuriWarriorOfWakanda.class, NON_FULL_USE_VARIOUS));
+
+        // cards-batch-C
+        cards.add(new SetCardInfo("The Frightful Four", 349, Rarity.RARE, mage.cards.t.TheFrightfulFour.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("The Frightful Four", 44, Rarity.RARE, mage.cards.t.TheFrightfulFour.class, NON_FULL_USE_VARIOUS));
     }
 }
