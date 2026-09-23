@@ -48,6 +48,7 @@ public final class TheHobbit extends ExpansionSet {
         cards.add(new SetCardInfo("Beorn the Fierce", 266, Rarity.MYTHIC, mage.cards.b.BeornTheFierce.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Beorn's Hospitality", 120, Rarity.UNCOMMON, mage.cards.b.BeornsHospitality.class));
         cards.add(new SetCardInfo("Beorn, Reluctant Host", 118, Rarity.COMMON, mage.cards.b.BeornReluctantHost.class));
+        cards.add(new SetCardInfo("Bifur, Melodic Rider", 147, Rarity.UNCOMMON, mage.cards.b.BifurMelodicRider.class));
         cards.add(new SetCardInfo("Bilbo Baggins, Burglar", 34, Rarity.COMMON, mage.cards.b.BilboBagginsBurglar.class));
         cards.add(new SetCardInfo("Bilbo's Deadly Slice", 62, Rarity.COMMON, mage.cards.b.BilbosDeadlySlice.class));
         cards.add(new SetCardInfo("Bilbo's Gambit", 285, Rarity.RARE, mage.cards.b.BilbosGambit.class, NON_FULL_USE_VARIOUS));
@@ -184,6 +185,7 @@ public final class TheHobbit extends ExpansionSet {
         cards.add(new SetCardInfo("Long Lake Nuisance", 45, Rarity.COMMON, mage.cards.l.LongLakeNuisance.class));
         cards.add(new SetCardInfo("Long-Bodied Grey Dog", 1, Rarity.COMMON, mage.cards.l.LongBodiedGreyDog.class));
         cards.add(new SetCardInfo("Magnificent End", 20, Rarity.COMMON, mage.cards.m.MagnificentEnd.class));
+        cards.add(new SetCardInfo("Master's Councillors", 47, Rarity.UNCOMMON, mage.cards.m.MastersCouncillors.class));
         cards.add(new SetCardInfo("Mirkwood", 188, Rarity.COMMON, mage.cards.m.Mirkwood.class));
         cards.add(new SetCardInfo("Mirkwood Meditator", 48, Rarity.COMMON, mage.cards.m.MirkwoodMeditator.class));
         cards.add(new SetCardInfo("Mirkwood Nurturer", 160, Rarity.COMMON, mage.cards.m.MirkwoodNurturer.class));
@@ -203,6 +205,7 @@ public final class TheHobbit extends ExpansionSet {
         cards.add(new SetCardInfo("Nori, Teller of Tales", 161, Rarity.COMMON, mage.cards.n.NoriTellerOfTales.class));
         cards.add(new SetCardInfo("Oin the Brave", 106, Rarity.COMMON, mage.cards.o.OinTheBrave.class));
         cards.add(new SetCardInfo("Old Fat Spider", 132, Rarity.UNCOMMON, mage.cards.o.OldFatSpider.class));
+        cards.add(new SetCardInfo("Old Fat Spider Can't See Me", 50, Rarity.UNCOMMON, mage.cards.o.OldFatSpiderCantSeeMe.class));
         cards.add(new SetCardInfo("Old Thrush", 2, Rarity.COMMON, mage.cards.o.OldThrush.class));
         cards.add(new SetCardInfo("Orcrist, Goblin-cleaver", 177, Rarity.MYTHIC, mage.cards.o.OrcristGoblinCleaver.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Orcrist, Goblin-cleaver", 236, Rarity.MYTHIC, mage.cards.o.OrcristGoblinCleaver.class, NON_FULL_USE_VARIOUS));
