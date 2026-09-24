@@ -54,7 +54,7 @@ public class MoleculeManTest extends CardTestPlayerBase {
         addCard(Zone.BATTLEFIELD, playerA, MOLECULE);
 
         setChoice(playerA, true); // reveal (the card's own miracle)
-        setChoice(playerA, "Nonland cards"); // order triggers: Molecule Man's resolves first
+        setChoice(playerA, "Miracle {0}"); // order triggers: the granted miracle {0} resolves first
         setChoice(playerA, true); // use Molecule Man's miracle {0}
         addTarget(playerA, playerB);
         setChoice(playerA, true); // the card's own trigger: tries to cast for {R}, can't pay, the cast is cancelled

@@ -51,11 +51,10 @@ public class MiracleWatcher extends Watcher {
     private void checkMiracleAbility(GameEvent event, Game game) {
         Card card = game.getCard(event.getTargetId());
         if (card != null) {
-            if (card.getAbilities(game).stream().noneMatch(MiracleAbility.class::isInstance)) {
-                // miracle can be granted to cards in hand (Aminatou, Veil Piercer; Lorehold, the Historian):
-                // the card just moved to the hand, so the effects must be applied again to see it
-                game.applyEffects();
-            }
+            // miracle can be granted to cards in hand (Aminatou, Veil Piercer; Lorehold, the Historian;
+            // Molecule Man): the card just moved to the hand and lost what was granted to it in the library,
+            // so the effects must be applied again to see it, even on a card with a printed miracle
+            game.applyEffects();
             for (Ability ability : card.getAbilities(game)) {
                 if (ability instanceof MiracleAbility) {
                     Player controller = game.getPlayer(ability.getControllerId());
@@ -65,8 +64,9 @@ public class MiracleWatcher extends Watcher {
                         if (controller.chooseUse(Outcome.Benefit, "Reveal " + card.getLogName() + " to be able to use Miracle?", ability, game)) {
                             controller.revealCards("Miracle", cards, game);
                             game.fireEvent(GameEvent.getEvent(GameEvent.EventType.MIRACLE_CARD_REVEALED, card.getId(), ability, controller.getId()));
-                            break;
                         }
+                        // one reveal triggers every miracle ability of the card (printed and granted): ask once
+                        break;
                     }
                 }
             }

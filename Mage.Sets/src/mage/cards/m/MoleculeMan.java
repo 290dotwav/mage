@@ -1,49 +1,29 @@
 package mage.cards.m;
 
-import mage.ApprovingObject;
 import mage.MageInt;
 import mage.abilities.Ability;
-import mage.abilities.SpellAbility;
-import mage.abilities.TriggeredAbilityImpl;
-import mage.abilities.costs.mana.ManaCost;
-import mage.abilities.costs.mana.ManaCosts;
-import mage.abilities.costs.mana.ManaCostsImpl;
-import mage.abilities.effects.OneShotEffect;
+import mage.abilities.common.SimpleStaticAbility;
+import mage.abilities.effects.ContinuousEffectImpl;
 import mage.abilities.keyword.MiracleAbility;
 import mage.cards.Card;
 import mage.cards.CardImpl;
 import mage.cards.CardSetInfo;
-import mage.cards.Cards;
-import mage.cards.CardsImpl;
 import mage.constants.CardType;
+import mage.constants.Duration;
+import mage.constants.Layer;
 import mage.constants.Outcome;
+import mage.constants.SubLayer;
 import mage.constants.SubType;
 import mage.constants.SuperType;
-import mage.constants.WatcherScope;
-import mage.constants.Zone;
 import mage.game.Game;
-import mage.game.events.GameEvent;
 import mage.players.Player;
-import mage.target.targetpointer.FixedTarget;
-import mage.watchers.Watcher;
+import mage.watchers.common.MiracleWatcher;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 /**
- * "Nonland cards in your hand have miracle {0}."
- * <p>
- * XMage clears an ability granted to a card as the card changes zones and only grants it again at the next
- * applyEffects, which comes after the draw event the miracle reveal is tied to (702.94a). So a granted
- * MiracleAbility is never there when MiracleWatcher looks. Instead:
- * - MoleculeManWatcher offers the reveal for the first card drawn each turn by a player who controls
- * Molecule Man, when that card has no printed miracle (MiracleWatcher already offers those), and fires the
- * usual MIRACLE_CARD_REVEALED event;
- * - Molecule Man's ability triggers on that event for any nonland card its controller revealed that way,
- * printed miracle or not, and casts it by paying {0}. A printed miracle card revealed with Molecule Man out
- * gets both triggers, its own cost and {0}, as a card with two miracle abilities would.
- *
  * @author Claude
  */
 public final class MoleculeMan extends CardImpl {
@@ -58,7 +38,8 @@ public final class MoleculeMan extends CardImpl {
         this.toughness = new MageInt(5);
 
         // Nonland cards in your hand have miracle {0}.
-        this.addAbility(new MoleculeManTriggeredAbility(), new MoleculeManWatcher());
+        // (the watcher is needed even if no card had miracle when the game began)
+        this.addAbility(new SimpleStaticAbility(new MoleculeManEffect()), new MiracleWatcher());
     }
 
     private MoleculeMan(final MoleculeMan card) {
@@ -71,58 +52,20 @@ public final class MoleculeMan extends CardImpl {
     }
 }
 
-class MoleculeManTriggeredAbility extends TriggeredAbilityImpl {
+class MoleculeManEffect extends ContinuousEffectImpl {
 
-    MoleculeManTriggeredAbility() {
-        super(Zone.BATTLEFIELD, new MoleculeManEffect(), true);
-    }
-
-    private MoleculeManTriggeredAbility(final MoleculeManTriggeredAbility ability) {
-        super(ability);
-    }
-
-    @Override
-    public MoleculeManTriggeredAbility copy() {
-        return new MoleculeManTriggeredAbility(this);
-    }
-
-    @Override
-    public boolean checkEventType(GameEvent event, Game game) {
-        return event.getType() == GameEvent.EventType.MIRACLE_CARD_REVEALED;
-    }
-
-    @Override
-    public boolean checkTrigger(GameEvent event, Game game) {
-        Card card = game.getCard(event.getTargetId());
-        if (card == null
-                || card.isLand(game)
-                || !isControlledBy(event.getPlayerId())
-                || !card.isOwnedBy(getControllerId())
-                || game.getState().getZone(card.getId()) != Zone.HAND) {
-            return false;
-        }
-        getEffects().setTargetPointer(new FixedTarget(card, game));
-        return true;
-    }
-
-    @Override
-    public String getRule() {
-        return "Nonland cards in your hand have miracle {0}. <i>(You may cast a card for its miracle cost "
-                + "when you draw it if it's the first card you drew this turn.)</i>";
-    }
-}
-
-class MoleculeManEffect extends OneShotEffect {
-
-    private static final ManaCosts<ManaCost> miracleCosts = new ManaCostsImpl<>("{0}");
+    private final Map<UUID, MiracleAbility> miracleAbilities = new HashMap<>();
 
     MoleculeManEffect() {
-        super(Outcome.Benefit);
-        staticText = "cast that card by paying {0}";
+        super(Duration.WhileOnBattlefield, Layer.AbilityAddingRemovingEffects_6, SubLayer.NA, Outcome.AddAbility);
+        staticText = "nonland cards in your hand have miracle {0}. "
+                + "<i>(You may cast a card for its miracle cost when you draw it "
+                + "if it's the first card you drew this turn.)</i>";
     }
 
     private MoleculeManEffect(final MoleculeManEffect effect) {
         super(effect);
+        this.miracleAbilities.putAll(effect.miracleAbilities);
     }
 
     @Override
@@ -133,62 +76,18 @@ class MoleculeManEffect extends OneShotEffect {
     @Override
     public boolean apply(Game game, Ability source) {
         Player controller = game.getPlayer(source.getControllerId());
-        // the target pointer keeps the card that was revealed: gone from the hand, it's gone for good
-        Card card = game.getCard(getTargetPointer().getFirst(game, source));
-        if (controller == null || card == null || game.getState().getZone(card.getId()) != Zone.HAND) {
+        if (controller == null) {
             return false;
         }
-        SpellAbility abilityToCast = card.getSpellAbility().copy();
-        ManaCosts<ManaCost> costRef = abilityToCast.getManaCostsToPay();
-        costRef.clear();
-        costRef.add(miracleCosts.copy());
-        controller.cast(abilityToCast, game, false, new ApprovingObject(source, game));
+        for (Card card : controller.getHand().getCards(game)) {
+            if (card.isLand(game)) {
+                continue;
+            }
+            MiracleAbility ability = miracleAbilities.computeIfAbsent(
+                    card.getId(), k -> new MiracleAbility("{0}")
+            );
+            game.getState().addOtherAbility(card, ability, false);
+        }
         return true;
-    }
-}
-
-class MoleculeManWatcher extends Watcher {
-
-    private final Map<UUID, Integer> drawnThisTurn = new HashMap<>();
-
-    MoleculeManWatcher() {
-        super(WatcherScope.GAME);
-    }
-
-    @Override
-    public void watch(GameEvent event, Game game) {
-        if (event.getType() == GameEvent.EventType.UNTAP_STEP_PRE) {
-            drawnThisTurn.clear();
-            return;
-        }
-        // opening hands can't be revealed for miracle: same guard as MiracleWatcher
-        if (game.getPhase() == null || event.getType() != GameEvent.EventType.DREW_CARD || event.getPlayerId() == null) {
-            return;
-        }
-        int amount = drawnThisTurn.merge(event.getPlayerId(), 1, Integer::sum);
-        if (amount != 1) {
-            return;
-        }
-        Player player = game.getPlayer(event.getPlayerId());
-        Card card = game.getCard(event.getTargetId());
-        if (player == null || card == null || card.isLand(game)
-                || game.getState().getZone(card.getId()) != Zone.HAND
-                || card.getAbilities(game).containsClass(MiracleAbility.class)
-                || game.getBattlefield().getAllActivePermanents(player.getId()).stream()
-                .noneMatch(p -> p.getAbilities(game).containsClass(MoleculeManTriggeredAbility.class))) {
-            return;
-        }
-        Cards cards = new CardsImpl(card);
-        player.lookAtCards("Miracle", cards, game);
-        if (player.chooseUse(Outcome.Benefit, "Reveal " + card.getLogName() + " to be able to use Miracle {0}?", null, game)) {
-            player.revealCards("Miracle", cards, game);
-            game.fireEvent(GameEvent.getEvent(GameEvent.EventType.MIRACLE_CARD_REVEALED, card.getId(), null, player.getId()));
-        }
-    }
-
-    @Override
-    public void reset() {
-        super.reset();
-        drawnThisTurn.clear();
     }
 }
