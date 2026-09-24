@@ -207,6 +207,7 @@ public final class Legends extends ExpansionSet {
         cards.add(new SetCardInfo("Nebuchadnezzar", 245, Rarity.RARE, mage.cards.n.Nebuchadnezzar.class, RETRO_ART));
         cards.add(new SetCardInfo("Nether Void", 113, Rarity.RARE, mage.cards.n.NetherVoid.class, RETRO_ART));
         cards.add(new SetCardInfo("Nicol Bolas", 246, Rarity.RARE, mage.cards.n.NicolBolas.class, RETRO_ART));
+        cards.add(new SetCardInfo("North Star", 288, Rarity.RARE, mage.cards.n.NorthStar.class));
         cards.add(new SetCardInfo("Nova Pentacle", 289, Rarity.RARE, mage.cards.n.NovaPentacle.class, RETRO_ART));
         cards.add(new SetCardInfo("Osai Vultures", 29, Rarity.COMMON, mage.cards.o.OsaiVultures.class, RETRO_ART));
         cards.add(new SetCardInfo("Palladia-Mors", 247, Rarity.RARE, mage.cards.p.PalladiaMors.class, RETRO_ART));
