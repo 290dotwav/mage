@@ -94,23 +94,14 @@ public class LondonMulliganTest extends MulliganTestBase {
             hand2.addAll(scenario.getHand());
             return true;
         });
+        // The second mulligan owes two cards: ONE pick of both (the fork's
+        // simultaneous mulligan asks "cards (2 more)" once, not one card at a
+        // time), and they go under in no order of the player's choosing.
         scenario.discardBottom(count -> {
             scenario.assertSizes(7, 33);
-            assertEquals(1, count);
+            assertEquals(2, count);
             assertEquals(hand1, new HashSet<>(scenario.getLibraryRangeSize(33-getCardsPerMull()*2, 7)));
             assertEquals(discarded, scenario.getLibraryRangeSize(33-getCardsPerMull(), 1));
-            assertEquals(hand2, new HashSet<>(scenario.getLibraryRangeSize(34-getCardsPerMull(), 6)));
-            discarded.clear();
-            remainingHand.clear();
-            scenario.getHand().stream().limit(count).forEach(discarded::add);
-            remainingHand.addAll(Sets.difference(scenario.getHand(), new HashSet<>(discarded)));
-            return discarded;
-        });
-        scenario.discardBottom(count -> {
-            scenario.assertSizes(6, 34);
-            assertEquals(1, count);
-            assertEquals(hand1, new HashSet<>(scenario.getLibraryRangeSize(33-getCardsPerMull()*2, 7)));
-            assertEquals(discarded, scenario.getNBottomOfLibrary(1));
             assertEquals(hand2, new HashSet<>(scenario.getLibraryRangeSize(34-getCardsPerMull(), 6)));
             discarded.clear();
             remainingHand.clear();
@@ -122,7 +113,7 @@ public class LondonMulliganTest extends MulliganTestBase {
             scenario.assertSizes(5, 35);
             assertEquals(hand1, new HashSet<>(scenario.getLibraryRangeSize(33-getCardsPerMull()*2, 7)));
             assertEquals(hand2, new HashSet<>(scenario.getLibraryRangeSize(34-getCardsPerMull(), 6)));
-            assertEquals(discarded, scenario.getNBottomOfLibrary(1));
+            assertEquals(new HashSet<>(discarded), new HashSet<>(scenario.getNBottomOfLibrary(2)));
             hand3.addAll(scenario.getHand());
             return false;
         });
@@ -132,7 +123,7 @@ public class LondonMulliganTest extends MulliganTestBase {
             assertEquals(hand1, new HashSet<>(scenario.getLibraryRangeSize(33-getCardsPerMull()*2, 7)));
             assertEquals(hand2, new HashSet<>(scenario.getLibraryRangeSize(34-getCardsPerMull(), 6)));
             assertEquals(hand3, scenario.getHand());
-            assertEquals(discarded, scenario.getNBottomOfLibrary(1));
+            assertEquals(new HashSet<>(discarded), new HashSet<>(scenario.getNBottomOfLibrary(2)));
         });
     }
 
@@ -223,174 +214,23 @@ public class LondonMulliganTest extends MulliganTestBase {
     @Test
     public void testLondonMulligan_AlwaysMulligan() {
         MulliganScenarioTest scenario = new MulliganScenarioTest(getMullType(), 0);
-        scenario.mulligan(() -> {
-            scenario.assertSizes(7, 33);
-            return true;
-        });
-        scenario.discardBottom(count -> {
-            scenario.assertSizes(7, 33);
-            assertEquals(1, count);
-            return scenario.getHand().stream().limit(count).collect(Collectors.toList());
-        });
-        scenario.mulligan(() -> {
-            scenario.assertSizes(6, 34);
-            return true;
-        });
-        scenario.discardBottom(count -> {
-            scenario.assertSizes(7, 33);
-            assertEquals(1, count);
-            return scenario.getHand().stream().limit(count).collect(Collectors.toList());
-        });
-        scenario.discardBottom(count -> {
-            scenario.assertSizes(6, 34);
-            assertEquals(1, count);
-            return scenario.getHand().stream().limit(count).collect(Collectors.toList());
-        });
-        scenario.mulligan(() -> {
-            scenario.assertSizes(5, 35);
-            return true;
-        });
-        scenario.discardBottom(count -> {
-            scenario.assertSizes(7, 33);
-            assertEquals(1, count);
-            return scenario.getHand().stream().limit(count).collect(Collectors.toList());
-        });
-        scenario.discardBottom(count -> {
-            scenario.assertSizes(6, 34);
-            assertEquals(1, count);
-            return scenario.getHand().stream().limit(count).collect(Collectors.toList());
-        });
-        scenario.discardBottom(count -> {
-            scenario.assertSizes(5, 35);
-            assertEquals(1, count);
-            return scenario.getHand().stream().limit(count).collect(Collectors.toList());
-        });
-        scenario.mulligan(() -> {
-            scenario.assertSizes(4, 36);
-            return true;
-        });
-        scenario.discardBottom(count -> {
-            scenario.assertSizes(7, 33);
-            assertEquals(1, count);
-            return scenario.getHand().stream().limit(count).collect(Collectors.toList());
-        });
-        scenario.discardBottom(count -> {
-            scenario.assertSizes(6, 34);
-            assertEquals(1, count);
-            return scenario.getHand().stream().limit(count).collect(Collectors.toList());
-        });
-        scenario.discardBottom(count -> {
-            scenario.assertSizes(5, 35);
-            assertEquals(1, count);
-            return scenario.getHand().stream().limit(count).collect(Collectors.toList());
-        });
-        scenario.discardBottom(count -> {
-            scenario.assertSizes(4, 36);
-            assertEquals(1, count);
-            return scenario.getHand().stream().limit(count).collect(Collectors.toList());
-        });
-        scenario.mulligan(() -> {
-            scenario.assertSizes(3, 37);
-            return true;
-        });
-        scenario.discardBottom(count -> {
-            scenario.assertSizes(7, 33);
-            assertEquals(1, count);
-            return scenario.getHand().stream().limit(count).collect(Collectors.toList());
-        });
-        scenario.discardBottom(count -> {
-            scenario.assertSizes(6, 34);
-            assertEquals(1, count);
-            return scenario.getHand().stream().limit(count).collect(Collectors.toList());
-        });
-        scenario.discardBottom(count -> {
-            scenario.assertSizes(5, 35);
-            assertEquals(1, count);
-            return scenario.getHand().stream().limit(count).collect(Collectors.toList());
-        });
-        scenario.discardBottom(count -> {
-            scenario.assertSizes(4, 36);
-            assertEquals(1, count);
-            return scenario.getHand().stream().limit(count).collect(Collectors.toList());
-        });
-        scenario.discardBottom(count -> {
-            scenario.assertSizes(3, 37);
-            assertEquals(1, count);
-            return scenario.getHand().stream().limit(count).collect(Collectors.toList());
-        });
-        scenario.mulligan(() -> {
-            scenario.assertSizes(2, 38);
-            return true;
-        });
-        scenario.discardBottom(count -> {
-            scenario.assertSizes(7, 33);
-            assertEquals(1, count);
-            return scenario.getHand().stream().limit(count).collect(Collectors.toList());
-        });
-        scenario.discardBottom(count -> {
-            scenario.assertSizes(6, 34);
-            assertEquals(1, count);
-            return scenario.getHand().stream().limit(count).collect(Collectors.toList());
-        });
-        scenario.discardBottom(count -> {
-            scenario.assertSizes(5, 35);
-            assertEquals(1, count);
-            return scenario.getHand().stream().limit(count).collect(Collectors.toList());
-        });
-        scenario.discardBottom(count -> {
-            scenario.assertSizes(4, 36);
-            assertEquals(1, count);
-            return scenario.getHand().stream().limit(count).collect(Collectors.toList());
-        });
-        scenario.discardBottom(count -> {
-            scenario.assertSizes(3, 37);
-            assertEquals(1, count);
-            return scenario.getHand().stream().limit(count).collect(Collectors.toList());
-        });
-        scenario.discardBottom(count -> {
-            scenario.assertSizes(2, 38);
-            assertEquals(1, count);
-            return scenario.getHand().stream().limit(count).collect(Collectors.toList());
-        });
-        scenario.mulligan(() -> {
-            scenario.assertSizes(1, 39);
-            return true;
-        });
-        scenario.discardBottom(count -> {
-            scenario.assertSizes(7, 33);
-            assertEquals(1, count);
-            return scenario.getHand().stream().limit(count).collect(Collectors.toList());
-        });
-        scenario.discardBottom(count -> {
-            scenario.assertSizes(6, 34);
-            assertEquals(1, count);
-            return scenario.getHand().stream().limit(count).collect(Collectors.toList());
-        });
-        scenario.discardBottom(count -> {
-            scenario.assertSizes(5, 35);
-            assertEquals(1, count);
-            return scenario.getHand().stream().limit(count).collect(Collectors.toList());
-        });
-        scenario.discardBottom(count -> {
-            scenario.assertSizes(4, 36);
-            assertEquals(1, count);
-            return scenario.getHand().stream().limit(count).collect(Collectors.toList());
-        });
-        scenario.discardBottom(count -> {
-            scenario.assertSizes(3, 37);
-            assertEquals(1, count);
-            return scenario.getHand().stream().limit(count).collect(Collectors.toList());
-        });
-        scenario.discardBottom(count -> {
-            scenario.assertSizes(2, 38);
-            assertEquals(1, count);
-            return scenario.getHand().stream().limit(count).collect(Collectors.toList());
-        });
-        scenario.discardBottom(count -> {
-            scenario.assertSizes(1, 39);
-            assertEquals(1, count);
-            return scenario.getHand().stream().limit(count).collect(Collectors.toList());
-        });
+        // After the n-th mulligan the redraw is seven and n of them go under,
+        // chosen in ONE pick of n (not n picks of one); the hand seen at the
+        // next question is 7 - n. The seventh mulligan leaves nothing, and a
+        // hand of nothing is kept without a question.
+        for (int n = 1; n <= 7; n++) {
+            final int handBefore = 8 - n;
+            final int owed = n;
+            scenario.mulligan(() -> {
+                scenario.assertSizes(handBefore, 40 - handBefore);
+                return true;
+            });
+            scenario.discardBottom(count -> {
+                scenario.assertSizes(7, 33);
+                assertEquals(owed, count);
+                return scenario.getHand().stream().limit(count).collect(Collectors.toList());
+            });
+        }
         scenario.run(() -> {
             scenario.assertSizes(0, 40);
         });

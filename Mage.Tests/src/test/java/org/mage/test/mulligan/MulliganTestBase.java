@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public class MulliganTestBase {
@@ -168,6 +169,15 @@ public class MulliganTestBase {
 
         private List<Step> steps = null;
         private int current = 0;
+        /*
+         * The first assertion a step failed. The mulligan asks its questions
+         * on threads of their own (every player declares at the same time)
+         * and treats a question that throws as a hand kept, so an assertion
+         * failing inside a step never reaches JUnit by itself: it is kept here
+         * and thrown again by assertStepsComplete. Other exceptions are not
+         * kept: a step may throw one on purpose, to be a question that broke.
+         */
+        private volatile AssertionError failed = null;
 
         public MulliganStubPlayer(String name, RangeOfInfluence range) {
             super(name, range);
@@ -178,13 +188,15 @@ public class MulliganTestBase {
             if (steps == null) {
                 return super.chooseMulligan(game);
             }
-            if (current >= steps.size()) {
-                fail("Tried to mulligan without a test step.");
-            }
-            Step step = steps.get(current++);
-            assertTrue("Expected mulligan step.",
-                    MulliganStep.class.isAssignableFrom(step.getClass()));
-            return ((MulliganStep) step).mulligan();
+            return recorded(() -> {
+                if (current >= steps.size()) {
+                    fail("Tried to mulligan without a test step.");
+                }
+                Step step = steps.get(current++);
+                assertTrue("Expected mulligan step.",
+                        MulliganStep.class.isAssignableFrom(step.getClass()));
+                return ((MulliganStep) step).mulligan();
+            });
         }
 
         @Override
@@ -192,13 +204,15 @@ public class MulliganTestBase {
             if (steps == null) {
                 return super.chooseScry(game, cardId);
             }
-            if (current >= steps.size()) {
-                fail("Tried to scry without a test step.");
-            }
-            Step step = steps.get(current++);
-            assertTrue("Expected scry step.",
-                    ScryStep.class.isAssignableFrom(step.getClass()));
-            return ((ScryStep) step).scry();
+            return recorded(() -> {
+                if (current >= steps.size()) {
+                    fail("Tried to scry without a test step.");
+                }
+                Step step = steps.get(current++);
+                assertTrue("Expected scry step.",
+                        ScryStep.class.isAssignableFrom(step.getClass()));
+                return ((ScryStep) step).scry();
+            });
         }
 
         @Override
@@ -206,20 +220,36 @@ public class MulliganTestBase {
             if (steps == null) {
                 return super.chooseDiscardBottom(game, count, cardIds);
             }
-            if (current >= steps.size()) {
-                fail("Tried to discard without a test step.");
-            }
-            Step step = steps.get(current++);
-            assertTrue("Expected discard bottom step.",
-                    DiscardBottomStep.class.isAssignableFrom(step.getClass()));
-            return ((DiscardBottomStep) step).discardBottom(count);
+            return recorded(() -> {
+                if (current >= steps.size()) {
+                    fail("Tried to discard without a test step.");
+                }
+                Step step = steps.get(current++);
+                assertTrue("Expected discard bottom step.",
+                        DiscardBottomStep.class.isAssignableFrom(step.getClass()));
+                return ((DiscardBottomStep) step).discardBottom(count);
+            });
         }
 
         public void setSteps(List<Step> steps) {
             this.steps = steps;
         }
 
+        private <T> T recorded(Supplier<T> step) {
+            try {
+                return step.get();
+            } catch (AssertionError error) {
+                if (failed == null) {
+                    failed = error;
+                }
+                throw error;
+            }
+        }
+
         public void assertStepsComplete() {
+            if (failed != null) {
+                throw failed;
+            }
             assertEquals(steps.size(), current);
         }
 
