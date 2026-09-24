@@ -68,6 +68,7 @@ public final class TheDark extends ExpansionSet {
         cards.add(new SetCardInfo("Flood", 27, Rarity.UNCOMMON, mage.cards.f.Flood.class, RETRO_ART));
         cards.add(new SetCardInfo("Fountain of Youth", 103, Rarity.UNCOMMON, mage.cards.f.FountainOfYouth.class, RETRO_ART_USE_VARIOUS));
         cards.add(new SetCardInfo("Fountain of Youth", "103+", Rarity.UNCOMMON, mage.cards.f.FountainOfYouth.class, RETRO_ART_USE_VARIOUS));
+        cards.add(new SetCardInfo("Frankenstein's Monster", 45, Rarity.RARE, mage.cards.f.FrankensteinsMonster.class));
         cards.add(new SetCardInfo("Gaea's Touch", 77, Rarity.COMMON, mage.cards.g.GaeasTouch.class, RETRO_ART_USE_VARIOUS));
         cards.add(new SetCardInfo("Gaea's Touch", "77+", Rarity.COMMON, mage.cards.g.GaeasTouch.class, RETRO_ART_USE_VARIOUS));
         cards.add(new SetCardInfo("Ghost Ship", 28, Rarity.COMMON, mage.cards.g.GhostShip.class, RETRO_ART));
