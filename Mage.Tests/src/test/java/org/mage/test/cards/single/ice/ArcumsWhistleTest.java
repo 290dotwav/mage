@@ -51,8 +51,8 @@ public class ArcumsWhistleTest extends CardTestPlayerBase {
     @Test
     public void test_TappedCantAttack_Destroyed() {
         addCard(Zone.BATTLEFIELD, playerA, whistle);
-        addCard(Zone.BATTLEFIELD, playerA, "Island", 3);
-        addCard(Zone.BATTLEFIELD, playerA, "Plains", 2);
+        // only Plains: the {3} may be paid with any three lands and {1}{W} is still left
+        addCard(Zone.BATTLEFIELD, playerA, "Plains", 5);
         addCard(Zone.HAND, playerA, "Pressure Point"); // {1}{W}: tap target creature, draw a card at next upkeep
         addCard(Zone.BATTLEFIELD, playerB, "Grizzly Bears");
 
