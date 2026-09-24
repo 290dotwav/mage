@@ -258,6 +258,7 @@ public final class Legends extends ExpansionSet {
         cards.add(new SetCardInfo("Shelkin Brownie", 204, Rarity.COMMON, mage.cards.s.ShelkinBrownie.class, RETRO_ART));
         cards.add(new SetCardInfo("Shield Wall", 36, Rarity.UNCOMMON, mage.cards.s.ShieldWall.class, RETRO_ART));
         cards.add(new SetCardInfo("Shimian Night Stalker", 116, Rarity.UNCOMMON, mage.cards.s.ShimianNightStalker.class, RETRO_ART));
+        cards.add(new SetCardInfo("Silhouette", 77, Rarity.UNCOMMON, mage.cards.s.Silhouette.class));
         cards.add(new SetCardInfo("Sir Shandlar of Eberyn", 257, Rarity.UNCOMMON, mage.cards.s.SirShandlarOfEberyn.class, RETRO_ART));
         cards.add(new SetCardInfo("Sivitri Scarzam", 258, Rarity.UNCOMMON, mage.cards.s.SivitriScarzam.class, RETRO_ART));
         cards.add(new SetCardInfo("Sol'kanar the Swamp King", 259, Rarity.RARE, mage.cards.s.SolkanarTheSwampKing.class, RETRO_ART));
