@@ -49,6 +49,7 @@ public final class Legends extends ExpansionSet {
         cards.add(new SetCardInfo("Axelrod Gunnarson", 219, Rarity.RARE, mage.cards.a.AxelrodGunnarson.class, RETRO_ART));
         cards.add(new SetCardInfo("Ayesha Tanaka", 220, Rarity.RARE, mage.cards.a.AyeshaTanaka.class, RETRO_ART));
         cards.add(new SetCardInfo("Azure Drake", 46, Rarity.UNCOMMON, mage.cards.a.AzureDrake.class, RETRO_ART));
+        cards.add(new SetCardInfo("Backdraft", 132, Rarity.UNCOMMON, mage.cards.b.Backdraft.class));
         cards.add(new SetCardInfo("Backfire", 47, Rarity.UNCOMMON, mage.cards.b.Backfire.class, RETRO_ART));
         cards.add(new SetCardInfo("Barbary Apes", 176, Rarity.COMMON, mage.cards.b.BarbaryApes.class, RETRO_ART));
         cards.add(new SetCardInfo("Barktooth Warbeard", 221, Rarity.UNCOMMON, mage.cards.b.BarktoothWarbeard.class, RETRO_ART));
