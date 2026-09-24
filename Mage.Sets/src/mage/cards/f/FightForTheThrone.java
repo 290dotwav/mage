@@ -8,6 +8,7 @@ import mage.abilities.effects.OneShotEffect;
 import mage.abilities.effects.common.BecomesMonarchSourceEffect;
 import mage.abilities.effects.common.FightTargetsEffect;
 import mage.abilities.effects.common.counter.AddCountersTargetEffect;
+import mage.abilities.hint.common.MonarchHint;
 import mage.cards.CardImpl;
 import mage.cards.CardSetInfo;
 import mage.constants.CardType;
@@ -42,6 +43,7 @@ public final class FightForTheThrone extends CardImpl {
                         "dies this turn, if you control your commander, you become the monarch"));
         this.getSpellAbility().addTarget(new TargetControlledCreaturePermanent());
         this.getSpellAbility().addTarget(new TargetOpponentsCreaturePermanent());
+        this.getSpellAbility().addHint(MonarchHint.instance);
     }
 
     private FightForTheThrone(final FightForTheThrone card) {

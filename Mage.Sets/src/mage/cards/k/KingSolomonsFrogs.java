@@ -10,6 +10,7 @@ import mage.abilities.costs.mana.GenericManaCost;
 import mage.abilities.effects.OneShotEffect;
 import mage.abilities.effects.common.BecomesMonarchSourceEffect;
 import mage.abilities.keyword.FlashAbility;
+import mage.abilities.hint.common.MonarchHint;
 import mage.cards.CardImpl;
 import mage.cards.CardSetInfo;
 import mage.cards.Cards;
@@ -65,6 +66,7 @@ public final class KingSolomonsFrogs extends CardImpl {
         Ability monarchAbility = new SimpleActivatedAbility(new BecomesMonarchSourceEffect(), new GenericManaCost(3));
         monarchAbility.addCost(new TapSourceCost());
         monarchAbility.addCost(new ExileSourceCost());
+        monarchAbility.addHint(MonarchHint.instance);
         this.addAbility(monarchAbility);
     }
 

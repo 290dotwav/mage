@@ -8,6 +8,7 @@ import mage.abilities.costs.common.TapSourceCost;
 import mage.abilities.costs.mana.GenericManaCost;
 import mage.abilities.effects.OneShotEffect;
 import mage.abilities.effects.PreventionEffectImpl;
+import mage.abilities.hint.common.MonarchHint;
 import mage.cards.Card;
 import mage.cards.CardImpl;
 import mage.cards.CardSetInfo;
@@ -42,6 +43,7 @@ public final class HeartShapedHerb extends CardImpl {
         Ability ability = new SimpleActivatedAbility(new HeartShapedHerbEffect(), new GenericManaCost(2));
         ability.addCost(new TapSourceCost());
         ability.addCost(new SacrificeSourceCost());
+        ability.addHint(MonarchHint.instance);
         this.addAbility(ability);
     }
 

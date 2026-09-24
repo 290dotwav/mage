@@ -57,6 +57,8 @@ class WhirlwindKillerCycloneTriggeredAbility extends TriggeredAbilityImpl {
         super(Zone.BATTLEFIELD, new CantBlockTargetEffect(Duration.EndOfTurn)
                 .setText("target creature that player controls can't block this turn"));
         setTriggerPhrase("Whenever one or more creatures you control that entered this turn attack a player, ");
+        // the filter is set to the attacked player's creatures as it triggers
+        this.addTarget(new TargetPermanent(new FilterCreaturePermanent("creature that player controls")));
     }
 
     private WhirlwindKillerCycloneTriggeredAbility(final WhirlwindKillerCycloneTriggeredAbility ability) {
