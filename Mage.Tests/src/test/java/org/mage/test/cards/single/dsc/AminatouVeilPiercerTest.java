@@ -116,4 +116,29 @@ public class AminatouVeilPiercerTest extends CardTestPlayerBase {
 
         Assert.assertNull(miracleRuleOf("Ghostly Prison"));
     }
+
+    /**
+     * The granted miracle is offered when the enchantment is drawn: Ghostly Prison is cast for {W}.
+     */
+    @Test
+    public void testMiracleOfferedOnDraw() {
+        skipInitShuffling();
+        removeAllCardsFromLibrary(playerA);
+        addCard(Zone.LIBRARY, playerA, "Ghostly Prison"); // {2}{W}
+        addCard(Zone.BATTLEFIELD, playerA, aminatou);
+        addCard(Zone.BATTLEFIELD, playerA, "Plains", 1);
+
+        addTarget(playerA, TestPlayer.TARGET_SKIP); // turn 1 upkeep surveil: keep it on top
+        // turn 1 draw is skipped for the starting player; the surveil of turn 3 keeps it too
+        addTarget(playerA, TestPlayer.TARGET_SKIP);
+        setChoice(playerA, true); // reveal for miracle
+        setChoice(playerA, true); // cast it for {W}
+
+        setStrictChooseMode(true);
+        setStopAt(3, PhaseStep.PRECOMBAT_MAIN);
+        execute();
+
+        assertPermanentCount(playerA, "Ghostly Prison", 1);
+        assertTapped("Plains", true);
+    }
 }

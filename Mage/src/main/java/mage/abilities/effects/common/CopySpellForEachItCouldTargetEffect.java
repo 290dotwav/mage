@@ -69,6 +69,10 @@ public abstract class CopySpellForEachItCouldTargetEffect extends OneShotEffect 
             return false;
         }
         List<MageObjectReferencePredicate> copies = prepareCopiesWithTargets(stackObject, actingPlayer, source, game);
+        if (copies.isEmpty()) {
+            // no copy at all (a replacement of "one or more copies" must not see it)
+            return true;
+        }
         stackObject.createCopyOnStack(
                 game, source, actingPlayer.getId(), false,
                 copies.size(), new ForEachCopyApplier(copies)

@@ -141,6 +141,7 @@ public final class Judgment extends ExpansionSet {
         cards.add(new SetCardInfo("Seedtime", 130, Rarity.RARE, mage.cards.s.Seedtime.class, RETRO_ART));
         cards.add(new SetCardInfo("Selfless Exorcist", 21, Rarity.RARE, mage.cards.s.SelflessExorcist.class, RETRO_ART));
         cards.add(new SetCardInfo("Serene Sunset", 131, Rarity.UNCOMMON, mage.cards.s.SereneSunset.class, RETRO_ART));
+        cards.add(new SetCardInfo("Shaman's Trance", 98, Rarity.RARE, mage.cards.s.ShamansTrance.class));
         cards.add(new SetCardInfo("Shieldmage Advocate", 22, Rarity.COMMON, mage.cards.s.ShieldmageAdvocate.class, RETRO_ART));
         cards.add(new SetCardInfo("Silver Seraph", 23, Rarity.RARE, mage.cards.s.SilverSeraph.class, RETRO_ART));
         cards.add(new SetCardInfo("Solitary Confinement", 24, Rarity.RARE, mage.cards.s.SolitaryConfinement.class, RETRO_ART));

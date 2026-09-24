@@ -147,6 +147,7 @@ public final class Alliances extends ExpansionSet {
         cards.add(new SetCardInfo("Phyrexian War Beast", "127a", Rarity.COMMON, mage.cards.p.PhyrexianWarBeast.class, RETRO_ART_USE_VARIOUS));
         cards.add(new SetCardInfo("Phyrexian War Beast", "127b", Rarity.COMMON, mage.cards.p.PhyrexianWarBeast.class, RETRO_ART_USE_VARIOUS));
         cards.add(new SetCardInfo("Pillage", 76, Rarity.UNCOMMON, mage.cards.p.Pillage.class, RETRO_ART));
+        cards.add(new SetCardInfo("Primitive Justice", 77, Rarity.UNCOMMON, mage.cards.p.PrimitiveJustice.class));
         cards.add(new SetCardInfo("Pyrokinesis", 78, Rarity.UNCOMMON, mage.cards.p.Pyrokinesis.class, RETRO_ART));
         cards.add(new SetCardInfo("Reinforcements", "12a", Rarity.COMMON, mage.cards.r.Reinforcements.class, RETRO_ART_USE_VARIOUS));
         cards.add(new SetCardInfo("Reinforcements", "12b", Rarity.COMMON, mage.cards.r.Reinforcements.class, RETRO_ART_USE_VARIOUS));
@@ -188,15 +189,20 @@ public final class Alliances extends ExpansionSet {
         cards.add(new SetCardInfo("Storm Shaman", "81a", Rarity.COMMON, mage.cards.s.StormShaman.class, RETRO_ART_USE_VARIOUS));
         cards.add(new SetCardInfo("Storm Shaman", "81b", Rarity.COMMON, mage.cards.s.StormShaman.class, RETRO_ART_USE_VARIOUS));
         cards.add(new SetCardInfo("Stromgald Spy", 62, Rarity.UNCOMMON, mage.cards.s.StromgaldSpy.class, RETRO_ART));
+        cards.add(new SetCardInfo("Suffocation", 38, Rarity.UNCOMMON, mage.cards.s.Suffocation.class));
         cards.add(new SetCardInfo("Surge of Strength", 109, Rarity.UNCOMMON, mage.cards.s.SurgeOfStrength.class, RETRO_ART));
         cards.add(new SetCardInfo("Sustaining Spirit", 18, Rarity.RARE, mage.cards.s.SustainingSpirit.class, RETRO_ART));
         cards.add(new SetCardInfo("Swamp Mosquito", "63a", Rarity.COMMON, mage.cards.s.SwampMosquito.class, RETRO_ART_USE_VARIOUS));
         cards.add(new SetCardInfo("Swamp Mosquito", "63b", Rarity.COMMON, mage.cards.s.SwampMosquito.class, RETRO_ART_USE_VARIOUS));
         cards.add(new SetCardInfo("Sworn Defender", 19, Rarity.RARE, mage.cards.s.SwornDefender.class, RETRO_ART));
+        cards.add(new SetCardInfo("Taste of Paradise", "100a", Rarity.COMMON, mage.cards.t.TasteOfParadise.class, RETRO_ART_USE_VARIOUS));
+        cards.add(new SetCardInfo("Taste of Paradise", "100b", Rarity.COMMON, mage.cards.t.TasteOfParadise.class, RETRO_ART_USE_VARIOUS));
         cards.add(new SetCardInfo("Thawing Glaciers", 144, Rarity.RARE, mage.cards.t.ThawingGlaciers.class, RETRO_ART));
         cards.add(new SetCardInfo("Thought Lash", 39, Rarity.RARE, mage.cards.t.ThoughtLash.class, RETRO_ART));
         cards.add(new SetCardInfo("Tidal Control", 40, Rarity.RARE, mage.cards.t.TidalControl.class, RETRO_ART));
         cards.add(new SetCardInfo("Tornado", 101, Rarity.RARE, mage.cards.t.Tornado.class, RETRO_ART));
+        cards.add(new SetCardInfo("Undergrowth", "102a", Rarity.COMMON, mage.cards.u.Undergrowth.class, RETRO_ART_USE_VARIOUS));
+        cards.add(new SetCardInfo("Undergrowth", "102b", Rarity.COMMON, mage.cards.u.Undergrowth.class, RETRO_ART_USE_VARIOUS));
         cards.add(new SetCardInfo("Unlikely Alliance", 20, Rarity.UNCOMMON, mage.cards.u.UnlikelyAlliance.class, RETRO_ART));
         cards.add(new SetCardInfo("Urza's Engine", 135, Rarity.UNCOMMON, mage.cards.u.UrzasEngine.class, RETRO_ART));
         cards.add(new SetCardInfo("Varchild's Crusader", "82a", Rarity.COMMON, mage.cards.v.VarchildsCrusader.class, RETRO_ART_USE_VARIOUS));

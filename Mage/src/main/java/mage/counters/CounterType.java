@@ -69,6 +69,7 @@ public enum CounterType {
     DOUBLE_STRIKE("double strike"),
     DREAD("dread"),
     DREAM("dream"),
+    DUTY("duty"),
     ECHO("echo"),
     EGG("egg"),
     ELIXIR("elixir"),
@@ -167,9 +168,11 @@ public enum CounterType {
     OMEN("omen"),
     ORE("ore"),
     P0P1(new BoostCounter(0, 1).name),
+    P0P2(new BoostCounter(0, 2).name),
     P1P0(new BoostCounter(1, 0).name),
     P1P1(new BoostCounter(1, 1).name),
     P1P2(new BoostCounter(1, 2).name),
+    P2P0(new BoostCounter(2, 0).name),
     P2P2(new BoostCounter(2, 2).name),
     PAGE("page"),
     PAIN("pain"),
@@ -213,6 +216,7 @@ public enum CounterType {
     SHRED("shred"),
     SKEWER("skewer"),
     SLEEP("sleep"),
+    SLEIGHT("sleight"),
     SLIME("slime"),
     SLUMBER("slumber"),
     SOOT("soot"),
@@ -304,12 +308,16 @@ public enum CounterType {
         switch (this) {
             case P0P1:
                 return new BoostCounter(0, 1, amount);
+            case P0P2:
+                return new BoostCounter(0, 2, amount);
             case P1P0:
                 return new BoostCounter(1, 0, amount);
             case P1P1:
                 return new BoostCounter(1, 1, amount);
             case P1P2:
                 return new BoostCounter(1, 2, amount);
+            case P2P0:
+                return new BoostCounter(2, 0, amount);
             case P2P2:
                 return new BoostCounter(2, 2, amount);
             case M0M1:

@@ -49,6 +49,7 @@ public final class Legends extends ExpansionSet {
         cards.add(new SetCardInfo("Axelrod Gunnarson", 219, Rarity.RARE, mage.cards.a.AxelrodGunnarson.class, RETRO_ART));
         cards.add(new SetCardInfo("Ayesha Tanaka", 220, Rarity.RARE, mage.cards.a.AyeshaTanaka.class, RETRO_ART));
         cards.add(new SetCardInfo("Azure Drake", 46, Rarity.UNCOMMON, mage.cards.a.AzureDrake.class, RETRO_ART));
+        cards.add(new SetCardInfo("Backdraft", 132, Rarity.UNCOMMON, mage.cards.b.Backdraft.class));
         cards.add(new SetCardInfo("Backfire", 47, Rarity.UNCOMMON, mage.cards.b.Backfire.class, RETRO_ART));
         cards.add(new SetCardInfo("Barbary Apes", 176, Rarity.COMMON, mage.cards.b.BarbaryApes.class, RETRO_ART));
         cards.add(new SetCardInfo("Barktooth Warbeard", 221, Rarity.UNCOMMON, mage.cards.b.BarktoothWarbeard.class, RETRO_ART));
@@ -206,6 +207,7 @@ public final class Legends extends ExpansionSet {
         cards.add(new SetCardInfo("Nebuchadnezzar", 245, Rarity.RARE, mage.cards.n.Nebuchadnezzar.class, RETRO_ART));
         cards.add(new SetCardInfo("Nether Void", 113, Rarity.RARE, mage.cards.n.NetherVoid.class, RETRO_ART));
         cards.add(new SetCardInfo("Nicol Bolas", 246, Rarity.RARE, mage.cards.n.NicolBolas.class, RETRO_ART));
+        cards.add(new SetCardInfo("North Star", 288, Rarity.RARE, mage.cards.n.NorthStar.class));
         cards.add(new SetCardInfo("Nova Pentacle", 289, Rarity.RARE, mage.cards.n.NovaPentacle.class, RETRO_ART));
         cards.add(new SetCardInfo("Osai Vultures", 29, Rarity.COMMON, mage.cards.o.OsaiVultures.class, RETRO_ART));
         cards.add(new SetCardInfo("Palladia-Mors", 247, Rarity.RARE, mage.cards.p.PalladiaMors.class, RETRO_ART));
@@ -225,6 +227,7 @@ public final class Legends extends ExpansionSet {
         cards.add(new SetCardInfo("Puppet Master", 69, Rarity.UNCOMMON, mage.cards.p.PuppetMaster.class, RETRO_ART));
         cards.add(new SetCardInfo("Pyrotechnics", 161, Rarity.COMMON, mage.cards.p.Pyrotechnics.class, RETRO_ART));
         cards.add(new SetCardInfo("Quagmire", 115, Rarity.UNCOMMON, mage.cards.q.Quagmire.class, RETRO_ART));
+        cards.add(new SetCardInfo("Quarum Trench Gnomes", 162, Rarity.RARE, mage.cards.q.QuarumTrenchGnomes.class));
         cards.add(new SetCardInfo("Rabid Wombat", 198, Rarity.UNCOMMON, mage.cards.r.RabidWombat.class, RETRO_ART));
         cards.add(new SetCardInfo("Radjan Spirit", 199, Rarity.UNCOMMON, mage.cards.r.RadjanSpirit.class, RETRO_ART));
         cards.add(new SetCardInfo("Raging Bull", 163, Rarity.COMMON, mage.cards.r.RagingBull.class, RETRO_ART));
@@ -258,6 +261,7 @@ public final class Legends extends ExpansionSet {
         cards.add(new SetCardInfo("Shelkin Brownie", 204, Rarity.COMMON, mage.cards.s.ShelkinBrownie.class, RETRO_ART));
         cards.add(new SetCardInfo("Shield Wall", 36, Rarity.UNCOMMON, mage.cards.s.ShieldWall.class, RETRO_ART));
         cards.add(new SetCardInfo("Shimian Night Stalker", 116, Rarity.UNCOMMON, mage.cards.s.ShimianNightStalker.class, RETRO_ART));
+        cards.add(new SetCardInfo("Silhouette", 77, Rarity.UNCOMMON, mage.cards.s.Silhouette.class));
         cards.add(new SetCardInfo("Sir Shandlar of Eberyn", 257, Rarity.UNCOMMON, mage.cards.s.SirShandlarOfEberyn.class, RETRO_ART));
         cards.add(new SetCardInfo("Sivitri Scarzam", 258, Rarity.UNCOMMON, mage.cards.s.SivitriScarzam.class, RETRO_ART));
         cards.add(new SetCardInfo("Sol'kanar the Swamp King", 259, Rarity.RARE, mage.cards.s.SolkanarTheSwampKing.class, RETRO_ART));

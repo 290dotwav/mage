@@ -126,6 +126,7 @@ public final class Visions extends ExpansionSet {
         cards.add(new SetCardInfo("Necromancy", 64, Rarity.UNCOMMON, mage.cards.n.Necromancy.class, RETRO_ART));
         cards.add(new SetCardInfo("Necrosavant", 65, Rarity.RARE, mage.cards.n.Necrosavant.class, RETRO_ART));
         cards.add(new SetCardInfo("Nekrataal", 66, Rarity.UNCOMMON, mage.cards.n.Nekrataal.class, RETRO_ART));
+        cards.add(new SetCardInfo("Ogre Enforcer", 89, Rarity.RARE, mage.cards.o.OgreEnforcer.class));
         cards.add(new SetCardInfo("Ovinomancer", 39, Rarity.UNCOMMON, mage.cards.o.Ovinomancer.class, RETRO_ART));
         cards.add(new SetCardInfo("Panther Warriors", 115, Rarity.COMMON, mage.cards.p.PantherWarriors.class, RETRO_ART));
         cards.add(new SetCardInfo("Parapet", 14, Rarity.COMMON, mage.cards.p.Parapet.class, RETRO_ART));
@@ -177,6 +178,7 @@ public final class Visions extends ExpansionSet {
         cards.add(new SetCardInfo("Teferi's Realm", 44, Rarity.RARE, mage.cards.t.TeferisRealm.class, RETRO_ART));
         cards.add(new SetCardInfo("Tempest Drake", 139, Rarity.UNCOMMON, mage.cards.t.TempestDrake.class, RETRO_ART));
         cards.add(new SetCardInfo("Three Wishes", 45, Rarity.RARE, mage.cards.t.ThreeWishes.class, RETRO_ART));
+        cards.add(new SetCardInfo("Time and Tide", 46, Rarity.UNCOMMON, mage.cards.t.TimeAndTide.class));
         cards.add(new SetCardInfo("Tin-Wing Chimera", 157, Rarity.UNCOMMON, mage.cards.t.TinWingChimera.class, RETRO_ART));
         cards.add(new SetCardInfo("Tithe", 23, Rarity.RARE, mage.cards.t.Tithe.class, RETRO_ART));
         cards.add(new SetCardInfo("Tremor", 99, Rarity.COMMON, mage.cards.t.Tremor.class, RETRO_ART));
