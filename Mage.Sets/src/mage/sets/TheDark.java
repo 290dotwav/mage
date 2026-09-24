@@ -111,6 +111,7 @@ public final class TheDark extends ExpansionSet {
         cards.add(new SetCardInfo("Preacher", 16, Rarity.RARE, mage.cards.p.Preacher.class, RETRO_ART));
         cards.add(new SetCardInfo("Psychic Allergy", 34, Rarity.RARE, mage.cards.p.PsychicAllergy.class, RETRO_ART));
         cards.add(new SetCardInfo("Rag Man", 51, Rarity.RARE, mage.cards.r.RagMan.class, RETRO_ART));
+        cards.add(new SetCardInfo("Reflecting Mirror", 106, Rarity.UNCOMMON, mage.cards.r.ReflectingMirror.class));
         cards.add(new SetCardInfo("Riptide", 35, Rarity.COMMON, mage.cards.r.Riptide.class, RETRO_ART));
         cards.add(new SetCardInfo("Runesword", 107, Rarity.UNCOMMON, mage.cards.r.Runesword.class, RETRO_ART_USE_VARIOUS));
         cards.add(new SetCardInfo("Runesword", "107+", Rarity.UNCOMMON, mage.cards.r.Runesword.class, RETRO_ART_USE_VARIOUS));
