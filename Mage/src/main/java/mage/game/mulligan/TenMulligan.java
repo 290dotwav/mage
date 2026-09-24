@@ -163,7 +163,22 @@ public class TenMulligan extends Mulligan {
                     mulligan(game, playerId);
                 }
             }
-            // Kept. The surplus goes under — chosen off the lock, moved on it.
+        } catch (Throwable error) {
+            /*
+             * A question that broke is a hand kept: never a table stuck here.
+             *
+             * But kept like any other hand — the surplus still goes under,
+             * below. This used to end the mulligan right here, so a player
+             * whose question threw started the game with every card they were
+             * looking at (ten, not seven). `cardsToBottom` reads the hand as
+             * it stands: a redraw that itself broke halfway leaves a short
+             * hand, which owes nothing.
+             */
+        }
+        // Kept. The surplus goes under — chosen off the lock, moved on it.
+        // `askForBottom` never throws: a player who answers nothing has the
+        // front of their hand taken, since a hand left too big stops the game.
+        try {
             int owed;
             synchronized (lock) {
                 game.informPlayers(player.getLogName() + " keeps hand");
@@ -177,10 +192,10 @@ public class TenMulligan extends Mulligan {
                     // for the order — a second question nobody wants.
                     player.putCardsOnBottomOfLibrary(new CardsImpl(under), game, null, false);
                 }
-                game.endMulligan(playerId);
             }
         } catch (Throwable error) {
-            // A question that broke is a hand kept: never a table stuck here.
+            // Nothing more can be done for this hand; the table still goes on.
+        } finally {
             synchronized (lock) {
                 game.endMulligan(playerId);
             }
