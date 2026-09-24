@@ -227,6 +227,7 @@ public final class Legends extends ExpansionSet {
         cards.add(new SetCardInfo("Puppet Master", 69, Rarity.UNCOMMON, mage.cards.p.PuppetMaster.class, RETRO_ART));
         cards.add(new SetCardInfo("Pyrotechnics", 161, Rarity.COMMON, mage.cards.p.Pyrotechnics.class, RETRO_ART));
         cards.add(new SetCardInfo("Quagmire", 115, Rarity.UNCOMMON, mage.cards.q.Quagmire.class, RETRO_ART));
+        cards.add(new SetCardInfo("Quarum Trench Gnomes", 162, Rarity.RARE, mage.cards.q.QuarumTrenchGnomes.class));
         cards.add(new SetCardInfo("Rabid Wombat", 198, Rarity.UNCOMMON, mage.cards.r.RabidWombat.class, RETRO_ART));
         cards.add(new SetCardInfo("Radjan Spirit", 199, Rarity.UNCOMMON, mage.cards.r.RadjanSpirit.class, RETRO_ART));
         cards.add(new SetCardInfo("Raging Bull", 163, Rarity.COMMON, mage.cards.r.RagingBull.class, RETRO_ART));
