@@ -40,6 +40,11 @@ public class CantBeBlockedAllEffect extends RestrictionEffect {
     }
 
     @Override
+    public boolean cantBeBlockedByAny(Permanent attacker, Ability source, Game game) {
+        return true;
+    }
+
+    @Override
     public boolean applies(Permanent permanent, Ability source, Game game) {
         return filter.match(permanent, source.getControllerId(), source, game);
     }

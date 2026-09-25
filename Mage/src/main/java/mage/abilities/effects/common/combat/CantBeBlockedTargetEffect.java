@@ -46,6 +46,12 @@ public class CantBeBlockedTargetEffect extends RestrictionEffect {
     }
 
     @Override
+    public boolean cantBeBlockedByAny(Permanent attacker, Ability source, Game game) {
+        // only the default filter is known to take every blocker
+        return filter == StaticFilters.FILTER_PERMANENT_CREATURE || filter == StaticFilters.FILTER_PERMANENT_CREATURES;
+    }
+
+    @Override
     public boolean applies(Permanent permanent, Ability source, Game game) {
         return getTargetPointer().getTargets(game, source).contains(permanent.getId());
     }

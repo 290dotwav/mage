@@ -32,6 +32,11 @@ public class CantBeBlockedAttachedEffect extends RestrictionEffect {
     }
 
     @Override
+    public boolean cantBeBlockedByAny(Permanent attacker, Ability source, Game game) {
+        return true;
+    }
+
+    @Override
     public boolean applies(Permanent permanent, Ability source, Game game) {
         return permanent.getAttachments().contains(source.getSourceId());
     }

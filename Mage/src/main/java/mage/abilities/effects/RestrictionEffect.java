@@ -78,6 +78,20 @@ public abstract class RestrictionEffect extends ContinuousEffectImpl {
     }
 
     /**
+     * General check for card info (the "Can't be blocked" hint): true only when
+     * canBeBlocked is false whatever the blocker. An effect that depends on the
+     * blocker ("except by Walls", "by creatures with power 2 or less") must keep false.
+     *
+     * @param attacker
+     * @param source
+     * @param game
+     * @return
+     */
+    public boolean cantBeBlockedByAny(Permanent attacker, Ability source, Game game) {
+        return false;
+    }
+
+    /**
      * Called for all attackers after all blocking decisions are made
      *
      * @param attacker

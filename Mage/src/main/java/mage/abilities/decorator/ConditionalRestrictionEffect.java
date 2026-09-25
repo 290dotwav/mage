@@ -125,6 +125,16 @@ public class ConditionalRestrictionEffect extends RestrictionEffect {
     }
 
     @Override
+    public boolean cantBeBlockedByAny(Permanent attacker, Ability source, Game game) {
+        if (conditionState) {
+            return effect.cantBeBlockedByAny(attacker, source, game);
+        } else if (otherwiseEffect != null) {
+            return otherwiseEffect.cantBeBlockedByAny(attacker, source, game);
+        }
+        return false;
+    }
+
+    @Override
     public boolean canBeUntapped(Permanent permanent, Ability source, Game game, boolean canUseChooseDialogs) {
         if (conditionState) {
             return effect.canBeUntapped(permanent, source, game, canUseChooseDialogs);

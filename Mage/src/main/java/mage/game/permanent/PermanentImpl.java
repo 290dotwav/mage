@@ -345,6 +345,9 @@ public abstract class PermanentImpl extends CardImpl implements Permanent {
                         if (!entry.getKey().canBlock(null, this, ability, game, false)) {
                             restrictHints.add(HintUtils.prepareText("Can't block" + addSourceObjectName(game, ability), null, HintUtils.HINT_ICON_RESTRICT));
                         }
+                        if (entry.getKey().cantBeBlockedByAny(this, ability, game)) {
+                            restrictHints.add(HintUtils.prepareText("Can't be blocked" + addSourceObjectName(game, ability), null, HintUtils.HINT_ICON_RESTRICT));
+                        }
                         if (!entry.getKey().canBeUntapped(this, ability, game, false)) {
                             restrictHints.add(HintUtils.prepareText("Can't untapped" + addSourceObjectName(game, ability), null, HintUtils.HINT_ICON_RESTRICT));
                         }
