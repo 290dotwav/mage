@@ -44,9 +44,8 @@ public class WhipgrassEntanglerTest extends CardTestPlayerBase {
         activateAbility(1, PhaseStep.PRECOMBAT_MAIN, playerA, "{1}{W}: Until end of turn, ", entangler);
         activateAbility(1, PhaseStep.PRECOMBAT_MAIN, playerA, "{1}{W}: Until end of turn, ", entangler);
         attack(1, playerA, entangler);
-        setChoice(playerA, "Whipgrass Entangler"); // two of the same replacement effect to choose from.
-        setChoice(playerA, true); // yes to "pay {1} for Entangler to attack"
-        setChoice(playerA, true); // yes to "pay {1} for Entangler to attack"
+        // ClaudeMTG fork: both taxes are totalled and asked once (CR 508.1g-h), no order to choose
+        setChoice(playerA, true); // yes to "pay {2} for Entangler to attack"
 
         setStopAt(1, PhaseStep.END_TURN);
         execute();
@@ -98,9 +97,8 @@ public class WhipgrassEntanglerTest extends CardTestPlayerBase {
         activateAbility(1, PhaseStep.PRECOMBAT_MAIN, playerA, "{1}{W}: Until end of turn, ", "Akroma's Devoted");
 
         attack(1, playerA, "Akroma's Devoted");
-        setChoice(playerA, "Akroma's Devoted"); // two of the same replacement effect to choose from.
-        setChoice(playerA, true); // yes to "pay {2} for Akroma's Devoted to attack"
-        setChoice(playerA, true); // yes to "pay {2} for Akroma's Devoted to attack"
+        // ClaudeMTG fork: both taxes are totalled and asked once (CR 508.1g-h), no order to choose
+        setChoice(playerA, true); // yes to "pay {4} for Akroma's Devoted to attack"
 
         setStopAt(1, PhaseStep.END_TURN);
         execute();
@@ -133,9 +131,8 @@ public class WhipgrassEntanglerTest extends CardTestPlayerBase {
         activateAbility(1, PhaseStep.PRECOMBAT_MAIN, playerA, "{1}{W}: Until end of turn, ", "Akroma's Devoted");
 
         attack(1, playerA, "Akroma's Devoted");
-        setChoice(playerA, "Akroma's Devoted"); // two of the same replacement effect to choose from.
-        setChoice(playerA, true); // yes to "pay {2} for Akroma's Devoted to attack"
-        setChoice(playerA, true); // yes to "pay {2} for Akroma's Devoted to attack"
+        // ClaudeMTG fork: both taxes are totalled and asked once (CR 508.1g-h), no order to choose
+        setChoice(playerA, true); // yes to "pay {4} for Akroma's Devoted to attack"
 
         setStopAt(1, PhaseStep.END_TURN);
         execute();

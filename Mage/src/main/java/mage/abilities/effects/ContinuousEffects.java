@@ -346,6 +346,35 @@ public class ContinuousEffects implements Serializable {
     }
 
     /**
+     * Every attack/block tax still to apply to this declaration, with the ability it
+     * applies from - one ability per effect, as replaceEvent applies an effect once
+     * per event. Same tests as getApplicableReplacementEffects.
+     * ClaudeMTG fork: lets the taxes on one declaration be totalled and paid at once
+     * (CR 508.1g-h, 509.1d-e).
+     */
+    public Map<PayCostToAttackBlockEffect, Ability> getApplicablePayCostToAttackBlockEffects(GameEvent event, Game game) {
+        Map<PayCostToAttackBlockEffect, Ability> found = new LinkedHashMap<>();
+        for (ReplacementEffect effect : replacementEffects) {
+            if (!(effect instanceof PayCostToAttackBlockEffect) || !effect.checksEventType(event, game)) {
+                continue;
+            }
+            if (event.getAppliedEffects() != null && event.getAppliedEffects().contains(effect.getId())) {
+                continue;
+            }
+            for (Ability ability : replacementEffects.getAbility(effect.getId())) {
+                if ((ability.getAbilityType() != AbilityType.STATIC || ability.isInUseableZone(game, null, event))
+                        && !effect.isUsed()
+                        && (!game.getScopeRelevant() || effect.hasSelfScope() || !event.getTargetId().equals(ability.getSourceId()))
+                        && effect.applies(event, ability, game)) {
+                    found.put((PayCostToAttackBlockEffect) effect, ability);
+                    break;
+                }
+            }
+        }
+        return found;
+    }
+
+    /**
      * @param event
      * @param game
      * @return a list of all {@link ReplacementEffect} that apply to the current
@@ -887,6 +916,11 @@ public class ContinuousEffects implements Serializable {
                 if (abilities == null || abilities.size() == 1) {
                     onlyOne = true;
                 }
+            }
+            // ClaudeMTG fork: attack/block taxes are totalled and paid together by the
+            // first one applied (PayCostToAttackBlockEffectImpl), so their order is no choice
+            if (!onlyOne && rEffects.keySet().stream().allMatch(PayCostToAttackBlockEffect.class::isInstance)) {
+                onlyOne = true;
             }
             if (onlyOne) {
                 index = 0;

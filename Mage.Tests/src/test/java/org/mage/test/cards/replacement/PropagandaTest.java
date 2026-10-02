@@ -44,9 +44,8 @@ public class PropagandaTest extends CardTestPlayerBase {
         addCard(Zone.BATTLEFIELD, playerB, "Plains", 4);
 
         attack(2, playerB, "Silvercoat Lion");
-        setChoice(playerB, "Propaganda"); // Creatures can't attack you unless their controller pays {2} for each creature they control that's attacking you.");
-        setChoice(playerB, true);// Pay {2} to attack?
-        setChoice(playerB, true);// Pay {2} to attack?
+        // ClaudeMTG fork: both taxes are totalled and asked once (CR 508.1g-h), no order to choose
+        setChoice(playerB, true);// Pay {4} to attack?
 
         setStopAt(2, PhaseStep.POSTCOMBAT_MAIN);
         execute();
