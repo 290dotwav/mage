@@ -9,6 +9,7 @@ import mage.abilities.keyword.BlitzAbility;
 import mage.cards.Card;
 import mage.cards.CardImpl;
 import mage.cards.CardSetInfo;
+import mage.cards.DoubleFacedCard;
 import mage.constants.*;
 import mage.filter.common.FilterCreatureCard;
 import mage.filter.predicate.mageobject.ManaValuePredicate;
@@ -82,18 +83,13 @@ class HenzieToolboxTorreGainBlitzEffect extends ContinuousEffectImpl {
             return false;
         }
         Set<Card> cardsToGainBlitz = new HashSet<>();
-        cardsToGainBlitz.addAll(controller.getHand().getCards(filter, game));
-        cardsToGainBlitz.addAll(controller.getGraveyard().getCards(filter, game));
-        controller.getLibrary().getCards(game).stream()
-                .filter(c -> filter.match(c, game))
-                .forEach(cardsToGainBlitz::add);
-        game.getExile().getCardsInRange(game, controller.getId()).stream()
-                .filter(c -> filter.match(c, game))
-                .forEach(cardsToGainBlitz::add);
+        controller.getHand().getCards(game).forEach(c -> addCastableFaces(c, game, cardsToGainBlitz));
+        controller.getGraveyard().getCards(game).forEach(c -> addCastableFaces(c, game, cardsToGainBlitz));
+        controller.getLibrary().getCards(game).forEach(c -> addCastableFaces(c, game, cardsToGainBlitz));
+        game.getExile().getCardsInRange(game, controller.getId())
+                .forEach(c -> addCastableFaces(c, game, cardsToGainBlitz));
         game.getCommanderCardsFromCommandZone(controller, CommanderCardType.ANY)
-                .stream()
-                .filter(card -> filter.match(card, game))
-                .forEach(cardsToGainBlitz::add);
+                .forEach(c -> addCastableFaces(c, game, cardsToGainBlitz));
         game.getStack().stream()
                 .filter(Spell.class::isInstance)
                 .filter(s -> s.isControlledBy(controller.getId()))
@@ -111,6 +107,24 @@ class HenzieToolboxTorreGainBlitzEffect extends ContinuousEffectImpl {
             game.getState().addOtherAbility(card, ability);
         }
         return true;
+    }
+
+    /**
+     * A double-faced card is cast by one of its faces, and the permanent it becomes is that face,
+     * with an id of its own: blitz given to the whole card would be cast, but its "gains haste and
+     * 'When this creature dies, draw a card'" would wait for an object that never enters
+     * (Ojer Kaslem, Deepest Growth). So it is given to each face that is itself such a creature spell.
+     */
+    private static void addCastableFaces(Card card, Game game, Set<Card> cardsToGainBlitz) {
+        if (card instanceof DoubleFacedCard) {
+            for (Card face : new Card[]{((DoubleFacedCard) card).getLeftHalfCard(), ((DoubleFacedCard) card).getRightHalfCard()}) {
+                if (face != null && filter.match(face, game)) {
+                    cardsToGainBlitz.add(face);
+                }
+            }
+        } else if (filter.match(card, game)) {
+            cardsToGainBlitz.add(card);
+        }
     }
 
     @Override

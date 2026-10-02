@@ -67,6 +67,29 @@ public class HenzieToolboxTorreTest extends CardTestCommander4Players {
     }
 
     /**
+     * A transforming double-faced creature (Ojer Kaslem, Deepest Growth) cast
+     * for the blitz cost Henzie gives it must enter with haste and the draw
+     * trigger, and be able to attack that turn — on the table it entered with
+     * neither and was left out of the possible attackers.
+     */
+    @Test
+    public void transformingCardGainsBlitz() {
+        String ojer = "Ojer Kaslem, Deepest Growth"; // {3}{G}{G} 6/5 trample, transforming
+        addCard(Zone.BATTLEFIELD, playerA, henzieToolboxTorre);
+        addCard(Zone.BATTLEFIELD, playerA, "Forest", 5);
+        addCard(Zone.HAND, playerA, ojer);
+
+        castSpell(1, PhaseStep.PRECOMBAT_MAIN, playerA, ojer + withBlitz, true);
+        attack(1, playerA, ojer, playerB);
+
+        setStopAt(1, PhaseStep.POSTCOMBAT_MAIN);
+        execute();
+
+        assertBlitzed(ojer, true);
+        assertLife(playerB, currentGame.getStartingLife() - 6); // trample 6/5, unblocked
+    }
+
+    /**
      * Test that it's properly being discount for each time the commander was cast.
      * Bonded Construct should be playable for free with its blitz costs.
      */
