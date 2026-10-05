@@ -270,4 +270,40 @@ public class RollbackPointsTest extends CardTestPlayerBase {
         Assert.assertTrue("nobody human but the asker: accepted at once", alone.settleIfUnanimous());
         Assert.assertEquals(RollbackVote.Outcome.ACCEPTED, alone.getOutcome());
     }
+
+    @Test
+    public void test_Vote_DeadDoNotVote_AndGoingOutMidVoteIsAYes() {
+        RollbackPoints.Point point = anyPoint();
+        UUID ann = UUID.randomUUID();
+        UUID bob = UUID.randomUUID();
+        UUID cid = UUID.randomUUID();
+        UUID dan = UUID.randomUUID();
+        List<RollbackVote.Seat> seats = new ArrayList<>();
+        seats.add(new RollbackVote.Seat(ann, "Ann", true));
+        seats.add(new RollbackVote.Seat(bob, "Bob", true));
+        seats.add(new RollbackVote.Seat(cid, "Cid", true));
+        seats.add(new RollbackVote.Seat(dan, "Dan", true, true)); // dead: no vote, yes
+
+        RollbackVote vote = new RollbackVote(point, ann, "Ann", seats, 0L);
+        Assert.assertEquals(RollbackVote.Answer.YES, vote.answerOf(dan));
+        Assert.assertFalse("the dead have nothing to answer", vote.answer(dan, false));
+        Assert.assertTrue(vote.answer(bob, true));
+        Assert.assertTrue("Cid is still to answer", vote.isOpen());
+        Assert.assertTrue("Cid concedes", vote.out(cid));
+        Assert.assertEquals(RollbackVote.Answer.YES, vote.answerOf(cid));
+        Assert.assertEquals(RollbackVote.Outcome.ACCEPTED, vote.getOutcome());
+        Assert.assertTrue(vote.claimSettle());
+        Assert.assertFalse("settled once", vote.claimSettle());
+        Assert.assertFalse("over", vote.out(bob));
+
+        List<RollbackVote.Seat> living = new ArrayList<>();
+        living.add(new RollbackVote.Seat(ann, "Ann", true));
+        living.add(new RollbackVote.Seat(bob, "Bob", true));
+        living.add(new RollbackVote.Seat(cid, "Cid", true));
+        RollbackVote silent = new RollbackVote(point, ann, "Ann", living, 0L);
+        Assert.assertTrue("Cid concedes, Bob still to answer", silent.out(cid));
+        Assert.assertTrue(silent.isOpen());
+        Assert.assertTrue(silent.timeOut());
+        Assert.assertEquals("only the living are silent", "Bob", silent.getRefusedBy());
+    }
 }

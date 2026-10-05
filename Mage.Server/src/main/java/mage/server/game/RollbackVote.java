@@ -12,9 +12,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * One request to go back to a rollback point ({@link RollbackPoints}), and the table's answer.
  * <p>
- * Only the human seats vote. A seat played by their AI says yes by itself, and so does the seat
- * that asked; one no ends it, and a seat that has not answered when {@link #TIMEOUT_MILLIS} run
- * out says no. Every answer is kept per seat, so a table can show who has answered what.
+ * Only the human seats still in the game vote. A seat played by their AI says yes by itself, and
+ * so does the seat that asked, and so does a seat out of the game (lost, conceded, left): « Les
+ * joueurs morts ne peuvent pas voter, c'est oui d'office ». A seat that goes out while the vote is
+ * open says yes then ({@link #out}), and the vote is accepted if nobody else is left to answer.
+ * One no ends it, and a seat that has not answered when {@link #TIMEOUT_MILLIS} run out says no.
+ * Every answer is kept per seat, so a table can show who has answered what.
  * <p>
  * The decision is here and nothing else: the {@link GameController} opens a vote, feeds it the
  * answers ({@code ADD_PERMISSION_TO_ROLLBACK_TURN} / {@code DENY_PERMISSION_TO_ROLLBACK_TURN},
@@ -61,12 +64,19 @@ public final class RollbackVote {
         private final UUID playerId;
         private final String name;
         private final boolean human;
-        private Answer answer;
+        private volatile boolean out;
+        private volatile Answer answer;
 
         public Seat(UUID playerId, String name, boolean human) {
+            this(playerId, name, human, false);
+        }
+
+        /** {@code out}: the seat is out of the game (lost, conceded, left) and does not vote. */
+        public Seat(UUID playerId, String name, boolean human, boolean out) {
             this.playerId = playerId;
             this.name = name;
             this.human = human;
+            this.out = out;
             this.answer = Answer.PENDING;
         }
 
@@ -85,6 +95,11 @@ public final class RollbackVote {
         public Answer getAnswer() {
             return answer;
         }
+
+        /** Out of the game: it does not vote, its answer is yes. */
+        public boolean isOut() {
+            return out;
+        }
     }
 
     private static final AtomicInteger SEQ = new AtomicInteger();
@@ -102,10 +117,11 @@ public final class RollbackVote {
     private final long deadline;
     private Outcome outcome;
     private String refusedBy;
+    private boolean settled;
 
     /**
-     * Opens a vote: the asker and every seat that is not human say yes at once, the others are
-     * pending until they answer or the time runs out.
+     * Opens a vote: the asker, every seat that is not human and every seat out of the game say yes
+     * at once, the others are pending until they answer or the time runs out.
      */
     public RollbackVote(RollbackPoints.Point point, UUID requesterId, String requesterName, List<Seat> seats, long now) {
         this.id = SEQ.incrementAndGet();
@@ -120,7 +136,7 @@ public final class RollbackVote {
         this.seats = new ArrayList<>(seats);
         this.deadline = now + TIMEOUT_MILLIS;
         for (Seat seat : this.seats) {
-            if (!seat.human || seat.playerId.equals(requesterId)) {
+            if (!seat.human || seat.out || seat.playerId.equals(requesterId)) {
                 seat.answer = Answer.YES;
             }
         }
@@ -148,6 +164,38 @@ public final class RollbackVote {
         } else if (allYes()) {
             outcome = Outcome.ACCEPTED;
         }
+        return true;
+    }
+
+    /**
+     * A seat went out of the game while the vote is open (lost, conceded, left): it does not vote
+     * any more, and a pending answer of its becomes yes; the last one pending closes the vote as
+     * accepted. False when the vote is over, the seat is unknown or was already out.
+     */
+    public synchronized boolean out(UUID playerId) {
+        Seat seat = seat(playerId);
+        if (outcome != null || seat == null || seat.out) {
+            return false;
+        }
+        seat.out = true;
+        if (seat.answer == Answer.PENDING) {
+            seat.answer = Answer.YES;
+        }
+        if (allYes()) {
+            outcome = Outcome.ACCEPTED;
+        }
+        return true;
+    }
+
+    /**
+     * True once only, for the one caller that acts on the outcome (an answer, a seat going out
+     * and the time running out can close the vote on different threads).
+     */
+    public synchronized boolean claimSettle() {
+        if (outcome == null || settled) {
+            return false;
+        }
+        settled = true;
         return true;
     }
 

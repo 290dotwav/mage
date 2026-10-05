@@ -19,6 +19,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
@@ -31,6 +32,10 @@ import java.util.function.Supplier;
  * of their rollback request ({@code ADD_PERMISSION_TO_ROLLBACK_TURN} /
  * {@code DENY_PERMISSION_TO_ROLLBACK_TURN}); every change is told to the {@link RollbackVote}
  * listener and said in the game log.
+ * <p>
+ * A seat out of the game (lost, conceded, left) does not vote: its answer is yes, from the start
+ * or from the moment it goes out ({@link #recheck}, on every update of the game and every second
+ * while a vote is open).
  */
 final class RollbackRequests {
 
@@ -39,17 +44,32 @@ final class RollbackRequests {
     private final Game game;
     private final Function<UUID, UUID> playerOfUser;
     private final Function<UUID, Optional<User>> userOfPlayer;
+    private final Predicate<Player> human;
+    private final Predicate<UUID> somebodyAt;
     private final Supplier<Set<UUID>> audience;
     private final ScheduledExecutorService timer;
 
     private RollbackVote vote;
     private ScheduledFuture<?> timeout;
+    private ScheduledFuture<?> watch;
 
     RollbackRequests(Game game, Function<UUID, UUID> playerOfUser, Function<UUID, Optional<User>> userOfPlayer,
+                     Supplier<Set<UUID>> audience, ScheduledExecutorService timer) {
+        this(game, playerOfUser, userOfPlayer, Player::isHuman, id -> userOfPlayer.apply(id).isPresent(), audience, timer);
+    }
+
+    /**
+     * {@code human}: a seat a person plays; {@code somebodyAt}: a person is still behind that seat
+     * (a human seat nobody is behind has left the table: it does not vote).
+     */
+    RollbackRequests(Game game, Function<UUID, UUID> playerOfUser, Function<UUID, Optional<User>> userOfPlayer,
+                     Predicate<Player> human, Predicate<UUID> somebodyAt,
                      Supplier<Set<UUID>> audience, ScheduledExecutorService timer) {
         this.game = game;
         this.playerOfUser = playerOfUser;
         this.userOfPlayer = userOfPlayer;
+        this.human = human;
+        this.somebodyAt = somebodyAt;
         this.audience = audience;
         this.timer = timer;
     }
@@ -81,11 +101,10 @@ final class RollbackRequests {
             }
             List<RollbackVote.Seat> seats = new ArrayList<>();
             for (Player p : game.getState().getPlayers().values()) {
-                if (p.isInGame()) {
-                    // a human seat with nobody behind it (left the table) cannot answer: it does not vote
-                    boolean human = p.isHuman() && userOfPlayer.apply(p.getId()).isPresent();
-                    seats.add(new RollbackVote.Seat(p.getId(), p.getName(), human));
-                }
+                boolean person = human.test(p);
+                // out of the game, or a human seat with nobody behind it (left the table): no vote, yes
+                boolean out = !p.isInGame() || (person && !somebodyAt.test(p.getId()));
+                seats.add(new RollbackVote.Seat(p.getId(), p.getName(), person, out));
             }
             opened = new RollbackVote(point, playerId, player.getName(), seats, System.currentTimeMillis());
             vote = opened;
@@ -101,9 +120,50 @@ final class RollbackRequests {
             }
         }
         synchronized (this) {
+            if (vote != opened || !opened.isOpen()) {
+                return; // answered already, before the clocks were set
+            }
             timeout = timer.schedule(() -> timedOut(opened), RollbackVote.TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+            watch = timer.scheduleWithFixedDelay(this::recheck, 1, 1, TimeUnit.SECONDS);
         }
         publish(opened);
+        recheck(); // somebody may have gone out while the seats were asked
+    }
+
+    /** The game changed: a seat may have gone out. Rechecked off the game's thread. */
+    void gameChanged() {
+        if (current() != null) {
+            timer.execute(this::recheck);
+        }
+    }
+
+    /**
+     * Each seat still pending whose player is out of the game now (lost, conceded, left) says
+     * yes; the vote is accepted when that leaves nobody to answer. Cheap with no vote open.
+     */
+    void recheck() {
+        RollbackVote v = current();
+        if (v == null) {
+            return;
+        }
+        boolean changed = false;
+        for (RollbackVote.Seat seat : v.getSeats()) {
+            if (seat.isOut()) {
+                continue;
+            }
+            Player p = game.getPlayer(seat.getPlayerId());
+            if (p == null || !p.isInGame()) {
+                changed |= v.out(seat.getPlayerId());
+            }
+        }
+        if (!changed) {
+            return;
+        }
+        if (v.isOpen()) {
+            publish(v);
+        } else {
+            settle(v);
+        }
     }
 
     /**
@@ -132,10 +192,17 @@ final class RollbackRequests {
 
     /** The vote is over: go back, or say who refused; then tell everybody and forget it. */
     private void settle(RollbackVote v) {
+        if (!v.claimSettle()) {
+            return; // another thread closed it and acts on it
+        }
         synchronized (this) {
             if (timeout != null) {
                 timeout.cancel(false);
                 timeout = null;
+            }
+            if (watch != null) {
+                watch.cancel(false);
+                watch = null;
             }
         }
         switch (v.getOutcome()) {

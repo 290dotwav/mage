@@ -88,7 +88,8 @@ final class Rollbacks {
      * { "id": 3, "pointId": 17, "point": { …as in rollbackPoints… }, "kind": "cast", "turn": 5, "label": "Bob casts Cyclonic Rift",
      *   "target": "before Bob casts Cyclonic Rift", "requester": "Bob", "requesterId": "…",
      *   "deadline": 1759600030000, "millisLeft": 29000,
-     *   "seats": [ { "playerId": "…", "name": "Ann", "human": true, "answer": "pending" }, … ],
+     *   "seats": [ { "playerId": "…", "name": "Ann", "human": true, "out": false, "answer": "pending" }, … ],
+     *   (a seat "out" of the game, lost, conceded or left, does not vote: its answer is "yes")
      *   "outcome": null | "accepted" | "refused" | "timeout" | "failed", "refusedBy": null | "Ann" }
      * </pre>
      */
@@ -111,6 +112,7 @@ final class Rollbacks {
             s.addProperty("playerId", seat.getPlayerId().toString());
             s.addProperty("name", seat.getName());
             s.addProperty("human", seat.isHuman());
+            s.addProperty("out", seat.isOut());
             s.addProperty("answer", seat.getAnswer().name().toLowerCase(Locale.ROOT));
             seats.add(s);
         }

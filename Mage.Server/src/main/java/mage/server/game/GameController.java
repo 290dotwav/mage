@@ -134,6 +134,7 @@ public class GameController implements GameCallback {
                         switch (event.getEventType()) {
                             case UPDATE:
                                 updateGame();
+                                rollbackRequests.gameChanged(); // a seat out of the game votes yes
                                 break;
                             case INFO:
                                 managerFactory.chatManager().broadcast(chatId, "", event.getMessage(), MessageColor.BLACK, true, event.getGame(), MessageType.GAME, null);
