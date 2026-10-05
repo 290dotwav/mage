@@ -49,6 +49,11 @@ public class YorvoLordOfGarenbrigOnCommandersTest extends CardTestCommanderDuelB
         addCard(Zone.COMMAND, playerA, "Uro, Titan of Nature's Wrath"); // {1}{G}{U}
         addCard(Zone.BATTLEFIELD, playerA, "Forest", 2);
         addCard(Zone.BATTLEFIELD, playerA, "Island", 1);
+        // A land in hand for Uro's "you may put a land card from your hand" to ask about. The question is
+        // only asked when the hand holds a land, and without this the hand held one only when the card Uro
+        // draws off the shuffled library happened to be a land: the "do not put land" choice below went
+        // unused, and the test failed, whenever it drew a spell.
+        addCard(Zone.HAND, playerA, "Forest", 1);
 
         // prepare yorvo
         castSpell(1, PhaseStep.PRECOMBAT_MAIN, playerA, "Yorvo, Lord of Garenbrig");
@@ -76,5 +81,7 @@ public class YorvoLordOfGarenbrigOnCommandersTest extends CardTestCommanderDuelB
         setStrictChooseMode(true);
         setStopAt(1, PhaseStep.END_TURN);
         execute();
+
+        assertHandCount(playerA, "Forest", 1); // not put onto the battlefield
     }
 }
