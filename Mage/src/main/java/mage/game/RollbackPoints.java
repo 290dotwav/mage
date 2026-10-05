@@ -36,6 +36,13 @@ import java.util.UUID;
  * copy, and resumes the turn where it stood ({@code Turn.resumePlay}) - at the start of the step,
  * or at the priority of the player who then cast or played. Simulated games (the AIs' copies)
  * and the playable checks never take a point.
+ * <p>
+ * A combat damage step is the exception: nobody gets priority before its damage (510.1-510.3),
+ * so its start is the same moment as its end, and going back there dealt the damage again at
+ * once - a commander that died in that combat died again before anybody could act. Its point
+ * resumes instead at the last priority before the damage (the declare blockers step, or the
+ * first-strike damage step), the attackers still attacking and the blocks as declared
+ * ({@link Point#getResumeStep}).
  */
 public final class RollbackPoints {
 
@@ -58,8 +65,14 @@ public final class RollbackPoints {
         private final String cardName;
         private final long createdAt;
         private final transient GameState state;
+        private final PhaseStep resumeStep;
 
         Point(int id, Kind kind, int turn, UUID playerId, String playerName, PhaseStep step, String cardName, GameState state) {
+            this(id, kind, turn, playerId, playerName, step, cardName, state, null);
+        }
+
+        Point(int id, Kind kind, int turn, UUID playerId, String playerName, PhaseStep step, String cardName, GameState state, PhaseStep resumeStep) {
+            this.resumeStep = resumeStep;
             this.id = id;
             this.kind = kind;
             this.turn = turn;
@@ -108,6 +121,14 @@ public final class RollbackPoints {
 
         GameState getState() {
             return state;
+        }
+
+        /**
+         * For a combat damage step: the step played just before it (declare blockers, or first-strike
+         * damage), whose priority the game resumes at; null when the step itself is resumed from its start.
+         */
+        public PhaseStep getResumeStep() {
+            return resumeStep;
         }
 
         /**
@@ -173,8 +194,34 @@ public final class RollbackPoints {
             return;
         }
         Player active = game.getPlayer(game.getActivePlayerId());
+        PhaseStep step = game.getTurnStepType();
         holder.add(game, new Point(holder.nextId(), Kind.STEP, game.getTurnNum(), game.getActivePlayerId(),
-                active == null ? "?" : active.getName(), game.getTurnStepType(), null, game.getState().copy()));
+                active == null ? "?" : active.getName(), step, null, game.getState().copy(),
+                holder.priorityBeforeDamage(step, game.getTurnNum())));
+    }
+
+    /**
+     * A combat damage step deals its damage before anybody gets priority (510.1-510.3): the last
+     * moment anybody can act before it is the priority of the step played just before it in this
+     * combat - the declare blockers step, or the first-strike damage step (510.4). That step's own
+     * point is the last step point of the turn. Null for any other step, or when it is not there.
+     */
+    private synchronized PhaseStep priorityBeforeDamage(PhaseStep step, int turn) {
+        if (step != PhaseStep.COMBAT_DAMAGE && step != PhaseStep.FIRST_COMBAT_DAMAGE) {
+            return null;
+        }
+        for (int i = points.size() - 1; i >= 0; i--) {
+            Point p = points.get(i);
+            if (p.kind != Kind.STEP || p.turn != turn) {
+                continue;
+            }
+            if (p.step == PhaseStep.DECLARE_BLOCKERS
+                    || (step == PhaseStep.COMBAT_DAMAGE && p.step == PhaseStep.FIRST_COMBAT_DAMAGE)) {
+                return p.step;
+            }
+            return null;
+        }
+        return null;
     }
 
     /** A turn begins and their own turn-start copy was taken (GameImpl.saveRollBackGameState). */
@@ -279,14 +326,15 @@ public final class RollbackPoints {
     /**
      * The game went back to {@code point}: what came after it is gone. A step start stays (the
      * game resumes at it and will not take it again); a cast or a land goes too, since the game is
-     * back at the priority it was taken at, and doing it again takes it again.
+     * back at the priority it was taken at, and doing it again takes it again; so does a combat
+     * damage step resumed at the priority before it, whose step will start again and take it again.
      */
     public synchronized void wentBackTo(Point point) {
         int at = points.indexOf(point);
         if (at < 0) {
             return;
         }
-        int keep = point.kind == Kind.CAST || point.kind == Kind.LAND ? at : at + 1;
+        int keep = point.kind == Kind.CAST || point.kind == Kind.LAND || point.resumeStep != null ? at : at + 1;
         while (points.size() > keep) {
             points.remove(points.size() - 1);
         }

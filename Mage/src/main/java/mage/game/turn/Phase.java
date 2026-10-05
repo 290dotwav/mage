@@ -67,6 +67,21 @@ public abstract class Phase implements Serializable {
         this.currentStep = step;
     }
 
+    /**
+     * Rollback: the step of this phase of that type becomes the current one, at its priority (its
+     * turn-based actions done), so a resumed turn goes on from there. False when it has no such step.
+     */
+    public boolean resumeAtPriorityOf(PhaseStep type) {
+        for (Step step : steps) {
+            if (step.getType() == type) {
+                step.stepPart = Step.StepPart.PRIORITY;
+                currentStep = step;
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void resetCount() {
         count = 0;
     }

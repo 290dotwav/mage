@@ -58,6 +58,23 @@ public class Turn implements Serializable {
         return currentPhase;
     }
 
+    /**
+     * Rollback: the current phase goes on from the priority of its step of that type (see
+     * {@link Phase#resumeAtPriorityOf}). A copied turn holds its current phase apart from its list
+     * of phases, and {@link #resumePlay} reads the step from the one and plays the other: both move.
+     */
+    public boolean resumeAtPriorityOf(PhaseStep type) {
+        if (currentPhase == null || !currentPhase.resumeAtPriorityOf(type)) {
+            return false;
+        }
+        for (Phase phase : phases) {
+            if (phase.getType() == currentPhase.getType()) {
+                return phase.resumeAtPriorityOf(type);
+            }
+        }
+        return false;
+    }
+
     public Phase getPhase(TurnPhase turnPhase) {
         for (Phase phase : phases) {
             if (phase.getType() == turnPhase) {

@@ -1779,6 +1779,11 @@ public abstract class GameImpl implements Game {
                                 if (isPaused() || checkIfGameIsOver()) {
                                     return;
                                 }
+                                if (executingRollback()) {
+                                    // granted while a state-based action or a trigger was asking (a commander
+                                    // going to the command zone, a target): nobody gets this priority, the game unwinds
+                                    return;
+                                }
                                 // A seat is holding the table (the web door's pause: someone is
                                 // reading a card). The game thread waits here, before anybody
                                 // acts, rather than unwinding the way pause() does - see
@@ -4204,6 +4209,11 @@ public abstract class GameImpl implements Game {
             savedStates.clear();
             gameStates.clear();
             if (point.getKind() == RollbackPoints.Kind.STEP) {
+                // a combat damage step deals its damage before any priority (510.1-510.3): it is
+                // gone back to at the priority before it, the attackers still attacking
+                if (point.getResumeStep() != null) {
+                    state.getTurn().resumeAtPriorityOf(point.getResumeStep());
+                }
                 // the step starts again: its first priority is the active player's, nobody has passed yet
                 state.setPriorityPlayerId(state.getActivePlayerId());
                 state.getPlayers().resetPassed();

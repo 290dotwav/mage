@@ -95,6 +95,11 @@ public class HumanPlayer extends PlayerImpl {
     // * - GAME thread: on notify from response - check new answer value and process it (if it bad then repeat and wait the next one);
     private transient Boolean responseOpenedForAnswer = false; // GAME thread waiting new answer
     private transient long responseLastWaitingThreadId = 0;
+    // An abort (a rollback granted, a disconnect) ends the question that was open: an answer sent
+    // for it must not be taken by the next question the game asks. abortCount counts the aborts;
+    // askedAfterAbort is abortCount when the latest question was asked (prepareForResponse).
+    private transient volatile int abortCount = 0;
+    private transient volatile int askedAfterAbort = 0;
     private final transient PlayerResponse response; // data receiver from a client side (must be shared for one player between multiple clients)
     private final int RESPONSE_WAITING_TIME_SECS = 30; // waiting time before cancel current response
     private final int RESPONSE_WAITING_CHECK_MS = 100; // timeout for open status check
@@ -214,6 +219,12 @@ public class HumanPlayer extends PlayerImpl {
         int currentTimesWaiting = 0;
         int maxTimesWaiting = RESPONSE_WAITING_TIME_SECS * 1000 / RESPONSE_WAITING_CHECK_MS;
         long currentThreadId = Thread.currentThread().getId();
+        // nothing was asked since the last abort: this answers the question the abort ended
+        int arrivedAfterAbort = abortCount;
+        if (askedAfterAbort != arrivedAfterAbort) {
+            logger.debug("Answer of " + this.getName() + " dropped: the question it answers was aborted");
+            return false;
+        }
         // it's a latest response
         responseLastWaitingThreadId = currentThreadId;
         while (!responseOpenedForAnswer && canRespond()) {
@@ -250,6 +261,11 @@ public class HumanPlayer extends PlayerImpl {
             }
         }
 
+        if (abortCount != arrivedAfterAbort) {
+            // aborted while this answer waited for the next question: it answers the aborted one
+            logger.debug("Answer of " + this.getName() + " dropped: the question it answers was aborted while it waited");
+            return false;
+        }
         return true; // can use new value
     }
 
@@ -302,6 +318,7 @@ public class HumanPlayer extends PlayerImpl {
         }
 
         responseOpenedForAnswer = false;
+        askedAfterAbort = abortCount;
     }
 
     /**
@@ -334,7 +351,10 @@ public class HumanPlayer extends PlayerImpl {
             loop = false;
             synchronized (response) { // TODO: synchronized response smells bad here, possible deadlocks? Need research
                 try {
-                    response.wait(); // start waiting a response.notifyAll command from CALL thread (client answer)
+                    // an abort that came between the question and this wait has already notified: not waited for ever
+                    if (canRespond()) {
+                        response.wait(); // start waiting a response.notifyAll command from CALL thread (client answer)
+                    }
                 } catch (InterruptedException ignore) {
                 } finally {
                     responseOpenedForAnswer = false;
@@ -2730,6 +2750,7 @@ public class HumanPlayer extends PlayerImpl {
     @Override
     public void abort() {
         // abort must cancel any response and stop waiting immediately
+        abortCount++;
         abort = true;
         synchronized (response) {
             response.notifyAll();
