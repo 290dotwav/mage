@@ -185,6 +185,7 @@ final class WebSession implements AsynchInvokerCallbackHandler {
             if (copy.getMethod().name().startsWith("GAME_")) {
                 StackControllers.enrich(frame, copy.getObjectId(), managerFactory);
                 Commanders.enrich(frame, copy.getObjectId(), managerFactory);
+                Rollbacks.enrich(frame, copy.getObjectId(), managerFactory);
             }
             json = Frames.GSON.toJson(frame);
             if (copy.getMethod() == ClientCallbackMethod.START_GAME && copy.getData() instanceof TableClientMessage) {

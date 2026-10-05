@@ -3,6 +3,7 @@ package mage.game.turn;
 import mage.constants.PhaseStep;
 import mage.constants.TurnPhase;
 import mage.game.Game;
+import mage.game.RollbackPoints;
 import mage.game.events.GameEvent;
 import mage.game.events.GameEvent.EventType;
 import mage.players.Player;
@@ -55,6 +56,11 @@ public abstract class Phase implements Serializable {
 
     public Step getStep() {
         return currentStep;
+    }
+
+    /** True while one of this phase's own steps is played (not an extra step): a rollback point can resume it. */
+    public boolean isPlayingOwnStep() {
+        return currentStep != null && steps.contains(currentStep);
     }
 
     public void setStep(Step step) {
@@ -198,8 +204,16 @@ public abstract class Phase implements Serializable {
     }
 
     protected void playStep(Game game) {
+        if (game.executingRollback()) {
+            return;
+        }
         if (!currentStep.skipStep(game, activePlayerId)) {
             game.getState().increaseStepNum();
+            if (game.getRollbackPoints() != null && !game.isSimulation()) {
+                // a rollback point resumes the step from its start (resumeStep, PRE)
+                currentStep.stepPart = Step.StepPart.PRE;
+                RollbackPoints.stepStarted(game);
+            }
             prePriority(game, activePlayerId);
             if (!game.isPaused() && !game.checkIfGameIsOver() && !game.executingRollback()) {
                 currentStep.priority(game, activePlayerId, false);
@@ -228,11 +242,11 @@ public abstract class Phase implements Serializable {
                     prePriority(game, activePlayerId);
                 }
             case PRIORITY:
-                if (!game.isPaused() && !game.checkIfGameIsOver()) {
+                if (!game.isPaused() && !game.checkIfGameIsOver() && !game.executingRollback()) {
                     currentStep.priority(game, activePlayerId, resuming);
                 }
             case POST:
-                if (!game.isPaused() && !game.checkIfGameIsOver()) {
+                if (!game.isPaused() && !game.checkIfGameIsOver() && !game.executingRollback()) {
                     postPriority(game, activePlayerId);
                 }
         }

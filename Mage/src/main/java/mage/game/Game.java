@@ -664,6 +664,21 @@ public interface Game extends MageItem, Serializable, Copyable<Game> {
     boolean executingRollback();
 
     /**
+     * The rollback points of this game (steps, casts, lands, turn starts), null when it keeps none.
+     */
+    default RollbackPoints getRollbackPoints() {
+        return null;
+    }
+
+    /**
+     * Go back to a rollback point: every loop unwinds, the copy is restored and the turn resumes
+     * there. Can be called from any thread; false when that point cannot be gone back to.
+     */
+    default boolean rollbackToPoint(int pointId) {
+        return false;
+    }
+
+    /**
      * Add counters to permanent before ETB. Use it before put real permanent to battlefield.
      */
     void setEnterWithCounters(UUID sourceId, Counters counters);

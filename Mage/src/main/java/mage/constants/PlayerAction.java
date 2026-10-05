@@ -22,6 +22,7 @@ public enum PlayerAction {
     TRIGGER_AUTO_ORDER_NAME_LAST,
     TRIGGER_AUTO_ORDER_RESET_ALL,
     ROLLBACK_TURNS,
+    ROLLBACK_TO_POINT, // data: the id of a rollback point (mage.game.RollbackPoints)
     UNDO,
     CONCEDE,
     MANA_AUTO_PAYMENT_ON,

@@ -279,7 +279,7 @@ final class TableOps {
         options.setMatchTimeLimit(MatchTimeLimit.NONE);
         options.setMatchBufferTime(MatchBufferTime.NONE);
         options.setSkillLevel(SkillLevel.CASUAL);
-        options.setRollbackTurnsAllowed(false);
+        options.setRollbackTurnsAllowed(true); // rollback points and their vote (Rollbacks)
         options.setSpectatorsAllowed(true);
         options.setRated(false);
         options.setPassword("");

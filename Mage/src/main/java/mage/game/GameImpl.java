@@ -138,8 +138,11 @@ public abstract class GameImpl implements Game {
 
     // game states to allow player rollback
     protected transient Map<Integer, GameState> gameStatesRollBack = new HashMap<>();
-    protected transient boolean executingRollback;
+    protected transient volatile boolean executingRollback;
     protected transient int turnToGoToForRollback;
+    // rollback points finer than a turn (steps, casts, lands), and the one being gone back to
+    protected transient RollbackPoints rollbackPoints = new RollbackPoints();
+    protected transient volatile RollbackPoints.Point rollbackPointToRestore;
 
     protected Date startTime;
     protected Date endTime;
@@ -1183,8 +1186,14 @@ public abstract class GameImpl implements Game {
     private boolean playTurn(Player player) {
         boolean skipTurn = false;
         do {
+            boolean resumed = false;
             if (executingRollback) {
-                rollbackTurnsExecution(turnToGoToForRollback);
+                if (rollbackPointToRestore != null) {
+                    restoreRollbackPoint();
+                    resumed = true;
+                } else {
+                    rollbackTurnsExecution(turnToGoToForRollback);
+                }
                 player = getPlayer(state.getActivePlayerId());
             } else {
                 state.setActivePlayerId(player.getId());
@@ -1193,7 +1202,13 @@ public abstract class GameImpl implements Game {
             if (checkStopOnTurnOption()) {
                 return false;
             }
-            skipTurn = state.getTurn().play(this, player);
+            if (resumed) {
+                // a point inside the turn: the turn goes on from that step, or that priority
+                state.getTurn().resumePlay(this, false);
+                skipTurn = false;
+            } else {
+                skipTurn = state.getTurn().play(this, player);
+            }
         } while (executingRollback);
 
         if (isPaused() || checkIfGameIsOver()) {
@@ -1750,6 +1765,9 @@ public abstract class GameImpl implements Game {
                         player = getPlayer(state.getPlayerList().get());
                         state.setPriorityPlayerId(player.getId());
                         while (!player.isPassed() && player.canRespond() && !isPaused() && !checkIfGameIsOver()) {
+                            if (executingRollback()) {
+                                return; // a rollback was granted while nobody acted: unwind before anybody does
+                            }
                             if (!resuming) {
                                 // 603.3. Once an ability has triggered, its controller puts it on the stack as an object that's not a card the next time a player would receive priority
                                 checkStateAndTriggered();
@@ -1785,6 +1803,9 @@ public abstract class GameImpl implements Game {
                         resuming = false;
                         if (isPaused() || checkIfGameIsOver()) {
                             return;
+                        }
+                        if (executingRollback()) {
+                            return; // nothing resolves once a rollback is granted
                         }
                         if (allPassed()) {
                             if (!state.getStack().isEmpty()) {
@@ -4070,6 +4091,7 @@ public abstract class GameImpl implements Game {
                 gameStatesRollBack.remove(toDelete);
             }
             gameStatesRollBack.put(getTurnNum(), state.copy());
+            RollbackPoints.turnStarted(this);
         }
     }
 
@@ -4090,6 +4112,9 @@ public abstract class GameImpl implements Game {
             gameStates.clear();
             // because restore uses the objects without copy each copy the state again
             gameStatesRollBack.put(getTurnNum(), state.copy());
+            if (rollbackPoints != null) {
+                rollbackPoints.wentBackToTurn(restore.getTurnNum());
+            }
 
             for (Player playerObject : getPlayers().values()) {
                 if (playerObject.isInGame()) {
@@ -4128,6 +4153,72 @@ public abstract class GameImpl implements Game {
     @Override
     public boolean executingRollback() {
         return executingRollback;
+    }
+
+    @Override
+    public RollbackPoints getRollbackPoints() {
+        return rollbackPoints;
+    }
+
+    @Override
+    public synchronized boolean rollbackToPoint(int pointId) {
+        if (!gameOptions.rollbackTurnsAllowed || executingRollback || hasEnded() || rollbackPoints == null) {
+            return false;
+        }
+        RollbackPoints.Point point = rollbackPoints.get(pointId);
+        if (point == null) {
+            return false;
+        }
+        if (point.getKind() == RollbackPoints.Kind.TURN) {
+            int turns = getTurnNum() - point.getTurn();
+            if (!canRollbackTurns(turns)) {
+                return false;
+            }
+            rollbackTurns(turns);
+            return executingRollback;
+        }
+        // same unwinding as a turn rollback: every loop returns to playTurn, which restores the copy
+        rollbackPointToRestore = point;
+        executingRollback = true;
+        GameHold.resume(getId()); // a held game thread must walk on to unwind
+        for (Player playerObject : getPlayers().values()) {
+            if (playerObject.isHuman() && playerObject.canRespond()) {
+                playerObject.resetStoredBookmark(this);
+                playerObject.resetPlayerPassedActions();
+                playerObject.abort();
+            }
+        }
+        if (gameOptions.testMode && gameStopped) { // in test mode execute rollback directly
+            restoreRollbackPoint();
+        }
+        return true;
+    }
+
+    private void restoreRollbackPoint() {
+        RollbackPoints.Point point = rollbackPointToRestore;
+        rollbackPointToRestore = null;
+        if (point != null && point.getState() != null) {
+            // the kept copy stays as it is: a copy of it is restored
+            state.restoreForRollBack(point.getState().copy());
+            playerList.setCurrent(state.getPlayerByOrderId());
+            savedStates.clear();
+            gameStates.clear();
+            if (point.getKind() == RollbackPoints.Kind.STEP) {
+                // the step starts again: its first priority is the active player's, nobody has passed yet
+                state.setPriorityPlayerId(state.getActivePlayerId());
+                state.getPlayers().resetPassed();
+            }
+            rollbackPoints.wentBackTo(point);
+            for (Player playerObject : getPlayers().values()) {
+                if (playerObject.isInGame()) {
+                    playerObject.abortReset();
+                }
+            }
+            resetLKI();
+            resetShortLivingLKI();
+            informPlayers("⟲ Rolled back " + point.getTarget() + " (accepted by all)");
+        }
+        executingRollback = false;
     }
 
     @Override

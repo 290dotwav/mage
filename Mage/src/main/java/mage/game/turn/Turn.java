@@ -172,12 +172,15 @@ public class Turn implements Serializable {
                     skipPhaseMod.getInfo()
             ));
         } else {
-            if (game.isPaused() || game.checkIfGameIsOver()) {
+            if (game.isPaused() || game.checkIfGameIsOver() || game.executingRollback()) {
                 return;
             }
             currentPhase = nextPhase;
             game.fireEvent(new PhaseChangedEvent(activePlayerId, null));
             if (nextPhase.resumePlay(game, needStepType, wasPaused)) {
+                if (game.executingRollback()) {
+                    return;
+                }
                 //20091005 - 500.4/703.4n
                 game.emptyManaPools(null);
                 //20091005 - 500.8
@@ -188,7 +191,7 @@ public class Turn implements Serializable {
         // play all other phases
         while (it.hasNext()) {
             nextPhase = it.next();
-            if (game.isPaused() || game.checkIfGameIsOver()) {
+            if (game.isPaused() || game.checkIfGameIsOver() || game.executingRollback()) {
                 return;
             }
             skipPhaseMod = game.getState().getTurnMods().useNextSkipPhase(activePlayerId, nextPhase.getType());
@@ -202,6 +205,9 @@ public class Turn implements Serializable {
                 currentPhase = nextPhase;
                 game.fireEvent(new PhaseChangedEvent(activePlayerId, null));
                 if (nextPhase.play(game, activePlayerId)) {
+                    if (game.executingRollback()) {
+                        return;
+                    }
                     //20091005 - 500.4/703.4n
                     game.emptyManaPools(null);
                     //20091005 - 500.8

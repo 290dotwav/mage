@@ -83,6 +83,7 @@ public class GameController implements GameCallback {
     private UUID userRequestingRollback;
     private int turnsToRollback;
     private int requestsOpen;
+    private final RollbackRequests rollbackRequests; // ROLLBACK_TO_POINT and its vote
 
     public GameController(ManagerFactory managerFactory, Game game, ConcurrentMap<UUID, UUID> userPlayerMap, UUID tableId, UUID choosingPlayerId, GameOptions gameOptions) {
         this.managerFactory = managerFactory;
@@ -98,7 +99,18 @@ public class GameController implements GameCallback {
         this.choosingPlayerId = choosingPlayerId;
         this.gameOptions = gameOptions;
         this.useResponseIdleTimeout = game.getPlayers().values().stream().filter(Player::isHuman).count() > 1;
+        this.rollbackRequests = new RollbackRequests(game, this::getPlayerId, this::getUserByPlayerId,
+                () -> {
+                    Set<UUID> users = new HashSet<>(userPlayerMap.keySet());
+                    users.addAll(watchers.keySet());
+                    return users;
+                }, responseIdleTimeoutExecutor);
         init();
+    }
+
+    /** The rollback vote under way at this game, or null (read by the web door). */
+    public RollbackVote getRollbackVote() {
+        return rollbackRequests.current();
     }
 
     public void cleanUp() {
@@ -565,7 +577,13 @@ public class GameController implements GameCallback {
                     }
                 }
                 break;
+            case ROLLBACK_TO_POINT: // any seat, any time: the human seats vote
+                rollbackRequests.request(userId, data);
+                break;
             case ADD_PERMISSION_TO_ROLLBACK_TURN:
+                if (rollbackRequests.answer(userId, true)) {
+                    break;
+                }
                 if (userRequestingRollback != null && requestsOpen > 0 && !userId.equals(userRequestingRollback)) {
                     requestsOpen--;
                     if (requestsOpen == 0) {
@@ -578,6 +596,9 @@ public class GameController implements GameCallback {
                 break;
             case DENY_PERMISSION_TO_ROLLBACK_TURN: // one player has denied - so cancel the request
             {
+                if (rollbackRequests.answer(userId, false)) {
+                    break;
+                }
                 UUID playerId = getPlayerId(userId);
                 if (playerId != null) {
                     Player player = game.getPlayer(playerId);

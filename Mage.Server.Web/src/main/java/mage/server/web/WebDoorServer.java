@@ -1,6 +1,8 @@
 package mage.server.web;
 
 import mage.server.MageServerImpl;
+import mage.server.Session;
+import mage.server.game.RollbackVote;
 import mage.server.managers.ManagerFactory;
 import org.apache.log4j.Logger;
 import org.java_websocket.WebSocket;
@@ -11,6 +13,7 @@ import org.java_websocket.server.WebSocketServer;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -46,6 +49,17 @@ final class WebDoorServer extends WebSocketServer {
         this.games = new GameOps(managerFactory);
         setReuseAddr(true);
         setConnectionLostTimeout(PING_SECONDS);
+        // a rollback vote that changes is pushed to every socket of a seat or a watcher of that game
+        RollbackVote.setListener((gameId, vote, userIds) -> {
+            String json = Rollbacks.voteFrame(gameId, vote);
+            for (WebSession session : sessions.values()) {
+                UUID userId = managerFactory.sessionManager().getSession(session.sessionId)
+                        .map(Session::getUserId).orElse(null);
+                if (userId != null && userIds.contains(userId)) {
+                    session.send(json);
+                }
+            }
+        });
     }
 
     @Override

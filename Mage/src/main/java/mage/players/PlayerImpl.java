@@ -1688,17 +1688,25 @@ public abstract class PlayerImpl implements Player, Serializable {
             }
 
             // Copy, and try to pay for and apply effects
+            RollbackPoints.Point beforeLand = RollbackPoints.capture(game, RollbackPoints.Kind.LAND, playerId, card);
             Ability activatingAbility = ability.copy();
             if (activatingAbility.activate(game, false)) {
                 result = playLand(card, game, false);
             } else {
                 result = false;
             }
+            if (result) {
+                RollbackPoints.commit(game, beforeLand);
+            }
 
         } else if (ability instanceof PlayLandAbility) {
 
             // LAND as normal card: without cost and stack
+            RollbackPoints.Point beforeLand = RollbackPoints.capture(game, RollbackPoints.Kind.LAND, playerId, card);
             result = playLand(card, game, false);
+            if (result) {
+                RollbackPoints.commit(game, beforeLand);
+            }
 
         } else {
 
@@ -1728,7 +1736,11 @@ public abstract class PlayerImpl implements Player, Serializable {
                         return false; // chosen to not approve any AsThough.
                     }
 
+                    RollbackPoints.Point beforeCast = RollbackPoints.capture(game, RollbackPoints.Kind.CAST, playerId, card);
                     result = cast((SpellAbility) ability, game, false, approvingResult.approvingObject);
+                    if (result) {
+                        RollbackPoints.commit(game, beforeCast);
+                    }
                     break;
                 default:
                     result = playAbility(ability.copy(), game);
