@@ -421,168 +421,196 @@ public class ComputerPlayer extends PlayerImpl {
             producers.addAll(this.getAvailableManaProducersWithCost(game));
         }
 
-        // use fully compatible colored mana producers first
-        for (MageObject mageObject : producers) {
-            ManaAbility:
-            for (ActivatedManaAbilityImpl manaAbility : getManaAbilitiesSortedByManaCount(mageObject, game)) {
-                boolean canPayColoredMana = false;
-                for (Mana mana : manaAbility.getNetMana(game)) {
-                    // if mana ability can produce non-useful mana then ignore whole ability here (example: {R} or {G})
-                    // (AI can't choose a good mana option, so make sure any selection option will be compatible with cost)
-                    // AI support {Any} choice by lastUnpaidMana, so it can safety used in includesMana
-                    if (!unpaid.getMana().includesMana(mana)) {
-                        continue ManaAbility;
-                    } else if (mana.getAny() > 0) {
-                        throw new IllegalArgumentException("Wrong mana calculation: AI do not support color choosing from {Any}");
+        // a mana ability that costs life or a sacrifice (a painland's colour, Ancient Tomb, Mana Confluence, a
+        // Treasure) only when nothing else pays: the first pass leaves them out
+        for (boolean allowHurt : new boolean[]{false, true}) {
+            // use fully compatible colored mana producers first
+            for (MageObject mageObject : producers) {
+                ManaAbility:
+                for (ActivatedManaAbilityImpl manaAbility : getManaAbilitiesSortedByManaCount(mageObject, game)) {
+                    if (!allowHurt && ManaUtil.hurts(manaAbility)) {
+                        continue;
                     }
-                    if (mana.countColored() > 0) {
-                        canPayColoredMana = true;
+                    boolean canPayColoredMana = false;
+                    for (Mana mana : manaAbility.getNetMana(game)) {
+                        // if mana ability can produce non-useful mana then ignore whole ability here (example: {R} or {G})
+                        // (AI can't choose a good mana option, so make sure any selection option will be compatible with cost)
+                        // AI support {Any} choice by lastUnpaidMana, so it can safety used in includesMana
+                        if (!unpaid.getMana().includesMana(mana)) {
+                            continue ManaAbility;
+                        } else if (mana.getAny() > 0) {
+                            throw new IllegalArgumentException("Wrong mana calculation: AI do not support color choosing from {Any}");
+                        }
+                        if (mana.countColored() > 0) {
+                            canPayColoredMana = true;
+                        }
                     }
-                }
-                // found compatible source - try to pay
-                if (canPayColoredMana && (cost instanceof ColoredManaCost)) {
-                    for (Mana netMana : manaAbility.getNetMana(game)) {
-                        if (cost.testPay(netMana)) {
-                            if (netMana instanceof ConditionalMana && !((ConditionalMana) netMana).apply(ability, game, getId(), cost)) {
-                                continue;
-                            }
-                            if (hasApprovingObject && !canUseAsThoughManaToPayManaCost(cost, ability, netMana, manaAbility, mageObject, game)) {
-                                continue;
-                            }
-                            if (activateAbility(manaAbility, game)) {
-                                return true;
+                    // found compatible source - try to pay
+                    if (canPayColoredMana && (cost instanceof ColoredManaCost)) {
+                        for (Mana netMana : manaAbility.getNetMana(game)) {
+                            if (cost.testPay(netMana)) {
+                                if (netMana instanceof ConditionalMana && !((ConditionalMana) netMana).apply(ability, game, getId(), cost)) {
+                                    continue;
+                                }
+                                if (hasApprovingObject && !canUseAsThoughManaToPayManaCost(cost, ability, netMana, manaAbility, mageObject, game)) {
+                                    continue;
+                                }
+                                if (activateAbility(manaAbility, game)) {
+                                    return true;
+                                }
                             }
                         }
                     }
                 }
             }
-        }
 
-        // use any other mana produces
-        for (MageObject mageObject : producers) {
-            // pay all colored costs first
-            for (ActivatedManaAbilityImpl manaAbility : getManaAbilitiesSortedByManaCount(mageObject, game)) {
-                if (cost instanceof ColoredManaCost) {
-                    for (Mana netMana : manaAbility.getNetMana(game)) {
-                        if (cost.testPay(netMana) || hasApprovingObject) {
-                            if (netMana instanceof ConditionalMana && !((ConditionalMana) netMana).apply(ability, game, getId(), cost)) {
-                                continue;
-                            }
-                            if (hasApprovingObject && !canUseAsThoughManaToPayManaCost(cost, ability, netMana, manaAbility, mageObject, game)) {
-                                continue;
-                            }
-                            if (activateAbility(manaAbility, game)) {
-                                return true;
+            // use any other mana produces
+            for (MageObject mageObject : producers) {
+                // pay all colored costs first
+                for (ActivatedManaAbilityImpl manaAbility : getManaAbilitiesSortedByManaCount(mageObject, game)) {
+                    if (!allowHurt && ManaUtil.hurts(manaAbility)) {
+                        continue;
+                    }
+                    if (cost instanceof ColoredManaCost) {
+                        for (Mana netMana : manaAbility.getNetMana(game)) {
+                            if (cost.testPay(netMana) || hasApprovingObject) {
+                                if (netMana instanceof ConditionalMana && !((ConditionalMana) netMana).apply(ability, game, getId(), cost)) {
+                                    continue;
+                                }
+                                if (hasApprovingObject && !canUseAsThoughManaToPayManaCost(cost, ability, netMana, manaAbility, mageObject, game)) {
+                                    continue;
+                                }
+                                if (activateAbility(manaAbility, game)) {
+                                    return true;
+                                }
                             }
                         }
                     }
                 }
-            }
-            // pay snow covered mana
-            for (ActivatedManaAbilityImpl manaAbility : getManaAbilitiesSortedByManaCount(mageObject, game)) {
-                if (cost instanceof SnowManaCost) {
-                    for (Mana netMana : manaAbility.getNetMana(game)) {
-                        if (cost.testPay(netMana) || hasApprovingObject) {
-                            if (netMana instanceof ConditionalMana && !((ConditionalMana) netMana).apply(ability, game, getId(), cost)) {
-                                continue;
-                            }
-                            if (hasApprovingObject && !canUseAsThoughManaToPayManaCost(cost, ability, netMana, manaAbility, mageObject, game)) {
-                                continue;
-                            }
-                            if (activateAbility(manaAbility, game)) {
-                                return true;
+                // pay snow covered mana
+                for (ActivatedManaAbilityImpl manaAbility : getManaAbilitiesSortedByManaCount(mageObject, game)) {
+                    if (!allowHurt && ManaUtil.hurts(manaAbility)) {
+                        continue;
+                    }
+                    if (cost instanceof SnowManaCost) {
+                        for (Mana netMana : manaAbility.getNetMana(game)) {
+                            if (cost.testPay(netMana) || hasApprovingObject) {
+                                if (netMana instanceof ConditionalMana && !((ConditionalMana) netMana).apply(ability, game, getId(), cost)) {
+                                    continue;
+                                }
+                                if (hasApprovingObject && !canUseAsThoughManaToPayManaCost(cost, ability, netMana, manaAbility, mageObject, game)) {
+                                    continue;
+                                }
+                                if (activateAbility(manaAbility, game)) {
+                                    return true;
+                                }
                             }
                         }
                     }
                 }
-            }
-            // pay colorless - more restrictive than hybrid (think of it like colored)
-            for (ActivatedManaAbilityImpl manaAbility : getManaAbilitiesSortedByManaCount(mageObject, game)) {
-                if (cost instanceof ColorlessManaCost) {
-                    for (Mana netMana : manaAbility.getNetMana(game)) {
-                        if (cost.testPay(netMana) || hasApprovingObject) {
-                            if (netMana instanceof ConditionalMana
-                                    && !((ConditionalMana) netMana).apply(ability, game, getId(), cost)) {
-                                continue;
-                            }
-                            if (hasApprovingObject && !canUseAsThoughManaToPayManaCost(cost, ability, netMana,
-                                    manaAbility, mageObject, game)) {
-                                continue;
-                            }
-                            if (activateAbility(manaAbility, game)) {
-                                return true;
+                // pay colorless - more restrictive than hybrid (think of it like colored)
+                for (ActivatedManaAbilityImpl manaAbility : getManaAbilitiesSortedByManaCount(mageObject, game)) {
+                    if (!allowHurt && ManaUtil.hurts(manaAbility)) {
+                        continue;
+                    }
+                    if (cost instanceof ColorlessManaCost) {
+                        for (Mana netMana : manaAbility.getNetMana(game)) {
+                            if (cost.testPay(netMana) || hasApprovingObject) {
+                                if (netMana instanceof ConditionalMana
+                                        && !((ConditionalMana) netMana).apply(ability, game, getId(), cost)) {
+                                    continue;
+                                }
+                                if (hasApprovingObject && !canUseAsThoughManaToPayManaCost(cost, ability, netMana,
+                                        manaAbility, mageObject, game)) {
+                                    continue;
+                                }
+                                if (activateAbility(manaAbility, game)) {
+                                    return true;
+                                }
                             }
                         }
                     }
                 }
-            }
-            // then pay hybrid
-            for (ActivatedManaAbilityImpl manaAbility : getManaAbilitiesSortedByManaCount(mageObject, game)) {
-                if (cost instanceof HybridManaCost) {
-                    for (Mana netMana : manaAbility.getNetMana(game)) {
-                        if (cost.testPay(netMana) || hasApprovingObject) {
-                            if (netMana instanceof ConditionalMana && !((ConditionalMana) netMana).apply(ability, game, getId(), cost)) {
-                                continue;
-                            }
-                            if (hasApprovingObject && !canUseAsThoughManaToPayManaCost(cost, ability, netMana, manaAbility, mageObject, game)) {
-                                continue;
-                            }
-                            if (activateAbility(manaAbility, game)) {
-                                return true;
+                // then pay hybrid
+                for (ActivatedManaAbilityImpl manaAbility : getManaAbilitiesSortedByManaCount(mageObject, game)) {
+                    if (!allowHurt && ManaUtil.hurts(manaAbility)) {
+                        continue;
+                    }
+                    if (cost instanceof HybridManaCost) {
+                        for (Mana netMana : manaAbility.getNetMana(game)) {
+                            if (cost.testPay(netMana) || hasApprovingObject) {
+                                if (netMana instanceof ConditionalMana && !((ConditionalMana) netMana).apply(ability, game, getId(), cost)) {
+                                    continue;
+                                }
+                                if (hasApprovingObject && !canUseAsThoughManaToPayManaCost(cost, ability, netMana, manaAbility, mageObject, game)) {
+                                    continue;
+                                }
+                                if (activateAbility(manaAbility, game)) {
+                                    return true;
+                                }
                             }
                         }
                     }
                 }
-            }
-            // then pay colorless hybrid - more restrictive than monohybrid
-            for (ActivatedManaAbilityImpl manaAbility : getManaAbilitiesSortedByManaCount(mageObject, game)) {
-                if (cost instanceof ColorlessHybridManaCost) {
-                    for (Mana netMana : manaAbility.getNetMana(game)) {
-                        if (cost.testPay(netMana) || hasApprovingObject) {
-                            if (netMana instanceof ConditionalMana && !((ConditionalMana) netMana).apply(ability, game, getId(), cost)) {
-                                continue;
-                            }
-                            if (hasApprovingObject && !canUseAsThoughManaToPayManaCost(cost, ability, netMana, manaAbility, mageObject, game)) {
-                                continue;
-                            }
-                            if (activateAbility(manaAbility, game)) {
-                                return true;
+                // then pay colorless hybrid - more restrictive than monohybrid
+                for (ActivatedManaAbilityImpl manaAbility : getManaAbilitiesSortedByManaCount(mageObject, game)) {
+                    if (!allowHurt && ManaUtil.hurts(manaAbility)) {
+                        continue;
+                    }
+                    if (cost instanceof ColorlessHybridManaCost) {
+                        for (Mana netMana : manaAbility.getNetMana(game)) {
+                            if (cost.testPay(netMana) || hasApprovingObject) {
+                                if (netMana instanceof ConditionalMana && !((ConditionalMana) netMana).apply(ability, game, getId(), cost)) {
+                                    continue;
+                                }
+                                if (hasApprovingObject && !canUseAsThoughManaToPayManaCost(cost, ability, netMana, manaAbility, mageObject, game)) {
+                                    continue;
+                                }
+                                if (activateAbility(manaAbility, game)) {
+                                    return true;
+                                }
                             }
                         }
                     }
                 }
-            }
-            // then pay monohybrid
-            for (ActivatedManaAbilityImpl manaAbility : getManaAbilitiesSortedByManaCount(mageObject, game)) {
-                if (cost instanceof MonoHybridManaCost) {
-                    for (Mana netMana : manaAbility.getNetMana(game)) {
-                        if (cost.testPay(netMana) || hasApprovingObject) {
-                            if (netMana instanceof ConditionalMana && !((ConditionalMana) netMana).apply(ability, game, getId(), cost)) {
-                                continue;
-                            }
-                            if (hasApprovingObject && !canUseAsThoughManaToPayManaCost(cost, ability, netMana, manaAbility, mageObject, game)) {
-                                continue;
-                            }
-                            if (activateAbility(manaAbility, game)) {
-                                return true;
+                // then pay monohybrid
+                for (ActivatedManaAbilityImpl manaAbility : getManaAbilitiesSortedByManaCount(mageObject, game)) {
+                    if (!allowHurt && ManaUtil.hurts(manaAbility)) {
+                        continue;
+                    }
+                    if (cost instanceof MonoHybridManaCost) {
+                        for (Mana netMana : manaAbility.getNetMana(game)) {
+                            if (cost.testPay(netMana) || hasApprovingObject) {
+                                if (netMana instanceof ConditionalMana && !((ConditionalMana) netMana).apply(ability, game, getId(), cost)) {
+                                    continue;
+                                }
+                                if (hasApprovingObject && !canUseAsThoughManaToPayManaCost(cost, ability, netMana, manaAbility, mageObject, game)) {
+                                    continue;
+                                }
+                                if (activateAbility(manaAbility, game)) {
+                                    return true;
+                                }
                             }
                         }
                     }
                 }
-            }
-            // finally pay generic
-            for (ActivatedManaAbilityImpl manaAbility : getManaAbilitiesSortedByManaCount(mageObject, game)) {
-                if (cost instanceof GenericManaCost) {
-                    for (Mana netMana : manaAbility.getNetMana(game)) {
-                        if (cost.testPay(netMana) || hasApprovingObject) {
-                            if (netMana instanceof ConditionalMana && !((ConditionalMana) netMana).apply(ability, game, getId(), cost)) {
-                                continue;
-                            }
-                            if (hasApprovingObject && !canUseAsThoughManaToPayManaCost(cost, ability, netMana, manaAbility, mageObject, game)) {
-                                continue;
-                            }
-                            if (activateAbility(manaAbility, game)) {
-                                return true;
+                // finally pay generic
+                for (ActivatedManaAbilityImpl manaAbility : getManaAbilitiesSortedByManaCount(mageObject, game)) {
+                    if (!allowHurt && ManaUtil.hurts(manaAbility)) {
+                        continue;
+                    }
+                    if (cost instanceof GenericManaCost) {
+                        for (Mana netMana : manaAbility.getNetMana(game)) {
+                            if (cost.testPay(netMana) || hasApprovingObject) {
+                                if (netMana instanceof ConditionalMana && !((ConditionalMana) netMana).apply(ability, game, getId(), cost)) {
+                                    continue;
+                                }
+                                if (hasApprovingObject && !canUseAsThoughManaToPayManaCost(cost, ability, netMana, manaAbility, mageObject, game)) {
+                                    continue;
+                                }
+                                if (activateAbility(manaAbility, game)) {
+                                    return true;
+                                }
                             }
                         }
                     }

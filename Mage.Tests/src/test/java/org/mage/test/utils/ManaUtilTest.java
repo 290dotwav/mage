@@ -8,6 +8,7 @@ import mage.abilities.costs.mana.ManaCost;
 import mage.abilities.costs.mana.ManaCostsImpl;
 import mage.abilities.mana.BasicManaAbility;
 import mage.abilities.mana.BlackManaAbility;
+import mage.abilities.mana.ColorlessManaAbility;
 import mage.abilities.mana.ActivatedManaAbilityImpl;
 import mage.abilities.mana.RedManaAbility;
 import mage.abilities.mana.WhiteManaAbility;
@@ -70,6 +71,36 @@ public class ManaUtilTest extends CardTestPlayerBase {
         testManaToPayVsLand("{W/R}{W}{R}", "Sacred Foundry", 2, 2);
 
         testManaToPayVsLand("{W/R}{R/G}", "Sacred Foundry", 2, 2); // can't auto choose to pay
+
+        // painlands: generic is paid with {C}, a colour owed with the colour (and its damage)
+        testManaToPayVsLand("{3}",    "Battlefield Forge", 3, ColorlessManaAbility.class);
+        testManaToPayVsLand("{1}{R}", "Battlefield Forge", 3, RedManaAbility.class);
+        testManaToPayVsLand("{2}",    "Grand Coliseum",    2, ColorlessManaAbility.class);
+    }
+
+    /**
+     * A source clicked for generic mana is tapped for an ability that costs nothing beyond its tap, wherever it
+     * stands among the source's abilities: Battlefield Forge's {C} even listed after its painful {R} and {W}.
+     */
+    @Test
+    public void testAutoPayGenericTakesThePainlessAbility() {
+        Card card = CardRepository.instance.findCard("Battlefield Forge").createCard();
+        Map<UUID, ActivatedManaAbilityImpl> abilities = getManaAbilities(card);
+        java.util.List<ActivatedManaAbilityImpl> reversed = new java.util.ArrayList<>(abilities.values());
+        java.util.Collections.reverse(reversed);
+        Map<UUID, ActivatedManaAbilityImpl> painFirst = new LinkedHashMap<>();
+        reversed.forEach(ability -> painFirst.put(ability.getId(), ability));
+        Assert.assertTrue("the painful abilities come first", ManaUtil.hasDrawback(painFirst.values().iterator().next()));
+
+        for (String cost : new String[]{"{1}", "{3}"}) {
+            Map<UUID, ActivatedManaAbilityImpl> left = ManaUtil.tryToAutoPay(new ManaCostsImpl<>(cost), new LinkedHashMap<>(painFirst));
+            Assert.assertEquals(cost, 1, left.size());
+            Assert.assertTrue(cost, left.values().iterator().next() instanceof ColorlessManaAbility);
+            Assert.assertFalse(cost, ManaUtil.hasDrawback(left.values().iterator().next()));
+        }
+        Assert.assertTrue("Ancient Tomb deals damage", ManaUtil.hasDrawback(getManaAbilities(CardRepository.instance.findCard("Ancient Tomb").createCard()).values().iterator().next()));
+        Assert.assertTrue("Mana Confluence costs life", ManaUtil.hasDrawback(getManaAbilities(CardRepository.instance.findCard("Mana Confluence").createCard()).values().iterator().next()));
+        Assert.assertFalse("a Forest costs nothing", ManaUtil.hasDrawback(getManaAbilities(CardRepository.instance.findCard("Forest").createCard()).values().iterator().next()));
     }
 
     /**

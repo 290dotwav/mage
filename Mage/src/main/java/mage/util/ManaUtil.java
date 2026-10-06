@@ -12,6 +12,7 @@ import mage.abilities.costs.mana.*;
 import mage.abilities.dynamicvalue.DynamicValue;
 import mage.abilities.dynamicvalue.common.GetXValue;
 import mage.abilities.effects.Effect;
+import mage.abilities.effects.mana.ManaEffect;
 import mage.abilities.mana.*;
 import mage.cards.*;
 import mage.choices.Choice;
@@ -161,8 +162,9 @@ public final class ManaUtil {
         if (countColored.isEmpty()) { // seems there is no colorful mana we can pay for
             // try to pay {1}
             if (unpaidMana.getGeneric() > 0) {
-                // use any (lets choose first)
-                return replace(useableAbilities, useableAbilities.values().iterator().next());
+                // use any, the first that costs nothing beyond its tap: a painland's {C}, never its
+                // coloured ability and its damage
+                return replace(useableAbilities, firstPainless(useableAbilities));
             }
 
             // return map as-is without any modification
@@ -399,13 +401,8 @@ public final class ManaUtil {
         if (countColorfull == 0) { // seems there is no colorful mana we can use
             // try to pay {1}
             if (mana.getGeneric() > 0) {
-                // choose first without addional costs if all have addional costs take the first
-                for (ActivatedManaAbilityImpl manaAbility : useableAbilities.values()) {
-                    if (manaAbility.getCosts().size() == 1 && manaAbility.getCosts().get(0).getClass().equals(TapSourceCost.class)) {
-                        return replace(useableAbilities, manaAbility);
-                    }
-                }
-                return replace(useableAbilities, useableAbilities.values().iterator().next());
+                // choose first without addional costs or damage if all have them take the first
+                return replace(useableAbilities, firstPainless(useableAbilities));
             }
 
             // return map as-is without any modification
@@ -418,6 +415,52 @@ public final class ManaUtil {
         }
 
         return replace(useableAbilities, chosenManaAbility);
+    }
+
+    /**
+     * Does this mana ability cost its controller more than its tap: a price beyond it (Pay 1 life, a sacrifice)
+     * or an effect beside the mana (a painland's "deals 1 damage to you", Ancient Tomb's 2)?
+     */
+    public static boolean hasDrawback(ActivatedManaAbilityImpl ability) {
+        if (!ability.getManaCosts().isEmpty()) {
+            return true;
+        }
+        if (ability.getCosts().size() != 1 || !ability.getCosts().get(0).getClass().equals(TapSourceCost.class)) {
+            return true;
+        }
+        return hurts(ability);
+    }
+
+    /**
+     * Does this mana ability cost something that is not mana nor its tap: life (Pay 1 life, a painland's or Ancient
+     * Tomb's damage), a sacrifice (a Treasure)? A Signet's {1} is not a hurt: it is paid with mana like the rest.
+     */
+    public static boolean hurts(ActivatedManaAbilityImpl ability) {
+        for (Cost cost : ability.getCosts()) {
+            if (!(cost instanceof TapSourceCost) && !(cost instanceof ManaCost)) {
+                return true;
+            }
+        }
+        for (Effect effect : ability.getEffects()) {
+            if (!(effect instanceof ManaEffect)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * The first of these mana abilities without a drawback ({@link #hasDrawback}), else the first: the one a payment
+     * of generic mana takes when the player clicks a source and leaves the ability to the server. A Battlefield
+     * Forge clicked for {1} is tapped for its {C}, not for {R} and 1 damage.
+     */
+    public static ActivatedManaAbilityImpl firstPainless(Map<UUID, ActivatedManaAbilityImpl> useableAbilities) {
+        for (ActivatedManaAbilityImpl ability : useableAbilities.values()) {
+            if (!hasDrawback(ability)) {
+                return ability;
+            }
+        }
+        return useableAbilities.values().iterator().next();
     }
 
     private static Map<UUID, ActivatedManaAbilityImpl> replace(Map<UUID, ActivatedManaAbilityImpl> useableAbilities, ActivatedManaAbilityImpl chosenManaAbility) {
