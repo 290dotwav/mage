@@ -21,6 +21,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -41,6 +44,9 @@ final class WebSession implements AsynchInvokerCallbackHandler {
 
     private static final Logger logger = Logger.getLogger(WebSession.class);
 
+    /** The wire's calls that make a table, held to the same limits as `table create` (TableGate). */
+    private static final Set<String> MAKES_A_TABLE = new HashSet<>(Arrays.asList("roomCreateTable", "roomCreateTournament"));
+
     final String sessionId = "web-" + UUID.randomUUID();
 
     private final WebSocket conn;
@@ -48,14 +54,16 @@ final class WebSession implements AsynchInvokerCallbackHandler {
     private final Wire wire;
     private final TableOps tables;
     private final GameOps games;
+    private final TableGate gate;
     private final ExecutorService inbound;
 
-    WebSession(WebSocket conn, ManagerFactory managerFactory, Wire wire, TableOps tables, GameOps games) {
+    WebSession(WebSocket conn, ManagerFactory managerFactory, Wire wire, TableOps tables, GameOps games, TableGate gate) {
         this.conn = conn;
         this.managerFactory = managerFactory;
         this.wire = wire;
         this.tables = tables;
         this.games = games;
+        this.gate = gate;
         this.inbound = Executors.newSingleThreadExecutor(r -> {
             Thread t = new Thread(r, "web-door " + sessionId);
             t.setDaemon(true);
@@ -104,7 +112,10 @@ final class WebSession implements AsynchInvokerCallbackHandler {
                     what = "call " + method;
                     JsonElement a = frame.get("args");
                     JsonArray args = a != null && a.isJsonArray() ? a.getAsJsonArray() : new JsonArray();
-                    Object result = wire.invoke(method, frame.get("gameId"), args, sessionId);
+                    // A table made by the raw call goes through the same gate as `table create`
+                    Object result = MAKES_A_TABLE.contains(method)
+                            ? gate.create(sessionId, () -> wire.invoke(method, frame.get("gameId"), args, sessionId))
+                            : wire.invoke(method, frame.get("gameId"), args, sessionId);
                     send(Frames.result(method, result, id));
                     break;
                 }
@@ -116,8 +127,18 @@ final class WebSession implements AsynchInvokerCallbackHandler {
                     what = "game " + Frames.optString(frame, "op", "?");
                     games.handle(this, frame, id);
                     break;
+                case "server": {
+                    // { kind: "server", op: "load" }: what the lobby shows, "5/12 tables" (TableGate.load)
+                    String op = Frames.optString(frame, "op", "?");
+                    what = "server " + op;
+                    if (!"load".equals(op)) {
+                        throw new IllegalArgumentException("unknown server op '" + op + "' (load)");
+                    }
+                    send(Frames.result("server.load", gate.load(), id));
+                    break;
+                }
                 default:
-                    throw new IllegalArgumentException("unknown frame kind '" + kind + "' (call, table or game)");
+                    throw new IllegalArgumentException("unknown frame kind '" + kind + "' (call, table, game or server)");
             }
         } catch (Throwable ex) {
             String message = ex.getMessage() == null ? ex.toString() : ex.getMessage();

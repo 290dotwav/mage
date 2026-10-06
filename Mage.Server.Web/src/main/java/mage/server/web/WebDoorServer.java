@@ -39,13 +39,15 @@ final class WebDoorServer extends WebSocketServer {
     private final Wire wire;
     private final TableOps tables;
     private final GameOps games;
+    private final TableGate gate;
     private final Map<WebSocket, WebSession> sessions = new ConcurrentHashMap<>();
 
     WebDoorServer(InetSocketAddress address, ManagerFactory managerFactory, MageServerImpl server) {
         super(address);
         this.managerFactory = managerFactory;
         this.wire = new Wire(server);
-        this.tables = new TableOps(managerFactory, server);
+        this.gate = new TableGate(managerFactory);
+        this.tables = new TableOps(managerFactory, server, gate);
         this.games = new GameOps(managerFactory);
         setReuseAddr(true);
         setConnectionLostTimeout(PING_SECONDS);
@@ -78,7 +80,7 @@ final class WebDoorServer extends WebSocketServer {
 
     @Override
     public void onOpen(WebSocket conn, ClientHandshake handshake) {
-        WebSession session = new WebSession(conn, managerFactory, wire, tables, games);
+        WebSession session = new WebSession(conn, managerFactory, wire, tables, games, gate);
         sessions.put(conn, session);
         session.open();
         logger.info("Web door: " + session.sessionId + " opened from " + conn.getRemoteSocketAddress());

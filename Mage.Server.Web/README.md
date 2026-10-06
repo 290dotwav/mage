@@ -72,7 +72,18 @@ Browser → server:
 { "kind": "game", "op": "pause", "gameId": "<uuid>", "seconds": 120 }
 { "kind": "game", "op": "resume", "gameId": "<uuid>" }
 { "kind": "game", "op": "status", "gameId": "<uuid>" }
+{ "kind": "server", "op": "load" }
 ```
+
+`server load` answers `server.load` with `{ tables, maxTables, open, why, heapAfterGcPct,
+maxHeapPct, availableMb, minAvailableMb }`: how full the machine is, for the lobby.
+**A new table is refused** (`table create`, and the raw `roomCreateTable` /
+`roomCreateTournament` calls) with the error `Server full, try again in a moment` when
+12 tables are in progress (waiting, starting or playing), when XMage's heap after the
+last collection is over 75 % of its maximum, or when the machine's `MemAvailable`
+(/proc/meminfo, the host's own inside Docker) is under 1.5 GB; the memory is read at
+most every 10 s. The numbers are `ServerLimits.java`; the gate is `TableGate.java`.
+Nothing about a table that exists is ever refused.
 
 `call`: `method` is the exact `MageServer` name (see `hello.methods`, or
 `src/main/resources/mage/server/web/mage-server-signatures.txt`). The `sessionId`

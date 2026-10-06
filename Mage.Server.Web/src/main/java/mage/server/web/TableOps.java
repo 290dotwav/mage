@@ -70,10 +70,12 @@ final class TableOps {
 
     private final ManagerFactory managerFactory;
     private final MageServerImpl server;
+    private final TableGate gate;
 
-    TableOps(ManagerFactory managerFactory, MageServerImpl server) {
+    TableOps(ManagerFactory managerFactory, MageServerImpl server, TableGate gate) {
         this.managerFactory = managerFactory;
         this.server = server;
+        this.gate = gate;
     }
 
     void handle(WebSession session, JsonObject frame, JsonElement id) throws Exception {
@@ -264,6 +266,9 @@ final class TableOps {
         }
         DeckText.Parsed deck = DeckText.parse(Frames.requireString(frame, "deck"));
 
+        // A full machine refuses before anything is done for him: leaveOldTables below
+        // concedes the games an earlier connection of his left, which a refusal must not.
+        gate.refuseIfFull(name);
         leaveOldTables(web, name, null);
         ensureConnected(web, name);
 
@@ -288,7 +293,8 @@ final class TableOps {
         options.setEdhPowerLevel(0);
 
         UUID roomId = roomId();
-        TableView table = server.roomCreateTable(web.sessionId, roomId, options);
+        // Checked again with the creation, under the gate's lock (ServerLimits)
+        TableView table = gate.create(name, () -> server.roomCreateTable(web.sessionId, roomId, options));
         if (table == null) {
             throw new MageException("table not created (the reason came as a SHOW_USERMESSAGE callback, or check gameType/deckType against config.xml)");
         }
