@@ -56,9 +56,12 @@ final class WebSession implements AsynchInvokerCallbackHandler {
     private final GameOps games;
     private final TableGate gate;
     private final ExecutorService inbound;
+    /** Who this socket may play as: the site's account, or anyone (DoorIdentity). */
+    final DoorIdentity identity;
 
-    WebSession(WebSocket conn, ManagerFactory managerFactory, Wire wire, TableOps tables, GameOps games, TableGate gate) {
+    WebSession(WebSocket conn, ManagerFactory managerFactory, Wire wire, TableOps tables, GameOps games, TableGate gate, DoorIdentity identity) {
         this.conn = conn;
+        this.identity = identity;
         this.managerFactory = managerFactory;
         this.wire = wire;
         this.tables = tables;
@@ -114,8 +117,8 @@ final class WebSession implements AsynchInvokerCallbackHandler {
                     JsonArray args = a != null && a.isJsonArray() ? a.getAsJsonArray() : new JsonArray();
                     // A table made by the raw call goes through the same gate as `table create`
                     Object result = MAKES_A_TABLE.contains(method)
-                            ? gate.create(sessionId, () -> wire.invoke(method, frame.get("gameId"), args, sessionId))
-                            : wire.invoke(method, frame.get("gameId"), args, sessionId);
+                            ? gate.create(sessionId, () -> wire.invoke(method, frame.get("gameId"), args, sessionId, identity))
+                            : wire.invoke(method, frame.get("gameId"), args, sessionId, identity);
                     send(Frames.result(method, result, id));
                     break;
                 }

@@ -244,6 +244,7 @@ final class TableOps {
         String gameType = Frames.optString(frame, "gameType", "Commander Free For All");
         int seats = Frames.optInt(frame, "seats", 4);
         String name = Frames.requireString(frame, "name");
+        web.identity.check(name, "table create");
         String tableName = Frames.optString(frame, "tableName", name);
         String deckType = Frames.optString(frame, "deckType", defaultDeckType(gameType));
         MulliganType mulliganType = mulliganType(Frames.optString(frame, "mulliganType", MulliganType.LONDON.name()));
@@ -319,6 +320,7 @@ final class TableOps {
         String password = Frames.optString(frame, "password", "");
 
         if (playerType == PlayerType.HUMAN) {
+            web.identity.check(name, "table join");
             leaveOldTables(web, name, tableId);
             ensureConnected(web, name);
             UUID seated = playerId(tableId, name);
@@ -406,6 +408,7 @@ final class TableOps {
     private void close(WebSession web, JsonObject frame, JsonElement id) throws Exception {
         UUID tableId = UUID.fromString(Frames.requireString(frame, "tableId"));
         String name = Frames.requireString(frame, "name");
+        web.identity.check(name, "table close");
         if (playerId(tableId, name) == null) {
             throw new IllegalStateException("only a player seated at table " + tableId + " can end it");
         }
@@ -417,6 +420,7 @@ final class TableOps {
     private void watch(WebSession web, JsonObject frame, JsonElement id) throws Exception {
         UUID tableId = UUID.fromString(Frames.requireString(frame, "tableId"));
         String name = Frames.requireString(frame, "name");
+        web.identity.check(name, "table watch");
         ensureConnected(web, name);
         boolean ok = server.roomWatchTable(web.sessionId, roomId(), tableId);
         if (!ok) {

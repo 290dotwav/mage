@@ -80,10 +80,12 @@ final class WebDoorServer extends WebSocketServer {
 
     @Override
     public void onOpen(WebSocket conn, ClientHandshake handshake) {
-        WebSession session = new WebSession(conn, managerFactory, wire, tables, games, gate);
+        DoorIdentity identity = DoorIdentity.fromHeader(handshake.getFieldValue(DoorIdentity.HEADER));
+        WebSession session = new WebSession(conn, managerFactory, wire, tables, games, gate, identity);
         sessions.put(conn, session);
         session.open();
-        logger.info("Web door: " + session.sessionId + " opened from " + conn.getRemoteSocketAddress());
+        logger.info("Web door: " + session.sessionId + " opened from " + conn.getRemoteSocketAddress()
+                + (identity.restricted() ? " as " + identity.player : ""));
     }
 
     @Override

@@ -179,6 +179,14 @@ final class Wire {
      * Run one "call" frame. Returns the method's return value (null for void).
      */
     Object invoke(String method, JsonElement gameId, JsonArray args, String sessionId) throws Exception {
+        return invoke(method, gameId, args, sessionId, DoorIdentity.ANYONE);
+    }
+
+    /**
+     * Run one "call" frame for a socket that may only use its own name ({@link DoorIdentity}):
+     * every argument naming a person is checked before the call is made.
+     */
+    Object invoke(String method, JsonElement gameId, JsonArray args, String sessionId, DoorIdentity identity) throws Exception {
         Sig sig = sigs.get(method);
         if (sig == null) {
             throw new IllegalArgumentException("unknown MageServer method '" + method + "'; known: " + sigs.keySet());
@@ -203,6 +211,13 @@ final class Wire {
         }
         if (ai < args.size()) {
             throw new IllegalArgumentException("too many args (" + args.size() + ") for " + sig.text);
+        }
+        if (identity.restricted()) {
+            String[] names = new String[sig.params.length];
+            for (int i = 0; i < names.length; i++) {
+                names[i] = sig.params[i].name;
+            }
+            identity.checkCall(method, names, values);
         }
         try {
             return sig.method.invoke(server, values);
