@@ -71,7 +71,7 @@ class RiaIvorBaneOfBladeholdEffect extends PreventionEffectImpl {
             Token token = new PhyrexianMiteToken();
             token.putOntoBattlefield(preventionData.getPreventedDamage(), game, source);
         }
-        return true;
+        return false;
     }
 
     @Override

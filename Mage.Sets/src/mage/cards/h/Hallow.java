@@ -65,7 +65,7 @@ class HallowPreventDamageByTargetEffect extends PreventionEffectImpl {
         if (controller != null) {
             controller.gainLife(preventionEffectData.getPreventedDamage(), game, source);
         }
-        return true;
+        return false;
     }
 
     @Override

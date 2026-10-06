@@ -96,7 +96,6 @@ class ImpulsiveManeuversEffect extends PreventionEffectImpl {
                     } else {
                         preventDamageAction(event, source, game);
                         this.discard();
-                        return true;
                     }
                 }
             }

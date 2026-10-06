@@ -83,7 +83,8 @@ class ComeuppanceEffect extends PreventionEffectImpl {
                 }
             }
         }
-        return true;
+        // prevented damage is already set to 0; damage that can't be prevented (615.12) must still be dealt
+        return false;
     }
 
     @Override

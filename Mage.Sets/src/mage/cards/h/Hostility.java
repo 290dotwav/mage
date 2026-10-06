@@ -100,6 +100,6 @@ class HostilityEffect extends PreventionEffectImpl {
         if (preventionEffectData.getPreventedDamage() > 0) {
             new CreateTokenEffect(new ElementalShamanToken(true), preventionEffectData.getPreventedDamage()).apply(game, source);
         }
-        return true;
+        return false;
     }
 }

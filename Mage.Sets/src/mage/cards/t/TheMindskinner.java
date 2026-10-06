@@ -79,7 +79,7 @@ class TheMindskinnerEffect extends PreventionEffectImpl {
                 player.millCards(amount, source, game);
             }
         }
-        return true;
+        return false;
     }
 
     @Override

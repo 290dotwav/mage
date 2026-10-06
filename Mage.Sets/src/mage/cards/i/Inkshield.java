@@ -69,6 +69,6 @@ class InkshieldEffect extends PreventionEffectImpl {
         if (preventionEffectData.getPreventedDamage() > 0) {
             new CreateTokenEffect(new InklingToken(), preventionEffectData.getPreventedDamage()).apply(game, source);
         }
-        return true;
+        return false;
     }
 }

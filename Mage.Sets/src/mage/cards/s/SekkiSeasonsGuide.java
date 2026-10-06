@@ -86,7 +86,7 @@ class SekkiSeasonsGuideEffect extends PreventionEffectImpl {
             permanent.removeCounters(CounterType.P1P1.createInstance(damage), source, game);
         }
         new CreateTokenEffect(new SpiritToken(), damage).apply(game, source);
-        return true;
+        return false;
     }
 
     @Override

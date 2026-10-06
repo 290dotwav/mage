@@ -114,7 +114,7 @@ class SwansOfBrynArgollEffect extends PreventionEffectImpl {
                 }
             }
         }
-        return preventionEffectData.isReplaced();
+        return false;
     }
 
     @Override
