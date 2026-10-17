@@ -2,6 +2,9 @@ package mage.game.stack;
 
 import mage.Mana;
 import mage.abilities.Ability;
+import mage.abilities.costs.Cost;
+import mage.abilities.costs.Costs;
+import mage.abilities.costs.common.PayLifeCost;
 import mage.abilities.costs.mana.GenericManaCost;
 import mage.abilities.costs.mana.ManaCost;
 import mage.abilities.costs.mana.ManaCosts;
@@ -22,6 +25,13 @@ import mage.abilities.costs.mana.VariableManaCost;
  * for a spell or an ability whose mana is still being paid (it is on the stack from 601.2a).
  * A spell cast without paying its mana cost (Dauthi Voidwalker, an alternative cost of no
  * mana) has an empty {@link #getCost()} and nothing spent.
+ * <p>
+ * The life paid for it is told too ({@link #getLifePaid()}): every "pay N life" cost paid among
+ * its costs. Each Phyrexian symbol paid with life becomes one (107.4f,
+ * {@code AbilityImpl.handlePhyrexianCosts}), so does each {B} K'rrik let be paid with life
+ * ({@code handlePhyrexianLikeEffects}), and an additional or alternative cost is one (Snuff Out,
+ * Toxic Deluge's X as the fixed cost its announcement became).
+ * An activated ability whose only cost was life ("Pay 1 life: ...") is told for its life alone.
  */
 public final class PaidCost {
 
@@ -30,11 +40,13 @@ public final class PaidCost {
     private final String cost;
     private final Integer x;
     private final String spent;
+    private final int lifePaid;
 
-    private PaidCost(String cost, Integer x, String spent) {
+    private PaidCost(String cost, Integer x, String spent, int lifePaid) {
         this.cost = cost;
         this.x = x;
         this.spent = spent;
+        this.lifePaid = lifePaid;
     }
 
     /** What {@code object} cost as it went on the stack, or null when nothing was paid for it (see the class). */
@@ -88,12 +100,29 @@ public final class PaidCost {
             }
             rest.append(part.getText());
         }
-        if (!spell && !anyGeneric && rest.length() == 0 && used.count() == 0) {
-            // an activated ability with no mana in its cost ({T}, a sacrifice): nothing to say
+        int life = lifePaid(ability.getCosts());
+        if (!spell && !anyGeneric && rest.length() == 0 && used.count() == 0 && life == 0) {
+            // an activated ability with no mana and no life in its cost ({T}, a sacrifice): nothing to say
             return null;
         }
         String text = (anyGeneric && (generic > 0 || rest.length() == 0) ? "{" + generic + "}" : "") + rest;
-        return new PaidCost(text, x, symbols(used));
+        return new PaidCost(text, x, symbols(used), life);
+    }
+
+    /** The life paid among {@code costs}: each paid {@link PayLifeCost}, nested cost lists included. */
+    private static int lifePaid(Costs<? extends Cost> costs) {
+        int life = 0;
+        if (costs == null) {
+            return life;
+        }
+        for (Cost cost : costs) {
+            if (cost instanceof PayLifeCost && cost.isPaid()) {
+                life += Math.max(0, ((PayLifeCost) cost).getLifePaid());
+            } else if (cost instanceof Costs) {
+                life += lifePaid((Costs<?>) cost);
+            }
+        }
+        return life;
     }
 
     private static String symbols(Mana mana) {
@@ -128,5 +157,10 @@ public final class PaidCost {
     /** The mana spent on it, one symbol per mana, W U B R G then colourless ("{R}{U}{G}{G}"); empty when none. */
     public String getSpent() {
         return spent;
+    }
+
+    /** The life paid for it (Phyrexian mana, "pay N life" costs, K'rrik); 0 when none. */
+    public int getLifePaid() {
+        return lifePaid;
     }
 }

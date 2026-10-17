@@ -31,6 +31,7 @@ public class PayLifeCost extends CostImpl {
     protected PayLifeCost(final PayLifeCost cost) {
         super(cost);
         this.amount = cost.amount.copy();
+        this.lifePaid = cost.lifePaid;
     }
 
     @Override

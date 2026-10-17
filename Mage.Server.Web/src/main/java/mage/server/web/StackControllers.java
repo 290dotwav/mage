@@ -27,8 +27,9 @@ import java.util.UUID;
  * same live object ({@link PaidCost}): {@code cost} the mana cost as paid ("{4}{G}{G}": commander
  * tax, reductions, X by its value; "" when cast without paying any mana), {@code spent} the mana
  * actually spent on it, one symbol per mana ("{R}{U}{G}{G}"), and {@code x} the value announced
- * for X when the cost had one. Left out for a triggered ability, a copy, and an activated ability
- * whose cost holds no mana: nothing was paid for those.
+ * for X when the cost had one, and {@code lifePaid} the life paid for it (Phyrexian mana, a
+ * "pay N life" cost, K'rrik), only when some was. Left out for a triggered ability, a copy, and an activated ability
+ * whose cost holds no mana and no life: nothing was paid for those.
  */
 final class StackControllers {
 
@@ -92,6 +93,9 @@ final class StackControllers {
         out.addProperty("spent", paid.getSpent());
         if (paid.getX() != null) {
             out.addProperty("x", paid.getX());
+        }
+        if (paid.getLifePaid() > 0) {
+            out.addProperty("lifePaid", paid.getLifePaid());
         }
         return out;
     }
