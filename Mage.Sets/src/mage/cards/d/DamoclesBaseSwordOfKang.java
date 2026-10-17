@@ -1,30 +1,31 @@
 package mage.cards.d;
 
+import java.util.UUID;
 import mage.MageInt;
 import mage.abilities.Ability;
+import mage.constants.SubType;
+import mage.constants.SuperType;
+import mage.abilities.keyword.FlyingAbility;
+import mage.abilities.keyword.DeathtouchAbility;
 import mage.abilities.common.DealsCombatDamageToAPlayerTriggeredAbility;
-import mage.abilities.costs.common.SacrificeTargetCost;
 import mage.abilities.effects.OneShotEffect;
 import mage.abilities.keyword.CrewAbility;
-import mage.abilities.keyword.DeathtouchAbility;
-import mage.abilities.keyword.FlyingAbility;
 import mage.cards.CardImpl;
 import mage.cards.CardSetInfo;
 import mage.choices.FaceVillainousChoice;
 import mage.choices.VillainousChoice;
 import mage.constants.CardType;
 import mage.constants.Outcome;
-import mage.constants.SubType;
-import mage.constants.SuperType;
-import mage.filter.StaticFilters;
+import mage.filter.common.FilterCreaturePermanent;
+import mage.filter.predicate.permanent.TokenPredicate;
 import mage.game.Game;
+import mage.game.permanent.Permanent;
 import mage.players.Player;
-
-import java.util.Optional;
-import java.util.UUID;
+import mage.target.common.TargetSacrifice;
 
 /**
- * @author Claude
+ *
+ * @author muz
  */
 public final class DamoclesBaseSwordOfKang extends CardImpl {
 
@@ -44,7 +45,7 @@ public final class DamoclesBaseSwordOfKang extends CardImpl {
 
         // Whenever Damocles Base deals combat damage to a player, that player faces a villainous choice -- They sacrifice a nontoken creature of their choice, or they lose 2 life and you draw two cards.
         this.addAbility(new DealsCombatDamageToAPlayerTriggeredAbility(
-                new DamoclesBaseSwordOfKangEffect(), false, true
+            new DamoclesBaseSwordOfKangEffect(), false, true
         ));
 
         // Crew 3
@@ -85,39 +86,49 @@ class DamoclesBaseSwordOfKangEffect extends OneShotEffect {
 
     @Override
     public boolean apply(Game game, Ability source) {
-        Optional.ofNullable(getTargetPointer().getFirst(game, source))
-                .map(game::getPlayer)
-                .ifPresent(player -> choice.faceChoice(player, game, source));
-        return true;
+        Player player = game.getPlayer(getTargetPointer().getFirst(game, source));
+        if (player == null) {
+            return false;
+        }
+        return choice.faceChoice(player, game, source);
     }
 }
 
 class DamoclesBaseSwordOfKangFirstChoice extends VillainousChoice {
 
+    private static final FilterCreaturePermanent filter = new FilterCreaturePermanent("nontoken creature");
+
+    static {
+        filter.add(TokenPredicate.FALSE);
+    }
+
     DamoclesBaseSwordOfKangFirstChoice() {
-        super("They sacrifice a nontoken creature of their choice", "Sacrifice a nontoken creature");
+        super("That player sacrifices a nontoken creature of their choice", "Sacrifice a nontoken creature");
     }
 
     @Override
     public boolean doChoice(Player player, Game game, Ability source) {
-        return new SacrificeTargetCost(StaticFilters.FILTER_CREATURE_NON_TOKEN)
-                .pay(source, game, source, player.getId(), true);
+        if (!game.getBattlefield().containsControlled(filter, player.getId(), source, game, 1)) {
+            return false;
+        }
+        TargetSacrifice target = new TargetSacrifice(filter);
+        player.choose(Outcome.Sacrifice, target, source, game);
+        Permanent permanent = game.getPermanent(target.getFirstTarget());
+        return permanent != null && permanent.sacrifice(source, game);
     }
 }
 
 class DamoclesBaseSwordOfKangSecondChoice extends VillainousChoice {
 
     DamoclesBaseSwordOfKangSecondChoice() {
-        super("they lose 2 life and you draw two cards", "You lose 2 life and {controller} draws two cards");
+        super("that player loses 2 life and you draw two cards", "Lose 2 life and {controller} draws two cards");
     }
 
     @Override
     public boolean doChoice(Player player, Game game, Ability source) {
-        player.loseLife(2, game, source, false);
         Player controller = game.getPlayer(source.getControllerId());
-        if (controller != null) {
-            controller.drawCards(2, source, game);
-        }
-        return true;
+        boolean lifeLost = player.loseLife(2, game, source, false) > 0;
+        boolean cardsDrawn = controller != null && controller.drawCards(2, source, game) > 0;
+        return lifeLost || cardsDrawn;
     }
 }

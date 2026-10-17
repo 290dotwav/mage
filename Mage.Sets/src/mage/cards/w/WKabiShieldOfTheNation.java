@@ -22,21 +22,21 @@ import mage.game.permanent.token.RhinoToken;
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author DarioBarrabinoDev
  */
 public final class WKabiShieldOfTheNation extends CardImpl {
 
     private static final FilterPermanent filter = new FilterPermanent("your commander");
-    private static final FilterControlledArtifactPermanent filter2
+    private static final FilterControlledArtifactPermanent filterArtifact
             = new FilterControlledArtifactPermanent("you control an artifact with mana value 4 or greater");
 
     static {
         filter.add(CommanderPredicate.instance);
         filter.add(TargetController.YOU.getOwnerPredicate());
-        filter2.add(new ManaValuePredicate(ComparisonType.MORE_THAN, 3));
+        filterArtifact.add(new ManaValuePredicate(ComparisonType.MORE_THAN, 3));
     }
 
-    private static final Condition condition = new PermanentsOnTheBattlefieldCondition(filter2);
+    private static final Condition condition = new PermanentsOnTheBattlefieldCondition(filterArtifact);
 
     public WKabiShieldOfTheNation(UUID ownerId, CardSetInfo setInfo) {
         super(ownerId, setInfo, new CardType[]{CardType.CREATURE}, "{1}{G}");
@@ -53,8 +53,8 @@ public final class WKabiShieldOfTheNation extends CardImpl {
 
         // Whenever you attack with your commander, if you control an artifact with mana value 4 or greater, create a 4/4 green Rhino creature token with trample.
         this.addAbility(new AttacksWithCreaturesTriggeredAbility(new CreateTokenEffect(new RhinoToken()), 1, filter)
-                .setTriggerPhrase("Whenever you attack with your commander, ")
-                .withInterveningIf(condition));
+                .withInterveningIf(condition)
+                .setTriggerPhrase("Whenever you attack with your commander, "));
     }
 
     private WKabiShieldOfTheNation(final WKabiShieldOfTheNation card) {

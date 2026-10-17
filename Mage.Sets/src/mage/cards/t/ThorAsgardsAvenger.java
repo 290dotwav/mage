@@ -1,7 +1,6 @@
 package mage.cards.t;
 
 import mage.MageInt;
-import mage.MageObject;
 import mage.abilities.Ability;
 import mage.abilities.common.SimpleStaticAbility;
 import mage.abilities.effects.ReplacementEffectImpl;
@@ -15,14 +14,13 @@ import mage.constants.SubType;
 import mage.constants.SuperType;
 import mage.game.Game;
 import mage.game.events.GameEvent;
-import mage.game.permanent.Permanent;
 import mage.players.Player;
 import mage.util.CardUtil;
 
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author DarioBarrabinoDev
  */
 public final class ThorAsgardsAvenger extends CardImpl {
 
@@ -57,12 +55,17 @@ class ThorAsgardsAvengerEffect extends ReplacementEffectImpl {
 
     ThorAsgardsAvengerEffect() {
         super(Duration.WhileOnBattlefield, Outcome.Damage);
-        this.staticText = "If another source you control would deal damage to an opponent "
-                + "or a permanent an opponent controls, it deals that much damage plus 1 instead.";
+        this.staticText = "if another source you control would deal damage to an opponent "
+                + "or a permanent an opponent controls, it deals that much damage plus 1 instead";
     }
 
     private ThorAsgardsAvengerEffect(final ThorAsgardsAvengerEffect effect) {
         super(effect);
+    }
+
+    @Override
+    public ThorAsgardsAvengerEffect copy() {
+        return new ThorAsgardsAvengerEffect(this);
     }
 
     @Override
@@ -85,29 +88,15 @@ class ThorAsgardsAvengerEffect extends ReplacementEffectImpl {
     @Override
     public boolean applies(GameEvent event, Ability source, Game game) {
         Player controller = game.getPlayer(source.getControllerId());
-        if (controller == null
-                || event.getSourceId().equals(source.getSourceId())
-                || !controller.hasOpponent(getControllerOrSelf(event.getTargetId(), game), game)
-                || !source.isControlledBy(game.getControllerId(event.getSourceId()))) {
-            return false;
-        }
-        MageObject sourceObject;
-        Permanent sourcePermanent = game.getPermanentOrLKIBattlefield(event.getSourceId());
-        if (sourcePermanent == null) {
-            sourceObject = game.getObject(event.getSourceId());
-        } else {
-            sourceObject = sourcePermanent;
-        }
-        return sourceObject != null && event.getAmount() > 0;
+        return controller != null
+                && event.getAmount() > 0
+                && !event.getSourceId().equals(source.getSourceId())
+                && source.isControlledBy(game.getControllerId(event.getSourceId()))
+                && controller.hasOpponent(getControllerOrSelf(event.getTargetId(), game), game);
     }
 
     private static UUID getControllerOrSelf(UUID id, Game game) {
         UUID outId = game.getControllerId(id);
         return outId == null ? id : outId;
-    }
-
-    @Override
-    public ThorAsgardsAvengerEffect copy() {
-        return new ThorAsgardsAvengerEffect(this);
     }
 }

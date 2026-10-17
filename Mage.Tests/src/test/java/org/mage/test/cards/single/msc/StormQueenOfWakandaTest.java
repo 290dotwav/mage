@@ -7,48 +7,59 @@ import org.junit.Test;
 import org.mage.test.serverside.base.CardTestPlayerBase;
 
 /**
- * @author Claude
+ * @author DarioBarrabinoDev
  */
 public class StormQueenOfWakandaTest extends CardTestPlayerBase {
 
-    // Flying
-    // Whenever Storm attacks, until end of turn, another target attacking creature gains flying and gets +X/+0, where X is Storm's power.
-    // Whenever a creature with flying attacks you, Storm deals damage equal to her power to that creature.
-    private static final String STORM = "Storm, Queen of Wakanda";
+    /**
+     * Storm, Queen of Wakanda {3}{G}{W}
+     * Legendary Creature - Mutant Noble Hero 4/5
+     * Flying
+     * Whenever Storm attacks, until end of turn, another target attacking creature gains flying and gets +X/+0,
+     * where X is Storm's power.
+     * Whenever a creature with flying attacks you, Storm deals damage equal to her power to that creature.
+     */
+    private static final String storm = "Storm, Queen of Wakanda";
+
+    private static final String bear = "Grizzly Bears"; // 2/2
+    private static final String drake = "Wind Drake"; // 2/2 flying
 
     @Test
-    public void test_AttackBoost() {
-        addCard(Zone.BATTLEFIELD, playerA, STORM);
-        addCard(Zone.BATTLEFIELD, playerA, "Grizzly Bears");
-
-        attack(1, playerA, STORM, playerB);
-        attack(1, playerA, "Grizzly Bears", playerB);
-        addTarget(playerA, "Grizzly Bears");
-
+    public void test_AttackBoostsAnotherAttacker() {
         setStrictChooseMode(true);
-        setStopAt(1, PhaseStep.END_COMBAT);
+
+        addCard(Zone.BATTLEFIELD, playerA, storm);
+        addCard(Zone.BATTLEFIELD, playerA, bear);
+
+        attack(3, playerA, storm, playerB);
+        attack(3, playerA, bear, playerB);
+        addTarget(playerA, bear);
+
+        setStopAt(3, PhaseStep.POSTCOMBAT_MAIN);
         execute();
 
-        assertPowerToughness(playerA, "Grizzly Bears", 2 + 4, 2);
-        assertAbility(playerA, "Grizzly Bears", FlyingAbility.getInstance(), true);
+        assertAbility(playerA, bear, FlyingAbility.getInstance(), true);
+        assertPowerToughness(playerA, bear, 2 + 4, 2);
         assertLife(playerB, 20 - 4 - 6);
     }
 
     @Test
-    public void test_FlyerAttacksYou() {
-        addCard(Zone.BATTLEFIELD, playerA, STORM);
-        addCard(Zone.BATTLEFIELD, playerB, "Serra Angel"); // 4/4 flying
-        addCard(Zone.BATTLEFIELD, playerB, "Grizzly Bears");
-
-        attack(2, playerB, "Serra Angel", playerA);
-        attack(2, playerB, "Grizzly Bears", playerA);
-
+    public void test_FlyingAttackerTakesDamage() {
         setStrictChooseMode(true);
+
+        addCard(Zone.BATTLEFIELD, playerA, storm);
+        addCard(Zone.BATTLEFIELD, playerB, drake);
+        addCard(Zone.BATTLEFIELD, playerB, bear);
+
+        attack(2, playerB, drake, playerA);
+        attack(2, playerB, bear, playerA);
+
         setStopAt(2, PhaseStep.END_TURN);
         execute();
 
-        assertGraveyardCount(playerB, "Serra Angel", 1);
-        assertPermanentCount(playerB, "Grizzly Bears", 1);
+        // only the flying attacker is damaged, the bear connects
+        assertGraveyardCount(playerB, drake, 1);
+        assertPermanentCount(playerB, bear, 1);
         assertLife(playerA, 20 - 2);
     }
 }

@@ -1,8 +1,21 @@
 package mage.cards.v;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
 import mage.MageIdentifier;
 import mage.MageInt;
 import mage.MageObjectReference;
+import mage.constants.SubType;
+import mage.constants.SuperType;
+import mage.constants.WatcherScope;
+import mage.game.Game;
+import mage.game.events.GameEvent;
+import mage.game.permanent.Permanent;
+import mage.players.Player;
+import mage.util.CardUtil;
+import mage.watchers.Watcher;
 import mage.abilities.Ability;
 import mage.abilities.common.SimpleStaticAbility;
 import mage.abilities.condition.Condition;
@@ -16,22 +29,10 @@ import mage.constants.AsThoughEffectType;
 import mage.constants.CardType;
 import mage.constants.Duration;
 import mage.constants.Outcome;
-import mage.constants.SubType;
-import mage.constants.SuperType;
-import mage.constants.WatcherScope;
-import mage.game.Game;
-import mage.game.events.GameEvent;
-import mage.game.permanent.Permanent;
-import mage.players.Player;
-import mage.util.CardUtil;
-import mage.watchers.Watcher;
-
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
 
 /**
- * @author Claude
+ *
+ * @author muz
  */
 public final class VisionSpectralSynthezoid extends CardImpl {
 
@@ -49,13 +50,13 @@ public final class VisionSpectralSynthezoid extends CardImpl {
 
         // Once during each of your turns, you may cast a noncreature or Robot spell from your hand without paying its mana cost.
         this.addAbility(
-                new SimpleStaticAbility(new VisionSpectralSynthezoidEffect())
-                        .setIdentifier(MageIdentifier.VisionSpectralSynthezoidWatcher)
-                        .addHint(new ConditionPermanentHint(
-                                VisionSpectralSynthezoidCondition.instance,
-                                "Can cast a noncreature or Robot spell from your hand without paying its mana cost this turn"
-                        )),
-                new VisionSpectralSynthezoidWatcher()
+            new SimpleStaticAbility(new VisionSpectralSynthezoidEffect())
+                .setIdentifier(MageIdentifier.VisionSpectralSynthezoidWatcher)
+                .addHint(new ConditionPermanentHint(
+                        VisionSpectralSynthezoidCondition.instance,
+                        "Can cast a noncreature or Robot spell from your hand without paying its mana cost this turn"
+                )),
+            new VisionSpectralSynthezoidWatcher()
         );
     }
 
@@ -77,9 +78,9 @@ enum VisionSpectralSynthezoidCondition implements Condition {
         VisionSpectralSynthezoidWatcher watcher = game.getState().getWatcher(VisionSpectralSynthezoidWatcher.class);
         Permanent sourceObject = game.getPermanent(source.getSourceId());
         return watcher != null
-                && sourceObject != null
-                && game.isActivePlayer(source.getControllerId())
-                && !watcher.isAbilityUsed(new MageObjectReference(sourceObject, game));
+            && sourceObject != null
+            && game.isActivePlayer(source.getControllerId())
+            && !watcher.isAbilityUsed(new MageObjectReference(sourceObject, game));
     }
 }
 
@@ -88,7 +89,7 @@ class VisionSpectralSynthezoidEffect extends AsThoughEffectImpl {
     VisionSpectralSynthezoidEffect() {
         super(AsThoughEffectType.CAST_FROM_NOT_OWN_HAND_ZONE, Duration.WhileOnBattlefield, Outcome.PlayForFree);
         staticText = "once during each of your turns, you may cast a noncreature or Robot spell from your hand " +
-                "without paying its mana cost";
+                "without paying its mana cost.";
     }
 
     private VisionSpectralSynthezoidEffect(final VisionSpectralSynthezoidEffect effect) {
@@ -112,21 +113,20 @@ class VisionSpectralSynthezoidEffect extends AsThoughEffectImpl {
         }
         Player controller = game.getPlayer(source.getControllerId());
         Permanent sourceObject = game.getPermanent(source.getSourceId());
-        // the part being cast (a face or an adventure spell) decides whether it's a noncreature or Robot spell
-        Card part = game.getCard(objectId);
-        Card mainCard = game.getCard(CardUtil.getMainCardId(game, objectId));
+        Card card = game.getCard(CardUtil.getMainCardId(game, objectId));
         VisionSpectralSynthezoidWatcher watcher = game.getState().getWatcher(VisionSpectralSynthezoidWatcher.class);
         if (controller == null
-                || part == null
-                || mainCard == null
-                || part.isLand(game)
-                || (part.isCreature(game) && !part.hasSubtype(SubType.ROBOT, game))
+                || card == null
+                || (card.isCreature(game) && !card.hasSubtype(SubType.ROBOT, game))
                 || watcher == null
                 || sourceObject == null
-                || watcher.isAbilityUsed(new MageObjectReference(sourceObject, game))
-                || !controller.getHand().contains(mainCard.getId())) {
+                || watcher.isAbilityUsed(new MageObjectReference(sourceObject, game))) {
             return false;
         }
+        if (!controller.getHand().contains(card.getId())) {
+            return false;
+        }
+
         allowCardToPlayWithoutMana(objectId, source, affectedControllerId, MageIdentifier.VisionSpectralSynthezoidWatcher, game);
         return true;
     }
@@ -136,7 +136,7 @@ class VisionSpectralSynthezoidWatcher extends Watcher {
 
     private final Set<MageObjectReference> usedFrom = new HashSet<>();
 
-    VisionSpectralSynthezoidWatcher() {
+    public VisionSpectralSynthezoidWatcher() {
         super(WatcherScope.GAME);
     }
 
@@ -154,7 +154,7 @@ class VisionSpectralSynthezoidWatcher extends Watcher {
         usedFrom.clear();
     }
 
-    boolean isAbilityUsed(MageObjectReference mor) {
+    public boolean isAbilityUsed(MageObjectReference mor) {
         return usedFrom.contains(mor);
     }
 }

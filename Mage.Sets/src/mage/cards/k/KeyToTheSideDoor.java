@@ -13,7 +13,6 @@ import mage.cards.CardSetInfo;
 import mage.constants.CardType;
 import mage.constants.SuperType;
 import mage.filter.FilterCard;
-import mage.filter.StaticFilters;
 import mage.filter.predicate.ObjectSourcePlayer;
 import mage.filter.predicate.ObjectSourcePlayerPredicate;
 import mage.game.Game;
@@ -24,12 +23,14 @@ import mage.util.CardUtil;
 import java.util.UUID;
 
 /**
- * @author Claude
+ *
+ * @author nandmp
  */
 public final class KeyToTheSideDoor extends CardImpl {
 
-    private static final FilterCard filter
-            = new FilterCard("a legendary card with the same name as a legendary permanent you control");
+    private static final FilterCard filter = new FilterCard(
+            "a legendary card with the same name as a legendary permanent you control"
+    );
 
     static {
         filter.add(SuperType.LEGENDARY.getPredicate());
@@ -40,13 +41,17 @@ public final class KeyToTheSideDoor extends CardImpl {
         super(ownerId, setInfo, new CardType[]{CardType.ARTIFACT}, "{1}");
 
         // {2}, {T}: Target creature can't be blocked this turn.
-        Ability ability = new SimpleActivatedAbility(new CantBeBlockedTargetEffect(), new GenericManaCost(2));
+        Ability ability = new SimpleActivatedAbility(
+                new CantBeBlockedTargetEffect(), new GenericManaCost(2)
+        );
         ability.addCost(new TapSourceCost());
         ability.addTarget(new TargetCreaturePermanent());
         this.addAbility(ability);
 
         // {1}, {T}, Discard a legendary card with the same name as a legendary permanent you control: Draw two cards.
-        ability = new SimpleActivatedAbility(new DrawCardSourceControllerEffect(2), new GenericManaCost(1));
+        ability = new SimpleActivatedAbility(
+                new DrawCardSourceControllerEffect(2), new GenericManaCost(1)
+        );
         ability.addCost(new TapSourceCost());
         ability.addCost(new DiscardTargetCost(new TargetCardInHand(filter)));
         this.addAbility(ability);
@@ -67,11 +72,12 @@ enum KeyToTheSideDoorPredicate implements ObjectSourcePlayerPredicate<Card> {
 
     @Override
     public boolean apply(ObjectSourcePlayer<Card> input, Game game) {
-        Card card = input.getObject();
         return game.getBattlefield()
-                .getAllActivePermanents(StaticFilters.FILTER_PERMANENT, input.getPlayerId(), game)
+                .getAllActivePermanents(input.getPlayerId())
                 .stream()
                 .filter(permanent -> permanent.isLegendary(game))
-                .anyMatch(permanent -> CardUtil.haveSameNames(permanent, card));
+                .anyMatch(permanent -> CardUtil.haveSameNames(
+                        input.getObject(), permanent.getName(), game
+                ));
     }
 }

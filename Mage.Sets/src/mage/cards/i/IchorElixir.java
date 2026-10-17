@@ -15,13 +15,10 @@ import mage.constants.RollDieType;
 import mage.constants.Zone;
 import mage.game.Game;
 import mage.game.events.GameEvent;
-import mage.game.events.RollDieEvent;
+import mage.game.events.RollDiceEvent;
 
 import java.util.UUID;
 
-/**
- * @author ClaudeMTG
- */
 public final class IchorElixir extends CardImpl {
 
     public IchorElixir(UUID ownerId, CardSetInfo setInfo) {
@@ -45,11 +42,9 @@ public final class IchorElixir extends CardImpl {
 }
 
 class IchorElixirEffect extends ReplacementEffectImpl {
-
     IchorElixirEffect() {
         super(Duration.WhileOnBattlefield, Outcome.Benefit);
-        staticText = "if you would roll one or more planar dice, "
-                + "instead roll that many planar dice plus one and ignore one";
+        this.staticText = "if you would roll one or more planar dice, instead roll that many planar dice plus one and ignore one";
     }
 
     private IchorElixirEffect(final IchorElixirEffect effect) {
@@ -58,17 +53,14 @@ class IchorElixirEffect extends ReplacementEffectImpl {
 
     @Override
     public boolean replaceEvent(GameEvent event, Ability source, Game game) {
-        // the engine rolls each die on its own and lets the player keep one result of the
-        // rolls made for it, so rolling an extra die and ignoring one is done per die
-        // (see Krark's Other Thumb)
-        ((RollDieEvent) event).doubleRollsAmount();
+        ((RollDiceEvent) event).incAmount(1);
         return false;
     }
 
     @Override
     public boolean checksEventType(GameEvent event, Game game) {
-        return event.getType() == GameEvent.EventType.ROLL_DIE
-                && ((RollDieEvent) event).getRollDieType() == RollDieType.PLANAR;
+        return event.getType() == GameEvent.EventType.ROLL_DICE
+                && ((RollDiceEvent) event).getRollDieType() == RollDieType.PLANAR;
     }
 
     @Override

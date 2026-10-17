@@ -1,46 +1,42 @@
 package mage.cards.o;
 
 import mage.MageInt;
+import mage.MageObjectReference;
 import mage.abilities.Ability;
 import mage.abilities.common.DiesSourceTriggeredAbility;
 import mage.abilities.common.SimpleActivatedAbility;
-import mage.abilities.condition.Condition;
+import mage.abilities.condition.InvertCondition;
+import mage.abilities.condition.common.SourceHasSubtypeCondition;
 import mage.abilities.costs.common.RemoveCountersSourceCost;
 import mage.abilities.costs.common.TapSourceCost;
 import mage.abilities.costs.mana.ManaCostsImpl;
-import mage.abilities.effects.ContinuousEffectImpl;
-import mage.abilities.effects.OneShotEffect;
 import mage.abilities.effects.common.DestroyTargetEffect;
+import mage.abilities.effects.common.ReturnToBattlefieldUnderOwnerControlSourceEffect;
+import mage.abilities.effects.common.continuous.BecomesSubtypeAllEffect;
 import mage.abilities.keyword.FlashAbility;
 import mage.cards.Card;
 import mage.cards.CardImpl;
 import mage.cards.CardSetInfo;
 import mage.constants.CardType;
 import mage.constants.Duration;
-import mage.constants.Layer;
-import mage.constants.Outcome;
-import mage.constants.SubLayer;
 import mage.constants.SubType;
 import mage.constants.TargetController;
-import mage.constants.Zone;
-import mage.counters.CounterType;
 import mage.counters.Counters;
+import mage.counters.CounterType;
 import mage.filter.common.FilterCreaturePermanent;
 import mage.filter.predicate.other.DamagedPlayerThisTurnPredicate;
+import mage.filter.predicate.permanent.PermanentReferenceInCollectionPredicate;
 import mage.game.Game;
-import mage.game.permanent.Permanent;
-import mage.players.Player;
 import mage.target.TargetPermanent;
-import mage.target.targetpointer.FixedTarget;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.UUID;
 
-/**
- * @author Claude
- */
 public final class OtherworldlyEscort extends CardImpl {
 
     private static final FilterCreaturePermanent filter = new FilterCreaturePermanent("creature that dealt damage to you this turn");
+    private static final InvertCondition condition = new InvertCondition(new SourceHasSubtypeCondition(SubType.SPIRIT), "it's not a Spirit");
 
     static {
         filter.add(new DamagedPlayerThisTurnPredicate(TargetController.YOU));
@@ -58,14 +54,13 @@ public final class OtherworldlyEscort extends CardImpl {
         this.addAbility(FlashAbility.getInstance());
 
         // When this creature dies, if it's not a Spirit, return it to the battlefield under its owner's control with four charge counters on it. It's a Spirit Detective.
-        this.addAbility(new DiesSourceTriggeredAbility(new OtherworldlyEscortEffect())
-                .withInterveningIf(OtherworldlyEscortCondition.instance));
+        this.addAbility(new DiesSourceTriggeredAbility(new OtherworldlyEscortReturnEffect()).withInterveningIf(condition));
 
         // {1}{W}, {T}, Remove a charge counter from this creature: Destroy target creature that dealt damage to you this turn.
-        Ability ability = new SimpleActivatedAbility(new DestroyTargetEffect(), new ManaCostsImpl<>("{1}{W}"));
-        ability.addCost(new TapSourceCost());
-        ability.addCost(new RemoveCountersSourceCost(CounterType.CHARGE.createInstance()));
+        final SimpleActivatedAbility ability = new SimpleActivatedAbility(new DestroyTargetEffect(), new ManaCostsImpl<>("{1}{W}"));
         ability.addTarget(new TargetPermanent(filter));
+        ability.addCost(new TapSourceCost());
+        ability.addCost(new RemoveCountersSourceCost(CounterType.CHARGE.createInstance(1)));
         this.addAbility(ability);
     }
 
@@ -79,85 +74,32 @@ public final class OtherworldlyEscort extends CardImpl {
     }
 }
 
-enum OtherworldlyEscortCondition implements Condition {
-    instance;
+class OtherworldlyEscortReturnEffect extends ReturnToBattlefieldUnderOwnerControlSourceEffect {
 
-    @Override
-    public boolean apply(Game game, Ability source) {
-        Permanent permanent = source.getSourcePermanentOrLKI(game);
-        return permanent != null && !permanent.hasSubtype(SubType.SPIRIT, game);
+    OtherworldlyEscortReturnEffect() {
+        super();
+        this.staticText = "return it to the battlefield under its owner's control with four charge counters on it. It's a Spirit Detective";
     }
 
-    @Override
-    public String toString() {
-        return "it's not a Spirit";
-    }
-}
-
-class OtherworldlyEscortEffect extends OneShotEffect {
-
-    OtherworldlyEscortEffect() {
-        super(Outcome.PutCreatureInPlay);
-        staticText = "return it to the battlefield under its owner's control with four charge counters on it. " +
-                "It's a Spirit Detective. <i>(It's no longer a Human.)</i>";
-    }
-
-    private OtherworldlyEscortEffect(final OtherworldlyEscortEffect effect) {
+    private OtherworldlyEscortReturnEffect(final OtherworldlyEscortReturnEffect effect) {
         super(effect);
     }
 
     @Override
-    public OtherworldlyEscortEffect copy() {
-        return new OtherworldlyEscortEffect(this);
+    public OtherworldlyEscortReturnEffect copy() {
+        return new OtherworldlyEscortReturnEffect(this);
     }
 
     @Override
     public boolean apply(Game game, Ability source) {
-        Card card = game.getCard(source.getSourceId());
-        if (card == null
-                || game.getState().getZone(card.getId()) != Zone.GRAVEYARD
-                || card.getZoneChangeCounter(game) != source.getStackMomentSourceZCC()) {
+        final Card card = game.getCard(source.getSourceId());
+        if (card == null) {
             return false;
         }
-        Player owner = game.getPlayer(card.getOwnerId());
-        if (owner == null) {
-            return false;
-        }
-        Counters counters = new Counters();
-        counters.addCounter(CounterType.CHARGE.createInstance(4));
-        game.setEnterWithCounters(card.getId(), counters);
-        // it's a Spirit Detective as it enters
-        game.addEffect(new OtherworldlyEscortTypeEffect().setTargetPointer(
-                new FixedTarget(card.getId(), card.getZoneChangeCounter(game) + 1)
-        ), source);
-        return owner.moveCards(card, Zone.BATTLEFIELD, source, game);
-    }
-}
-
-class OtherworldlyEscortTypeEffect extends ContinuousEffectImpl {
-
-    OtherworldlyEscortTypeEffect() {
-        super(Duration.Custom, Layer.TypeChangingEffects_4, SubLayer.NA, Outcome.Neutral);
-    }
-
-    private OtherworldlyEscortTypeEffect(final OtherworldlyEscortTypeEffect effect) {
-        super(effect);
-    }
-
-    @Override
-    public OtherworldlyEscortTypeEffect copy() {
-        return new OtherworldlyEscortTypeEffect(this);
-    }
-
-    @Override
-    public boolean apply(Game game, Ability source) {
-        Permanent permanent = game.getPermanent(getTargetPointer().getFirst(game, source));
-        if (permanent == null) {
-            discard();
-            return false;
-        }
-        permanent.removeAllCreatureTypes(game);
-        permanent.addSubType(game, SubType.SPIRIT, SubType.DETECTIVE);
-        return true;
+        final FilterCreaturePermanent filter = new FilterCreaturePermanent();
+        filter.add(new PermanentReferenceInCollectionPredicate(Collections.singletonList(new MageObjectReference(card, game, 1))));
+        game.addEffect(new BecomesSubtypeAllEffect(Duration.WhileOnBattlefield, Arrays.asList(SubType.SPIRIT, SubType.DETECTIVE), filter, true), source);
+        game.setEnterWithCounters(card.getId(), new Counters(CounterType.CHARGE.createInstance(4)));
+        return super.apply(game, source);
     }
 }

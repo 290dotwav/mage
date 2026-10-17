@@ -1,5 +1,6 @@
 package mage.cards.b;
 
+import java.util.UUID;
 import mage.MageInt;
 import mage.abilities.Ability;
 import mage.abilities.common.EntersBattlefieldTriggeredAbility;
@@ -7,10 +8,6 @@ import mage.abilities.common.delayed.ReflexiveTriggeredAbility;
 import mage.abilities.costs.common.SacrificeTargetCost;
 import mage.abilities.effects.OneShotEffect;
 import mage.abilities.effects.keyword.AmassEffect;
-import mage.cards.CardImpl;
-import mage.cards.CardSetInfo;
-import mage.constants.CardType;
-import mage.constants.Outcome;
 import mage.constants.SubType;
 import mage.constants.SuperType;
 import mage.filter.StaticFilters;
@@ -18,11 +15,14 @@ import mage.game.Game;
 import mage.game.permanent.Permanent;
 import mage.players.Player;
 import mage.target.TargetPermanent;
-
-import java.util.UUID;
+import mage.cards.CardImpl;
+import mage.cards.CardSetInfo;
+import mage.constants.CardType;
+import mage.constants.Outcome;
 
 /**
- * @author Claude
+ *
+ * @author muz
  */
 public final class BolgOfTheNorth extends CardImpl {
 
@@ -35,8 +35,9 @@ public final class BolgOfTheNorth extends CardImpl {
         this.power = new MageInt(5);
         this.toughness = new MageInt(5);
 
-        // When Bolg enters, you may sacrifice another creature. When you do, Bolg deals damage equal to that creature's power to another target creature. If excess damage was dealt this way, amass Goblins X, where X is that excess damage.
-        this.addAbility(new EntersBattlefieldTriggeredAbility(new BolgOfTheNorthEffect()));
+        // When Bolg enters, you may sacrifice another creature.
+        // When you do, Bolg deals damage equal to that creature's power to another target creature. If excess damage was dealt this way, amass Goblins X, where X is that excess damage.
+        this.addAbility(new EntersBattlefieldTriggeredAbility(new BolgOfTheNorthSacrificeEffect()));
     }
 
     private BolgOfTheNorth(final BolgOfTheNorth card) {
@@ -49,18 +50,61 @@ public final class BolgOfTheNorth extends CardImpl {
     }
 }
 
+class BolgOfTheNorthSacrificeEffect extends OneShotEffect {
+
+    BolgOfTheNorthSacrificeEffect() {
+        super(Outcome.Benefit);
+        staticText = "you may sacrifice another creature. When you do, {this} deals damage equal to that creature's "
+                + "power to another target creature. If excess damage was dealt this way, amass Goblins X, "
+                + "where X is that excess damage";
+    }
+
+    private BolgOfTheNorthSacrificeEffect(final BolgOfTheNorthSacrificeEffect effect) {
+        super(effect);
+    }
+
+    @Override
+    public BolgOfTheNorthSacrificeEffect copy() {
+        return new BolgOfTheNorthSacrificeEffect(this);
+    }
+
+    @Override
+    public boolean apply(Game game, Ability source) {
+        Player player = game.getPlayer(source.getControllerId());
+        if (player == null) {
+            return false;
+        }
+
+        SacrificeTargetCost cost = new SacrificeTargetCost(StaticFilters.FILTER_ANOTHER_CREATURE);
+        if (!cost.canPay(source, source, player.getId(), game)
+                || !player.chooseUse(Outcome.Sacrifice, "Sacrifice another creature?", source, game)
+                || !cost.pay(source, game, source, player.getId(), false)) {
+            return false;
+        }
+
+        // The cost keeps the creature's characteristics from before it was sacrificed.
+        int power = cost.getPermanents().get(0).getPower().getValue();
+        ReflexiveTriggeredAbility ability = new ReflexiveTriggeredAbility(new BolgOfTheNorthEffect(power), false);
+        ability.addTarget(new TargetPermanent(StaticFilters.FILTER_ANOTHER_TARGET_CREATURE));
+        game.fireReflexiveTriggeredAbility(ability, source);
+        return true;
+    }
+}
+
 class BolgOfTheNorthEffect extends OneShotEffect {
 
-    BolgOfTheNorthEffect() {
-        super(Outcome.Damage);
-        staticText = "you may sacrifice another creature. When you do, {this} deals damage equal to that " +
-                "creature's power to another target creature. If excess damage was dealt this way, " +
-                "amass Goblins X, where X is that excess damage. <i>(Put X +1/+1 counters on an Army you control. " +
-                "It's also a Goblin. If you don't control an Army, create a 0/0 black Goblin Army creature token first.)</i>";
+    private final int amount;
+
+    BolgOfTheNorthEffect(int amount) {
+        super(Outcome.Benefit);
+        this.amount = amount;
+        staticText = "{this} deals damage equal to that creature's power to another target creature. "
+                + "If excess damage was dealt this way, amass Goblins X, where X is that excess damage";
     }
 
     private BolgOfTheNorthEffect(final BolgOfTheNorthEffect effect) {
         super(effect);
+        this.amount = effect.amount;
     }
 
     @Override
@@ -70,60 +114,16 @@ class BolgOfTheNorthEffect extends OneShotEffect {
 
     @Override
     public boolean apply(Game game, Ability source) {
-        Player controller = game.getPlayer(source.getControllerId());
-        if (controller == null) {
+        Permanent targetCreature = game.getPermanent(getTargetPointer().getFirst(game, source));
+        if (targetCreature == null) {
             return false;
         }
-        SacrificeTargetCost cost = new SacrificeTargetCost(StaticFilters.FILTER_CONTROLLED_ANOTHER_CREATURE);
-        if (!cost.canPay(source, source, source.getControllerId(), game)
-                || !controller.chooseUse(outcome, "Sacrifice another creature?", source, game)
-                || !cost.pay(source, game, source, source.getControllerId(), false)) {
-            return false;
-        }
-        int power = cost
-                .getPermanents()
-                .stream()
-                .mapToInt(permanent -> permanent.getPower().getValue())
-                .sum();
-        ReflexiveTriggeredAbility trigger = new ReflexiveTriggeredAbility(
-                new BolgOfTheNorthDamageEffect(power), false,
-                "{this} deals damage equal to that creature's power to another target creature. " +
-                        "If excess damage was dealt this way, amass Goblins X, where X is that excess damage"
-        );
-        trigger.addTarget(new TargetPermanent(StaticFilters.FILTER_ANOTHER_CREATURE));
-        game.fireReflexiveTriggeredAbility(trigger, source);
-        return true;
-    }
-}
 
-class BolgOfTheNorthDamageEffect extends OneShotEffect {
-
-    private final int amount;
-
-    BolgOfTheNorthDamageEffect(int amount) {
-        super(Outcome.Damage);
-        this.amount = amount;
-    }
-
-    private BolgOfTheNorthDamageEffect(final BolgOfTheNorthDamageEffect effect) {
-        super(effect);
-        this.amount = effect.amount;
-    }
-
-    @Override
-    public BolgOfTheNorthDamageEffect copy() {
-        return new BolgOfTheNorthDamageEffect(this);
-    }
-
-    @Override
-    public boolean apply(Game game, Ability source) {
-        Permanent permanent = game.getPermanent(getTargetPointer().getFirst(game, source));
-        if (permanent == null || amount < 1) {
-            return false;
-        }
-        int excess = permanent.damageWithExcess(amount, source, game);
+        int lethal = targetCreature.getLethalDamage(source.getSourceId(), game);
+        int dealt = targetCreature.damage(amount, source, game);
+        int excess = Math.max(dealt - lethal, 0);
         if (excess > 0) {
-            AmassEffect.doAmass(excess, SubType.GOBLIN, game, source);
+            new AmassEffect(excess, SubType.GOBLIN).apply(game, source);
         }
         return true;
     }

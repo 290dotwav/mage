@@ -21,7 +21,7 @@ import mage.target.targetadjustment.TargetsCountAdjuster;
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author muz
  */
 public final class BatrocTheLeaper extends CardImpl {
 
@@ -39,13 +39,16 @@ public final class BatrocTheLeaper extends CardImpl {
 
         // Batroc enters with a +1/+1 counter on him for each time he was kicked.
         this.addAbility(new EntersBattlefieldAbility(
-                new AddCountersSourceEffect(CounterType.P1P1.createInstance(0), MultikickerCount.instance),
-                "with a +1/+1 counter on him for each time he was kicked"
+            new AddCountersSourceEffect(CounterType.P1P1.createInstance(0), MultikickerCount.instance),
+            false, null,
+            "Batroc enters with a +1/+1 counter on him for each time he was kicked.",
+            null
         ));
 
         // When Batroc enters, he deals damage equal to his power to each of up to X targets, where X is the number of times he was kicked.
-        Ability ability = new EntersBattlefieldTriggeredAbility(new DamageTargetEffect(SourcePermanentPowerValue.NOT_NEGATIVE)
-                .setText("he deals damage equal to his power to each of up to X targets, where X is the number of times he was kicked"));
+        Ability ability = new EntersBattlefieldTriggeredAbility(new DamageTargetEffect(
+            SourcePermanentPowerValue.NOT_NEGATIVE, "he"
+        ).setText("he deals damage equal to his power to each of up to X targets, where X is the number of times he was kicked"));
         ability.addTarget(new TargetAnyTarget(0, 1));
         ability.setTargetAdjuster(new TargetsCountAdjuster(MultikickerCount.instance));
         this.addAbility(ability);
