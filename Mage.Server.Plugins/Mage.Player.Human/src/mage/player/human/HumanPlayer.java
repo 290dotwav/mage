@@ -1711,6 +1711,16 @@ public class HumanPlayer extends PlayerImpl {
         // TODO: make canRespond cycle?
         if (canRespond()) {
             Map<String, Serializable> options = new HashMap<>();
+            // "spend mana as though it were mana of any type / color" (Gonti, Chromatic Orrery): what else pays each
+            // owed mana, so a client that pays by itself can tap a Swamp for {G} as the engine allows it
+            try {
+                Map<String, String> asThough = ManaUtil.asThoughPayers(abilityToCast, game);
+                if (!asThough.isEmpty()) {
+                    options.put("asThoughMana", new HashMap<>(asThough));
+                }
+            } catch (RuntimeException e) {
+                logger.warn("asThoughMana for the payment of " + abilityToCast + ": " + e);
+            }
             prepareForResponse(game);
             if (!isExecutingMacro()) {
                 game.firePlayManaEvent(playerId, "Pay " + promptText, options);

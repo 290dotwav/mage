@@ -21,6 +21,7 @@ import mage.constants.ManaType;
 import mage.filter.FilterMana;
 import mage.game.Game;
 import mage.game.permanent.token.Token;
+import mage.players.ManaPoolItem;
 import mage.players.Player;
 
 import java.util.*;
@@ -793,5 +794,57 @@ public final class ManaUtil {
             if (mana.getColorless() > 0 || mana.getGeneric() > 0 || mana.getAny() > 0) res.add(ManaType.COLORLESS);
         }
         return res;
+    }
+
+    private static final ManaType[] PAYING_TYPES = {ManaType.WHITE, ManaType.BLUE, ManaType.BLACK, ManaType.RED, ManaType.GREEN, ManaType.COLORLESS};
+
+    private static String letterOf(ManaType type) {
+        switch (type) {
+            case WHITE:
+                return "W";
+            case BLUE:
+                return "U";
+            case BLACK:
+                return "B";
+            case RED:
+                return "R";
+            case GREEN:
+                return "G";
+            default:
+                return "C";
+        }
+    }
+
+    /**
+     * What else may pay each mana an ability owes, through the "spend mana as though it were mana of
+     * any type / any color" effects in play now (Gonti, Hostage Taker, Chromatic Orrery, Mycosynth
+     * Lattice, Sunglasses of Urza): the owed type's letter (W U B R G C) to the letters of the other
+     * types that pay it, as {@link mage.players.ManaPool#pay} would decide it for one mana of that type
+     * ({@code ContinuousEffects.asThoughMana}). Only types with something beyond themselves are listed;
+     * empty when no such effect applies to this ability.
+     */
+    public static Map<String, String> asThoughPayers(Ability ability, Game game) {
+        Map<String, String> out = new LinkedHashMap<>();
+        if (ability == null || game == null) {
+            return out;
+        }
+        for (ManaType owed : PAYING_TYPES) {
+            StringBuilder by = new StringBuilder();
+            for (ManaType paid : PAYING_TYPES) {
+                if (paid == owed) {
+                    continue;
+                }
+                ManaPoolItem item = new ManaPoolItem();
+                item.add(paid, 1);
+                ManaType usable = game.getContinuousEffects().asThoughMana(owed, item, ability.getSourceId(), ability, ability.getControllerId(), game);
+                if (usable != null && item.get(usable) > 0) {
+                    by.append(letterOf(paid));
+                }
+            }
+            if (by.length() > 0) {
+                out.put(letterOf(owed), by.toString());
+            }
+        }
+        return out;
     }
 }
