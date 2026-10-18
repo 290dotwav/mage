@@ -40,6 +40,55 @@ public class PlayerUnderControlTest extends CardTestPlayerBase {
         execute();
     }
 
+    @Test
+    public void test_ControllerGetsTheControlledPlayersView() {
+        // web door (723.4): the controller is sent the game as the controlled player sees it, and
+        // every seat is told who plays whose turn
+        addCard(Zone.HAND, playerA, "Emrakul, the Promised End"); // {13}
+        addCard(Zone.BATTLEFIELD, playerA, "Forest", 13);
+        //
+        addCard(Zone.HAND, playerB, "Lightning Bolt");
+        addCard(Zone.BATTLEFIELD, playerB, "Mountain", 1);
+
+        castSpell(1, PhaseStep.PRECOMBAT_MAIN, playerA, "Emrakul, the Promised End");
+        addTarget(playerA, playerB);
+        waitStackResolved(1, PhaseStep.PRECOMBAT_MAIN);
+
+        runCode("turn 1 - nobody controlled", 1, PhaseStep.POSTCOMBAT_MAIN, playerA, (info, player, game) -> {
+            Assert.assertTrue(info, getGameView(playerA).getTurnControllers().isEmpty());
+            Assert.assertTrue(info, getGameView(playerA).getControlledViews().isEmpty());
+        });
+        runCode("turn 2 - B under A", 2, PhaseStep.PRECOMBAT_MAIN, playerA, (info, player, game) -> {
+            GameView viewA = getGameView(playerA);
+            GameView viewB = getGameView(playerB);
+            Assert.assertEquals(info, playerA.getId(), viewA.getTurnControllers().get(playerB.getId()));
+            Assert.assertEquals(info, playerA.getId(), viewB.getTurnControllers().get(playerB.getId()));
+            Assert.assertEquals(info, 1, viewA.getTurnControllers().size());
+            // the controlled player's own view holds nobody else's game
+            Assert.assertTrue(info, viewB.getControlledViews().isEmpty());
+
+            GameView asB = viewA.getControlledViews().get(playerB.getId());
+            Assert.assertNotNull(info, asB);
+            Assert.assertEquals(info, playerB.getId(), asB.getMyPlayer().getPlayerId());
+            Assert.assertTrue(info, asB.getMyHand().values().stream().anyMatch(c -> c.getName().equals("Lightning Bolt")));
+            Assert.assertTrue(info, asB.getMyPlayer().getSideboard().isEmpty());
+            // what he can play is his while he holds priority, nothing otherwise
+            if (playerB.getId().equals(game.getPriorityPlayerId())) {
+                Assert.assertNotNull(info, asB.getCanPlayObjects());
+            } else {
+                Assert.assertNull(info, asB.getCanPlayObjects());
+            }
+        });
+        runCode("turn 3 - control is over", 3, PhaseStep.PRECOMBAT_MAIN, playerA, (info, player, game) -> {
+            Assert.assertTrue(info, getGameView(playerA).getTurnControllers().isEmpty());
+            Assert.assertTrue(info, getGameView(playerA).getControlledViews().isEmpty());
+        });
+
+        setStrictChooseMode(true);
+        setStopAt(3, PhaseStep.END_TURN);
+        execute();
+    }
+
     private void checkUnderControl(String info, int turnNum, PhaseStep step, boolean mustHaveControl) {
         runCode(info, turnNum, step, playerA, (info1, player, game) -> {
             GameView viewA = getGameView(playerA);

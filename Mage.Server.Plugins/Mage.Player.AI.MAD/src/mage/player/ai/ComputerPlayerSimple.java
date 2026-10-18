@@ -26,8 +26,15 @@ import java.util.List;
  * another player's turn and never activates a non-mana ability. The skill is accepted and ignored.
  * <p>
  * Registered in config.xml as "Computer - simple" ({@link mage.players.PlayerType#COMPUTER_SIMPLE}).
+ * <p>
+ * It can be taken under control like "Computer - mad" (723: Emrakul, the Promised End, Mindslaver):
+ * it is a {@link ComputerPlayerControllableProxy}, so while another player controls its turn every
+ * decision, its priority included, goes to that player. Without it a human who cast Emrakul on a
+ * simple bot was sent the bot's priorities ("as Bot") while the bot went on playing its own turn.
+ * Under its own control nothing changes: the proxy hands every dialog to {@link ComputerPlayer6}
+ * (through {@link ComputerPlayer7}, which adds nothing but the simulated priority this class replaces).
  */
-public class ComputerPlayerSimple extends ComputerPlayer6 {
+public class ComputerPlayerSimple extends ComputerPlayerControllableProxy {
 
     private static final Logger logger = Logger.getLogger(ComputerPlayerSimple.class);
 
@@ -56,6 +63,9 @@ public class ComputerPlayerSimple extends ComputerPlayer6 {
 
     @Override
     public boolean priority(Game game) {
+        if (!isUnderMe(game)) {
+            return super.priority(game); // the proxy gives it to the player who controls this turn
+        }
         game.getState().setPriorityPlayerId(playerId);
         game.firePriorityEvent(playerId);
         PhaseStep step = game.getTurnStepType();

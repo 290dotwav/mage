@@ -259,8 +259,30 @@ public class GameSessionPlayer extends GameSessionWatcher {
             for (UUID controlledPlayerId : player.getPlayersUnderYourControl()) {
                 Player opponent = game.getPlayer(controlledPlayerId);
                 gameView.getOpponentHands().put(opponent.getName(), new SimpleCardsView(opponent.getHand().getCards(game), true));
+                gameView.getControlledViews().put(controlledPlayerId, controlledView(game, controlledPlayerId, gameView));
             }
         }
+    }
+
+    /**
+     * Web door: the game as a player under control sees it, for the player who controls him
+     * (723.4: what the controlled player may see, his controller sees too). Built on the game
+     * thread like the view it rides in. What it can play is the controller's own view's list
+     * while the controlled player is the one with priority (prepareGameView already puts his
+     * playables there), and nothing otherwise. Cards outside the game stay his alone (723.4):
+     * his sideboard is not in it.
+     */
+    private static GameView controlledView(Game game, UUID controlledPlayerId, GameView controllerView) {
+        GameView view = new GameView(game.getState(), game, controlledPlayerId, null);
+        if (controlledPlayerId.equals(game.getPriorityPlayerId())) {
+            view.setCanPlayObjects(controllerView.getCanPlayObjects());
+        }
+        for (mage.view.PlayerView playerView : view.getPlayers()) {
+            if (playerView.getPlayerId().equals(controlledPlayerId)) {
+                playerView.getSideboard().clear();
+            }
+        }
+        return view;
     }
 
     public void removeGame() {

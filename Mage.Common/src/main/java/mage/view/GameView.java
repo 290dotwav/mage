@@ -56,6 +56,12 @@ public class GameView implements Serializable {
     private PlayableObjectsList canPlayObjects;
     private final Map<String, SimpleCardsView> opponentHands = new HashMap<>();
     private final Map<String, SimpleCardsView> watchedHands = new HashMap<>();
+    // web door (723): who plays whose turn, by player id, for every viewer: a player whose turn
+    // another player controls, and that controller. Empty when nobody controls anybody.
+    private final Map<UUID, UUID> turnControllers = new HashMap<>();
+    // web door (723.4): the game as each player under this viewer's control sees it, filled for
+    // the controlling player only (GameSessionPlayer.processControlledPlayers)
+    private final Map<UUID, GameView> controlledViews = new HashMap<>();
     private final CardsView stack = new CardsView();
     private final List<ExileView> exiles = new ArrayList<>();
     private final List<RevealedView> revealed = new ArrayList<>();
@@ -93,6 +99,10 @@ public class GameView implements Serializable {
         for (Player player : state.getPlayers().values()) {
             PlayerView playerView = new PlayerView(player, state, game, createdForPlayerId, watcherUserId);
             players.add(playerView);
+            UUID turnController = player.getTurnControlledBy();
+            if (turnController != null && !turnController.equals(player.getId())) {
+                turnControllers.put(player.getId(), turnController);
+            }
             if (player.getId().equals(createdForPlayerId)) {
                 createdForPlayer = player;
                 this.myPlayerId = player.getId();
@@ -286,6 +296,14 @@ public class GameView implements Serializable {
 
     public Map<String, SimpleCardsView> getWatchedHands() {
         return watchedHands;
+    }
+
+    public Map<UUID, UUID> getTurnControllers() {
+        return turnControllers;
+    }
+
+    public Map<UUID, GameView> getControlledViews() {
+        return controlledViews;
     }
 
     public TurnPhase getPhase() {

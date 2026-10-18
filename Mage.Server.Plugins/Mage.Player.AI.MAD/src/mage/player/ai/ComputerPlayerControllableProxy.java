@@ -58,7 +58,7 @@ public class ComputerPlayerControllableProxy extends ComputerPlayer7 {
         return new ComputerPlayerControllableProxy(this);
     }
 
-    private boolean isUnderMe(Game game) {
+    protected boolean isUnderMe(Game game) {
         return game.isSimulation() || this.isGameUnderControl();
     }
 
