@@ -1403,6 +1403,13 @@ public abstract class GameImpl implements Game {
         }
 
         //20091005 - 103.4
+        // Nobody has priority while the hands are decided, and everyone decides
+        // at once (`Mulligan.askTogether`). A game started over by Karn
+        // Liberated keeps the old game's priority player here, and
+        // `GameController.sendMessage` drops every answer but that player's:
+        // the other seats' keeps never reached their question and the
+        // restarted game waited on them for ever.
+        state.setPriorityPlayerId(null);
         mulligan.executeMulliganPhase(this, startingHandSize);
         getState().setChoosingPlayerId(null);
         state.resetWatchers(); // watcher objects from cards are reused during match so reset all card watchers already added
