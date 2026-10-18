@@ -37,6 +37,7 @@ final class ControlledViews {
             own.add("data", e.getValue());
             StackControllers.enrich(own, gameId, managerFactory);
             Commanders.enrich(own, gameId, managerFactory);
+            Companions.enrich(own, gameId, managerFactory);
         }
     }
 }
