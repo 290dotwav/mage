@@ -146,10 +146,12 @@ being the `PlaneView` every player's `commandList` carries, and `dieCost` what t
 player pays for his next roll this turn (901.9: one more for each roll he already made, their
 `PlanarRollWatcher`; the ability's own text keeps saying `{0}`). Absent with no plane.
 
-Two states of the board their views do not carry (`BoardStates.java`): `dayNight` on the
-`GameView`, `"day"` or `"night"` once the game has day and night (731), absent before; and
+States of the board their views do not carry (`BoardStates.java`): `dayNight` on the
+`GameView`, `"day"` or `"night"` once the game has day and night (731), absent before;
 `classLevel` on a Class permanent's entry of a player's `battlefield` (716: 1 to 3, read off
-`Permanent.getClassLevel`), on Classes only.
+`Permanent.getClassLevel`), on Classes only; and `protectionFromEverything: true` on a
+player's entry of `players` while he has protection from everything (702.16j: Teferi's
+Protection, The One Ring), absent otherwise.
 
 ## Holding the game (`game` frames)
 
