@@ -5066,7 +5066,9 @@ public abstract class PlayerImpl implements Player, Serializable {
         this.loses = false;
         this.left = false;
         this.wins = false;
-        this.passed = false;
+        // the priority he had passed at that moment stays passed (restore took it from the copy):
+        // reset, it gave him one more priority than the moment had (117.4)
+        this.passed = then.isPassed();
         return false;
     }
 

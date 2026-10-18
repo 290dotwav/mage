@@ -144,6 +144,8 @@ public abstract class GameImpl implements Game {
     // rollback points finer than a turn (steps, casts, lands), and the one being gone back to
     protected transient RollbackPoints rollbackPoints = new RollbackPoints();
     protected transient volatile RollbackPoints.Point rollbackPointToRestore;
+    // how many times the game went back, see getRollbackCount
+    protected transient volatile int rollbackCount = 0;
 
     protected Date startTime;
     protected Date endTime;
@@ -4200,6 +4202,7 @@ public abstract class GameImpl implements Game {
         if (restore != null) {
             informPlayers(GameLog.getPlayerRequestColoredText("Player request: Rolling back to start of turn " + restore.getTurnNum()));
             state.restoreForRollBack(restore);
+            rollbackCount++;
             playerList.setCurrent(state.getPlayerByOrderId());
             outcomesAfterRollback(restore);
             // Reset temporary created bookmarks because no longer valid after rollback
@@ -4253,6 +4256,11 @@ public abstract class GameImpl implements Game {
     @Override
     public RollbackPoints getRollbackPoints() {
         return rollbackPoints;
+    }
+
+    @Override
+    public int getRollbackCount() {
+        return rollbackCount;
     }
 
     @Override
@@ -4314,6 +4322,7 @@ public abstract class GameImpl implements Game {
             // the kept copy stays as it is: a copy of it is restored
             GameState then = point.getState().copy();
             state.restoreForRollBack(then);
+            rollbackCount++;
             playerList.setCurrent(state.getPlayerByOrderId());
             outcomesAfterRollback(then);
             savedStates.clear();

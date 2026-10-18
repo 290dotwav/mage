@@ -698,6 +698,16 @@ public interface Game extends MageItem, Serializable, Copyable<Game> {
     }
 
     /**
+     * How many times this game went back (to a rollback point or to a turn start), counted as the
+     * copy is restored: every view built after that carries the new count ({@code GameView.rollbacks}),
+     * so a screen can tell a question of the restored game from one asked before it went back,
+     * whatever order the two reach it in.
+     */
+    default int getRollbackCount() {
+        return 0;
+    }
+
+    /**
      * Add counters to permanent before ETB. Use it before put real permanent to battlefield.
      */
     void setEnterWithCounters(UUID sourceId, Counters counters);

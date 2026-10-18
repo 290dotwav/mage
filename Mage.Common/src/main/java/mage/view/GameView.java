@@ -76,6 +76,8 @@ public class GameView implements Serializable {
     private final int turn;
     private boolean special = false;
     private final boolean rollbackTurnsAllowed;
+    // web door: how many times the game had gone back when this view was built (Game.getRollbackCount)
+    private final int rollbacks;
 
     // for debug only
     // TODO: implement and support in admin tools
@@ -95,6 +97,7 @@ public class GameView implements Serializable {
         Player createdForPlayer = null;
         this.priorityTime = game.getPriorityTime();
         this.bufferTime = game.getBufferTime();
+        this.rollbacks = game.getRollbackCount();
 
         for (Player player : state.getPlayers().values()) {
             PlayerView playerView = new PlayerView(player, state, game, createdForPlayerId, watcherUserId);
@@ -385,6 +388,10 @@ public class GameView implements Serializable {
     public String toJson() {
         Gson gson = new GsonBuilder().create();
         return gson.toJson(this);
+    }
+
+    public int getRollbacks() {
+        return rollbacks;
     }
 
     public int getTotalErrorsCount() {
