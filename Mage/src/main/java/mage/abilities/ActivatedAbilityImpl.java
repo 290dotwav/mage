@@ -76,7 +76,8 @@ public abstract class ActivatedAbilityImpl extends AbilityImpl implements Activa
             case EACH_PLAYER:
                 return true;
             case ACTIVE:
-                return game.getActivePlayerId() == playerId;
+                // equals, not ==: two UUID objects with one value (a copied state, a reloaded game) are one player
+                return playerId != null && playerId.equals(game.getActivePlayerId());
             case NOT_YOU:
                 return !isControlledByPlayer(playerId, game);
             case TEAM:

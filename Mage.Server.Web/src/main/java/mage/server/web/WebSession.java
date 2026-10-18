@@ -210,6 +210,7 @@ final class WebSession implements AsynchInvokerCallbackHandler {
                 StackControllers.enrich(frame, copy.getObjectId(), managerFactory);
                 Commanders.enrich(frame, copy.getObjectId(), managerFactory);
                 Companions.enrich(frame, copy.getObjectId(), managerFactory);
+                Planechase.enrich(frame, copy.getObjectId(), managerFactory);
                 Rollbacks.enrich(frame, copy.getObjectId(), managerFactory);
                 ControlledViews.enrich(frame, copy.getObjectId(), managerFactory);
             }

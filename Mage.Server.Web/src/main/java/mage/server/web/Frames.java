@@ -141,6 +141,14 @@ final class Frames {
         return s;
     }
 
+    static boolean optBoolean(JsonObject frame, String key, boolean def) {
+        JsonElement e = frame.get(key);
+        if (e == null || e.isJsonNull()) {
+            return def;
+        }
+        return e.getAsBoolean();
+    }
+
     static int optInt(JsonObject frame, String key, int def) {
         JsonElement e = frame.get(key);
         if (e == null || e.isJsonNull()) {

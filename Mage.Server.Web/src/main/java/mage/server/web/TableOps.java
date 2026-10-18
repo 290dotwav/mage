@@ -36,7 +36,8 @@ import java.util.UUID;
  * <pre>
  * { kind: "table", op: "create", gameType: "Commander Free For All", seats: 4, deck: "&lt;.dck text&gt;", name: "Alice",
  *   seatTypes?: ["Human","Computer - mad","Computer - mad","Computer - mad"], tableName?: "FG", deckType?: "Variant Magic - Commander",
- *   mulliganType?: "LONDON" | "TEN" | ... (a MulliganType name; default LONDON) }
+ *   mulliganType?: "LONDON" | "TEN" | ... (a MulliganType name; default LONDON),
+ *   planechase?: true (901: a plane in the command zone and the planar die; default off) }
  * { kind: "table", op: "join",   tableId, deck, name, playerType?: "Human" | "Computer - mad", skill?: 2, thinkSeconds?: 3, password?: "" }
  *   - a name already seated at tableId re-seats (reconnection): no new seat, deck not needed
  *   - thinkSeconds caps an AI seat's simulation time per decision (ComputerPlayer6: skill * 3 s
@@ -248,6 +249,10 @@ final class TableOps {
         String tableName = Frames.optString(frame, "tableName", name);
         String deckType = Frames.optString(frame, "deckType", defaultDeckType(gameType));
         MulliganType mulliganType = mulliganType(Frames.optString(frame, "mulliganType", MulliganType.LONDON.name()));
+        // 901 Planechase: their engine deals the first plane to the starting player and rolls
+        // the die as an ability of the plane (GameImpl, TableController: MatchOptions.planeChase
+        // becomes GameOptions.planeChase); their own client sets it in its new table dialog.
+        boolean planechase = Frames.optBoolean(frame, "planechase", false);
         List<PlayerType> seatTypes = new ArrayList<>();
         JsonElement st = frame.get("seatTypes");
         if (st != null && st.isJsonArray()) {
@@ -292,6 +297,7 @@ final class TableOps {
         options.setQuitRatio(100);
         options.setMinimumRating(0);
         options.setEdhPowerLevel(0);
+        options.setPlaneChase(planechase);
 
         UUID roomId = roomId();
         // Checked again with the creation, under the gate's lock (ServerLimits)
@@ -304,7 +310,7 @@ final class TableOps {
             server.tableRemove(web.sessionId, roomId, table.getTableId());
             throw new MageException("creator could not take a seat at the new table (see callbacks); table removed");
         }
-        logger.info("Web door: " + name + " created table " + table.getTableId() + " (" + gameType + ", " + seats + " seats, mulligan " + mulliganType.name() + ")");
+        logger.info("Web door: " + name + " created table " + table.getTableId() + " (" + gameType + ", " + seats + " seats, mulligan " + mulliganType.name() + (planechase ? ", Planechase" : "") + ")");
         web.send(Frames.joined(table.getTableId(), playerId(table.getTableId(), name), name, false, deck, id));
     }
 

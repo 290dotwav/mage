@@ -65,7 +65,7 @@ Browser → server:
 { "kind": "call", "method": "gameJoin", "gameId": "<uuid>" }
 { "kind": "table", "op": "create", "gameType": "Commander Free For All", "seats": 4, "deck": "<.dck text>", "name": "Alice",
   "seatTypes": ["Human", "Computer - mad", "Computer - mad", "Computer - mad"], "tableName": "FG", "deckType": "Variant Magic - Commander",
-  "mulliganType": "TEN" }
+  "mulliganType": "TEN", "planechase": true }
 { "kind": "table", "op": "join", "tableId": "<uuid>", "deck": "<.dck text>", "name": "Bot1", "playerType": "Computer - mad", "skill": 2, "thinkSeconds": 3 }
 { "kind": "table", "op": "join", "tableId": "<uuid>", "name": "Alice" }
 { "kind": "table", "op": "start", "tableId": "<uuid>" }
@@ -137,6 +137,14 @@ commander card, which is where their own 903.10a check reads it); nothing in a `
 carries the count otherwise, only an English line the watcher pins on the commander's card.
 `commanderIds` is what names the damage keys: `commandList` holds a commander only while it
 waits in the command zone, and a commander deals its damage from the battlefield.
+
+`planechase: true` on `table create` opens a Planechase game (901, their
+`MatchOptions.planeChase`): their engine deals a random plane to the starting player and the
+planar die is an ability of the plane. Such a game's `GameView` gets a `planechase` field
+(`Planechase.java`): `{ "planeId": "<the face-up plane's id>", "dieCost": 1 }`, the plane
+being the `PlaneView` every player's `commandList` carries, and `dieCost` what the active
+player pays for his next roll this turn (901.9: one more for each roll he already made, their
+`PlanarRollWatcher`; the ability's own text keeps saying `{0}`). Absent with no plane.
 
 ## Holding the game (`game` frames)
 

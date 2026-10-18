@@ -15,6 +15,7 @@ import mage.abilities.effects.Effect;
 import mage.abilities.effects.PreventionEffectData;
 import mage.abilities.effects.common.CopyEffect;
 import mage.abilities.effects.common.InfoEffect;
+import mage.abilities.effects.common.RollPlanarDieEffect;
 import mage.abilities.effects.common.continuous.BecomesFaceDownCreatureEffect;
 import mage.abilities.effects.keyword.FinalityCounterEffect;
 import mage.abilities.effects.keyword.ShieldCounterEffect;
@@ -2207,8 +2208,18 @@ public abstract class GameImpl implements Game {
         newPlane.getAbilities().newId();
         for (Ability ability : newPlane.getAbilities()) {
             ability.setSourceId(newPlane.getId());
+            // 901.9: only the active player rolls the planar die, in a main phase of his own
+            // turn. Every plane writes its die as an ability anybody may activate whenever a
+            // main phase's stack is empty, so the others could roll in his main phase too.
+            if (ability instanceof ActivatedAbilityImpl
+                    && ability.getEffects().stream().anyMatch(RollPlanarDieEffect.class::isInstance)) {
+                ((ActivatedAbilityImpl) ability).setMayActivate(TargetController.ACTIVE);
+            }
         }
         state.addCommandObject(newPlane);
+        // Remembered, so a planeswalk deals a plane the table has not been to yet (PlaneswalkEffect):
+        // nothing ever wrote this list, and the plane just left could be dealt again at once.
+        state.addSeenPlane(newPlane, this, toPlayerId);
 
         informPlayers("You have planeswalked to " + newPlane.getLogName());
 

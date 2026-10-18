@@ -49,8 +49,10 @@ public class PlaneswalkEffect extends OneShotEffect {
         }
 
         // Steps: 1) Remove the last plane and set its effects to discarded
+        String leaving = null;
         for (CommandObject cobject : game.getState().getCommand()) {
             if (cobject instanceof Plane) {
+                leaving = cobject.getName();
                 if (cobject.getAbilities() != null) {
                     for (Ability ability : cobject.getAbilities()) {
                         for (Effect effect : ability.getEffects()) {
@@ -69,8 +71,12 @@ public class PlaneswalkEffect extends OneShotEffect {
         // 2) Choose a new random plane we haven't been to, or reset if we've been everywhere
         List<String> planesVisited = game.getState().getSeenPlanes();
         if (game.getState().getSeenPlanes() != null) {
-            if (planesVisited.size() == Planes.values().length) {
+            if (planesVisited.size() >= Planes.values().length) {
                 game.getState().resetSeenPlanes();
+                // every plane was visited: they all come round again, but not the one being left (701.31b: it goes to the bottom)
+                if (leaving != null) {
+                    planesVisited.add(leaving);
+                }
             }
         }
 
