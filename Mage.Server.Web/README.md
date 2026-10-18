@@ -146,6 +146,11 @@ being the `PlaneView` every player's `commandList` carries, and `dieCost` what t
 player pays for his next roll this turn (901.9: one more for each roll he already made, their
 `PlanarRollWatcher`; the ability's own text keeps saying `{0}`). Absent with no plane.
 
+Two states of the board their views do not carry (`BoardStates.java`): `dayNight` on the
+`GameView`, `"day"` or `"night"` once the game has day and night (731), absent before; and
+`classLevel` on a Class permanent's entry of a player's `battlefield` (716: 1 to 3, read off
+`Permanent.getClassLevel`), on Classes only.
+
 ## Holding the game (`game` frames)
 
 `pause` holds the running game for every seat but the one asking, `resume`

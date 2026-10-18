@@ -39,6 +39,7 @@ final class ControlledViews {
             Commanders.enrich(own, gameId, managerFactory);
             Companions.enrich(own, gameId, managerFactory);
             Planechase.enrich(own, gameId, managerFactory);
+            BoardStates.enrich(own, gameId, managerFactory);
         }
     }
 }
