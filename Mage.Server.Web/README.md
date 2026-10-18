@@ -151,7 +151,9 @@ States of the board their views do not carry (`BoardStates.java`): `dayNight` on
 `classLevel` on a Class permanent's entry of a player's `battlefield` (716: 1 to 3, read off
 `Permanent.getClassLevel`), on Classes only; and `protectionFromEverything: true` on a
 player's entry of `players` while he has protection from everything (702.16j: Teferi's
-Protection, The One Ring), absent otherwise.
+Protection, The One Ring), absent otherwise; `hexproof: true` and `shroud: true` on a
+player's entry the same way while he has hexproof (702.11c: Leyline of Sanctity, Shalai) or
+shroud (702.18a: True Believer).
 
 ## Holding the game (`game` frames)
 

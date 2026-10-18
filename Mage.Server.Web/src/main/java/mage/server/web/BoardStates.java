@@ -4,7 +4,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import mage.abilities.Abilities;
 import mage.abilities.Ability;
+import mage.abilities.keyword.HexproofAbility;
 import mage.abilities.keyword.ProtectionFromEverythingAbility;
+import mage.abilities.keyword.ShroudAbility;
 import mage.constants.SubType;
 import mage.game.Game;
 import mage.game.permanent.Permanent;
@@ -33,6 +35,12 @@ import java.util.UUID;
  * abilities, so the screens of the players attacking him showed nothing.
  * <pre>
  *   "protectionFromEverything": true // on that player's entry of players[]; left out otherwise
+ * </pre>
+ * A player's hexproof and shroud (702.11c, 702.18a: Leyline of Sanctity, Shalai, True Believer):
+ * his opponents (hexproof), or nobody (shroud), can target him. The same silence in their view.
+ * <pre>
+ *   "hexproof": true                 // on that player's entry of players[]; left out otherwise
+ *   "shroud": true                   // the same
  * </pre>
  * Read on the game thread; a concurrent change skips the enrichment for that frame.
  */
@@ -88,10 +96,17 @@ final class BoardStates {
         }
     }
 
-    /** `protectionFromEverything` on a player's entry when he has that ability now (a layer gives it him, 613). */
+    /** `protectionFromEverything`, `hexproof`, `shroud` on a player's entry when he has that ability now (a layer gives it him, 613). */
     static void markProtection(JsonObject entry, Abilities<Ability> abilities) {
         if (abilities != null && abilities.containsClass(ProtectionFromEverythingAbility.class)) {
             entry.addProperty("protectionFromEverything", true);
+        }
+        // a player's hexproof or shroud (Leyline of Sanctity, True Believer), given him through a layer like the above
+        if (abilities != null && abilities.containsClass(HexproofAbility.class)) {
+            entry.addProperty("hexproof", true);
+        }
+        if (abilities != null && abilities.containsClass(ShroudAbility.class)) {
+            entry.addProperty("shroud", true);
         }
     }
 }
