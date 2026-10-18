@@ -22,7 +22,7 @@ public class ExileView extends CardsView {
         this.name = exileZone.getName();
         this.id = exileZone.getId();
         for (Card card: exileZone.getCards(game)) {
-            this.put(card.getId(), new CardView(card, game, CardUtil.canShowAsControlled(card, createdForPlayerId)));
+            this.put(card.getId(), new CardView(card, game, CardUtil.canShowAsControlled(card, game, createdForPlayerId)));
         }
     }
 

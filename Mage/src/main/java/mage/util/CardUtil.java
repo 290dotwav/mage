@@ -2602,6 +2602,33 @@ public final class CardUtil {
     }
 
     /**
+     * Who may see a card in exile as its owner would. 406.3: a card exiled face down can't be
+     * examined by any player except when instructions allow it. When an effect lets somebody look
+     * at it (LOOK_AT_FACE_DOWN: Gonti, Lord of Luxury, Praetor's Grasp, Hostage Taker's kin,
+     * foretell, hideaway), those players see it and nobody else does: the owner of a card that
+     * Gonti's controller exiled from his library used to be shown it, and Gonti's controller,
+     * who may look at it and cast it, was not. A face-down card nothing lets anyone look at keeps
+     * the old rule (its controller or owner), as does every face-up card.
+     */
+    public static boolean canShowAsControlled(Card card, Game game, UUID createdForPlayer) {
+        if (game != null && card.isFaceDown(game) && game.getState().getZone(card.getId()) == Zone.EXILED) {
+            boolean anybody = false;
+            for (UUID playerId : game.getState().getPlayers().keySet()) {
+                if (!game.getContinuousEffects().asThough(card.getId(), AsThoughEffectType.LOOK_AT_FACE_DOWN, null, playerId, game).isEmpty()) {
+                    if (playerId.equals(createdForPlayer)) {
+                        return true;
+                    }
+                    anybody = true;
+                }
+            }
+            if (anybody) {
+                return false;
+            }
+        }
+        return canShowAsControlled(card, createdForPlayer);
+    }
+
+    /**
      * Ability used for information only, e.g. adds additional rule texts
      */
     public static boolean isInformationAbility(Ability ability) {
