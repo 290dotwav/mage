@@ -295,6 +295,18 @@ public interface Player extends MageItem, Copyable<Player> {
     boolean hasLeft();
 
     /**
+     * After a rollback: the outcome as it stood at the point gone back to. Their {@link #restore} keeps
+     * wins, losses and leaving on purpose (#1205), so a player who lost after the point stayed out while
+     * his permanents came back, and another player could take them. A player alive at the point is alive
+     * again; one who conceded stays out.
+     *
+     * @return true when the player stays out although his objects came back: the game must make him leave again
+     */
+    default boolean restoreOutcomeForRollback(Player then) {
+        return false;
+    }
+
+    /**
      * Player is still active in game (has not left, lost or won the game).
      *
      * @return

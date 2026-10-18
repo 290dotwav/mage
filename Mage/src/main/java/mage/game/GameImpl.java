@@ -4201,6 +4201,7 @@ public abstract class GameImpl implements Game {
             informPlayers(GameLog.getPlayerRequestColoredText("Player request: Rolling back to start of turn " + restore.getTurnNum()));
             state.restoreForRollBack(restore);
             playerList.setCurrent(state.getPlayerByOrderId());
+            outcomesAfterRollback(restore);
             // Reset temporary created bookmarks because no longer valid after rollback
             savedStates.clear();
             gameStates.clear();
@@ -4288,13 +4289,33 @@ public abstract class GameImpl implements Game {
         return true;
     }
 
+    /**
+     * Who is in the game after going back: a player alive at that moment is alive again, with the board
+     * that came back with him; one who conceded since leaves again, his objects with him (800.4a).
+     * Without it, a player dead after the point stayed dead with his permanents back on the battlefield.
+     */
+    private void outcomesAfterRollback(GameState then) {
+        List<UUID> leaveAgain = new ArrayList<>();
+        for (Player was : then.getPlayers().values()) {
+            Player player = getPlayer(was.getId());
+            if (player != null && player.restoreOutcomeForRollback(was)) {
+                leaveAgain.add(player.getId());
+            }
+        }
+        for (UUID playerId : leaveAgain) {
+            leave(playerId);
+        }
+    }
+
     private void restoreRollbackPoint() {
         RollbackPoints.Point point = rollbackPointToRestore;
         rollbackPointToRestore = null;
         if (point != null && point.getState() != null) {
             // the kept copy stays as it is: a copy of it is restored
-            state.restoreForRollBack(point.getState().copy());
+            GameState then = point.getState().copy();
+            state.restoreForRollBack(then);
             playerList.setCurrent(state.getPlayerByOrderId());
+            outcomesAfterRollback(then);
             savedStates.clear();
             gameStates.clear();
             if (point.getKind() == RollbackPoints.Kind.STEP) {

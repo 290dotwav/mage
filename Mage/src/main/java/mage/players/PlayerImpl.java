@@ -5054,6 +5054,23 @@ public abstract class PlayerImpl implements Player, Serializable {
     }
 
     @Override
+    public boolean restoreOutcomeForRollback(Player then) {
+        if (then.hasLost() || then.hasLeft() || !(this.loses || this.left)) {
+            return false;
+        }
+        if (this.quit) {
+            // conceded: stays out, and his objects leave again (800.4a)
+            this.left = false;
+            return true;
+        }
+        this.loses = false;
+        this.left = false;
+        this.wins = false;
+        this.passed = false;
+        return false;
+    }
+
+    @Override
     public boolean hasTimerTimeout() {
         return timerTimeout;
     }
