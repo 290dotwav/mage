@@ -340,6 +340,11 @@ public final class RollbackPoints {
         }
     }
 
+    /** The game started over (Karn Liberated, 727.1): the game every point was taken in has ended. */
+    public synchronized void clear() {
+        points.clear();
+    }
+
     /** Their turn rollback went back to the start of {@code turn}: every point taken after that start is gone. */
     public synchronized void wentBackToTurn(int turn) {
         for (int i = 0; i < points.size(); i++) {

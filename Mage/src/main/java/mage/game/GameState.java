@@ -218,6 +218,19 @@ public class GameState implements Serializable, Copyable<GameState> {
         turnNum = 1;
         stepNum = 0;
         extraTurnId = null;
+        // The new game has had no turn yet (727.1, 103): nobody is active,
+        // nobody has priority, and the old game's monarch and initiative are
+        // gone with it. `GameImpl.getPriorityPlayerId` falls back on the active
+        // player, and the server takes an answer only from that player
+        // (`GameController.sendMessage`): with the old game's active player
+        // kept here, every other seat's keep or mulligan was dropped on its
+        // way in and the restarted game waited on it for ever.
+        activePlayerId = null;
+        priorityPlayerId = null;
+        playerByOrderId = null;
+        choosingPlayerId = null;
+        monarchId = null;
+        initiativeId = null;
         gameOver = false;
         specialActions.clear();
         cardState.clear();

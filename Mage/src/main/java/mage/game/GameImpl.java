@@ -1091,6 +1091,16 @@ public abstract class GameImpl implements Game {
     @Override
     public void start(UUID choosingPlayerId) {
         startTime = new Date();
+        // Nothing before a game's start to go back to. A game started over by
+        // Karn Liberated (727.1: the old game ended) still held the old game's
+        // turns and points: its screens offered "turn 6" of a game at its first
+        // turn, and their turn numbers start over, so the old game's turn 2
+        // would have been taken for the new one's.
+        gameStatesRollBack.clear();
+        if (rollbackPoints != null) {
+            rollbackPoints.clear();
+        }
+        rollbackPointToRestore = null;
         DataCollectorServices.getInstance().onGameStart(this);
         if (state.getPlayers().values().iterator().hasNext()) {
             init(choosingPlayerId);
@@ -1404,11 +1414,10 @@ public abstract class GameImpl implements Game {
 
         //20091005 - 103.4
         // Nobody has priority while the hands are decided, and everyone decides
-        // at once (`Mulligan.askTogether`). A game started over by Karn
-        // Liberated keeps the old game's priority player here, and
-        // `GameController.sendMessage` drops every answer but that player's:
-        // the other seats' keeps never reached their question and the
-        // restarted game waited on them for ever.
+        // at once (`Mulligan.askTogether`): `GameController.sendMessage` takes
+        // an answer from anybody only while `getPriorityPlayerId` is null. It
+        // falls back on the active player, which a game started over by Karn
+        // Liberated no longer keeps either (`GameState.clearOnGameRestart`).
         state.setPriorityPlayerId(null);
         mulligan.executeMulliganPhase(this, startingHandSize);
         getState().setChoosingPlayerId(null);
