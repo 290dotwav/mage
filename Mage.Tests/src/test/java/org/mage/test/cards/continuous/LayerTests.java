@@ -58,7 +58,12 @@ public class LayerTests extends CardTestPlayerBase {
      *      This came up in a recent EDH game and we had no idea how to progress.
      *      Player A cast a Humility, then a March of the Machines, and finally a Mycosynth Lattice.
      *      Does the game get stuck in an endless loop of each card gaining and losing its respective creature-ness and abilities?
-     *      Answer: No, they all die
+     *      Answer: No. Lattice makes everything an artifact and March every artifact a creature
+     *      (layer 4); Humility then removes every ability, theirs included (layer 6), but their
+     *      effects have started and keep applying (613.6): in 7b Humility sets 1/1 and March,
+     *      later, sets each to its mana value. The lands are 0/0 and die; Humility and March
+     *      are 4/4, the Lattice 6/6. (This test expected all of them dead: Humility's and
+     *      March's 7b were dropped once they had lost their abilities.)
      */
     @Test
     public void testMycosynthLatticeAndMarchOfTheMachinesAndHumility() {
@@ -77,10 +82,10 @@ public class LayerTests extends CardTestPlayerBase {
         setStopAt(1, PhaseStep.POSTCOMBAT_MAIN);
         execute();
 
-        // everything dies
-        assertPermanentCount(playerA, "Humility", 0);
-        assertPermanentCount(playerA, "March of the Machines", 0);
-        assertPermanentCount(playerA, "Mycosynth Lattice", 0);
+        // the lands die, the three others are creatures as big as their mana value
+        assertPowerToughness(playerA, "Humility", 4, 4);
+        assertPowerToughness(playerA, "March of the Machines", 4, 4);
+        assertPowerToughness(playerA, "Mycosynth Lattice", 6, 6);
         assertPermanentCount(playerA, "Island", 0);
     }
 

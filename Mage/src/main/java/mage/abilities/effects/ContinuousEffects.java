@@ -187,28 +187,22 @@ public class ContinuousEffects implements Serializable {
      * @return effects list ordered by timestamp
      */
     public synchronized List<ContinuousEffect> getLayeredEffects(Game game, String timestampGroupName) {
+        return getLayeredEffects(game, timestampGroupName, Collections.emptySet());
+    }
+
+    /**
+     * The same, keeping the effects of `started`: 613.6, an effect that started to apply in a layer
+     * of this pass keeps applying in the later ones even when the ability generating it is removed
+     * meanwhile (Opalescence makes Humility a creature, Humility takes its own ability away in layer
+     * 6 and still sets every creature to 1/1 in layer 7b). Kept in the list, it also keeps its
+     * timestamp: an effect that left a group's list and came back was numbered anew
+     * (`updateTimestamps`), and one new to the group was numbered after it.
+     */
+    private synchronized List<ContinuousEffect> getLayeredEffects(Game game, String timestampGroupName, Set<UUID> started) {
         List<ContinuousEffect> layerEffects = new ArrayList<>();
         for (ContinuousEffect effect : layeredEffects) {
-            switch (effect.getDuration()) {
-                case WhileOnBattlefield:
-                case WhileControlled:
-                case WhileOnStack:
-                case WhileInGraveyard:
-                    Set<Ability> abilities = layeredEffects.getAbility(effect.getId());
-                    if (!abilities.isEmpty()) {
-                        for (Ability ability : abilities) {
-                            // If e.g. triggerd abilities (non static) created the effect, the ability must not be in usable zone (e.g. Unearth giving Haste effect)
-                            if (!(ability instanceof StaticAbility) || ability.isInUseableZone(game, null, null)) {
-                                layerEffects.add(effect);
-                                break;
-                            }
-                        }
-                    } else {
-                        logger.error("No abilities for continuous effect: " + effect);
-                    }
-                    break;
-                default:
-                    layerEffects.add(effect);
+            if (started.contains(effect.getId()) || isActive(effect, game)) {
+                layerEffects.add(effect);
             }
         }
 
@@ -241,14 +235,46 @@ public class ContinuousEffects implements Serializable {
             lastEffectsListOnLayer.put(timestampGroupName, new ContinuousEffectsList<>());
         }
         ContinuousEffectsList<ContinuousEffect> prevs = lastEffectsListOnLayer.get(timestampGroupName);
+        // The new ones are numbered after the others, and among themselves in the order they
+        // already had (613.7): numbered in the list's own order, a group seen for the first time
+        // put Opalescence after a Humility cast later than it.
+        List<ContinuousEffect> fresh = new ArrayList<>();
         for (ContinuousEffect continuousEffect : layerEffects) {
             // check if it's new, then set order
             if (!prevs.contains(continuousEffect)) {
-                setOrder(continuousEffect);
+                fresh.add(continuousEffect);
             }
+        }
+        fresh.sort(Comparator.comparingLong(ContinuousEffect::getOrder));
+        for (ContinuousEffect continuousEffect : fresh) {
+            setOrder(continuousEffect);
         }
         prevs.clear();
         prevs.addAll(layerEffects);
+    }
+
+    /** Whether the effect applies now: one of a static ability needs the ability in a zone where it works. */
+    private boolean isActive(ContinuousEffect effect, Game game) {
+        switch (effect.getDuration()) {
+            case WhileOnBattlefield:
+            case WhileControlled:
+            case WhileOnStack:
+            case WhileInGraveyard:
+                Set<Ability> abilities = layeredEffects.getAbility(effect.getId());
+                if (abilities.isEmpty()) {
+                    logger.error("No abilities for continuous effect: " + effect);
+                    return false;
+                }
+                for (Ability ability : abilities) {
+                    // If e.g. triggerd abilities (non static) created the effect, the ability must not be in usable zone (e.g. Unearth giving Haste effect)
+                    if (!(ability instanceof StaticAbility) || ability.isInUseableZone(game, null, null)) {
+                        return true;
+                    }
+                }
+                return false;
+            default:
+                return true;
+        }
     }
 
     public void setOrder(ContinuousEffect effect) {
@@ -1043,19 +1069,25 @@ public class ContinuousEffects implements Serializable {
             game.getBattlefield().resetPermanentsControl();
         }
 
-        applyLayer(activeLayerEffects, Layer.TextChangingEffects_3, game, "layer_3");
-        activeLayerEffects = getLayeredEffects(game, "layer_3");
-        applyLayer(activeLayerEffects, Layer.TypeChangingEffects_4, game, "layer_4");
-        activeLayerEffects = getLayeredEffects(game, "layer_4");
-        applyLayer(activeLayerEffects, Layer.ColorChangingEffects_5, game, "layer_5");
-        activeLayerEffects = getLayeredEffects(game, "layer_5");
+        // 613.6: an effect that started to apply in a layer keeps applying in the later ones, even
+        // when the ability that generates it is removed meanwhile (Opalescence makes Humility a
+        // creature, Humility then takes its own ability away in layer 6 and must still set every
+        // creature to 1/1 in layer 7b). The ids of the effects that started: each one applied in
+        // layers 3 to 5, and in layer 6 one that took its own ability away.
+        Set<UUID> startedEffects = new HashSet<>();
+        applyLayer(activeLayerEffects, Layer.TextChangingEffects_3, game, "layer_3", startedEffects);
+        activeLayerEffects = getLayeredEffects(game, "layer_3", startedEffects);
+        applyLayer(activeLayerEffects, Layer.TypeChangingEffects_4, game, "layer_4", startedEffects);
+        activeLayerEffects = getLayeredEffects(game, "layer_4", startedEffects);
+        applyLayer(activeLayerEffects, Layer.ColorChangingEffects_5, game, "layer_5", startedEffects);
+        activeLayerEffects = getLayeredEffects(game, "layer_5", startedEffects);
 
         Map<ContinuousEffect, List<Ability>> appliedEffectAbilities = new HashMap<>();
         boolean done = false;
         Map<ContinuousEffect, Set<UUID>> waitingEffects = new LinkedHashMap<>();
         Set<UUID> appliedEffects = new HashSet<>();
         applyStatus.apply(Layer.AbilityAddingRemovingEffects_6, SubLayer.NA, null, game);
-        activeLayerEffects = getLayeredEffects(game, "layer_6");
+        activeLayerEffects = getLayeredEffects(game, "layer_6", startedEffects);
 
         while (!done) { // loop needed if a added effect adds again an effect (e.g. Level 5- of Joraga Treespeaker)
             done = true;
@@ -1108,9 +1140,15 @@ public class ContinuousEffects implements Serializable {
                     }
                     appliedAbilities.add(ability);
                     effect.apply(Layer.AbilityAddingRemovingEffects_6, SubLayer.NA, ability, game);
+                    // It took its own ability away (Humility made a creature by Opalescence): it goes on
+                    // in the later layers (613.6). One whose ability another effect of this layer takes
+                    // away depended on that effect (613.8) and is dropped, as before (Turn to Frog on a lord).
+                    if (!isActive(effect, game)) {
+                        startedEffects.add(effect.getId());
+                    }
                     done = false;
                     // list must be updated after each applied effect (eg. if "Turn to Frog" removes abilities)
-                    activeLayerEffects = getLayeredEffects(game, "apply");
+                    activeLayerEffects = getLayeredEffects(game, "apply", startedEffects);
                 }
                 appliedEffects.add(effect.getId());
 
@@ -1135,9 +1173,12 @@ public class ContinuousEffects implements Serializable {
                         }
                         appliedAbilities.add(ability);
                         entry.getKey().apply(Layer.AbilityAddingRemovingEffects_6, SubLayer.NA, ability, game);
+                        if (!isActive(entry.getKey(), game)) {
+                            startedEffects.add(entry.getKey().getId());
+                        }
                         done = false;
                         // list must be updated after each applied effect (eg. if "Turn to Frog" removes abilities)
-                        activeLayerEffects = getLayeredEffects(game, "apply");
+                        activeLayerEffects = getLayeredEffects(game, "apply", startedEffects);
                     }
                     appliedEffects.add(entry.getKey().getId());
                     iterator.remove();
@@ -1198,7 +1239,7 @@ public class ContinuousEffects implements Serializable {
         return object != null && object.hasAbility(ability, game);
     }
 
-    private void applyLayer(List<ContinuousEffect> activeLayerEffects, Layer currentLayer, Game game, String timestampGroupName) {
+    private void applyLayer(List<ContinuousEffect> activeLayerEffects, Layer currentLayer, Game game, String timestampGroupName, Set<UUID> startedEffects) {
         List<ContinuousEffect> layer = filterLayeredEffects(activeLayerEffects, currentLayer);
         // layer is a list of all effects at the current layer
         if (!layer.isEmpty()) {
@@ -1218,7 +1259,9 @@ public class ContinuousEffects implements Serializable {
                     }
                 }
                 // apply the effect
-                applyContinuousEffect(effect, currentLayer, game);
+                if (applyContinuousEffect(effect, currentLayer, game)) {
+                    startedEffects.add(effect.getId());
+                }
                 // add it to the applied effects list
                 appliedEffects.add(effect.getId());
                 layer = getLayeredEffects(game, timestampGroupName);
@@ -1229,7 +1272,9 @@ public class ContinuousEffects implements Serializable {
                     for (Entry<ContinuousEffect, Set<UUID>> entry : waitingEffects.entrySet()) {
                         // all dependent to effects are applied now so apply the effect itself
                         if (appliedEffects.containsAll(entry.getValue())) {
-                            applyContinuousEffect(entry.getKey(), currentLayer, game);
+                            if (applyContinuousEffect(entry.getKey(), currentLayer, game)) {
+                                startedEffects.add(entry.getKey().getId());
+                            }
                             // add it to the applied effects list
                             appliedEffects.add(entry.getKey().getId());
                             layer = getLayeredEffects(game, timestampGroupName);
@@ -1240,7 +1285,9 @@ public class ContinuousEffects implements Serializable {
                     for (Entry<ContinuousEffect, Set<UUID>> entry : waitingEffects.entrySet()) {
                         // all dependent to effects are applied now so apply the effect itself
                         if (appliedEffects.containsAll(entry.getValue())) {
-                            applyContinuousEffect(entry.getKey(), currentLayer, game);
+                            if (applyContinuousEffect(entry.getKey(), currentLayer, game)) {
+                                startedEffects.add(entry.getKey().getId());
+                            }
                             // add it to the applied effects list
                             appliedEffects.add(entry.getKey().getId());
                             layer = getLayeredEffects(game, timestampGroupName);
@@ -1251,14 +1298,18 @@ public class ContinuousEffects implements Serializable {
         }
     }
 
-    private void applyContinuousEffect(ContinuousEffect effect, Layer currentLayer, Game game) {
+    /** Applies the effect for each of its abilities that still exists; true when it applied for one. */
+    private boolean applyContinuousEffect(ContinuousEffect effect, Layer currentLayer, Game game) {
         Set<Ability> abilities = layeredEffects.getAbility(effect.getId());
+        boolean applied = false;
         for (Ability ability : abilities) {
             //effect.apply(currentLayer, SubLayer.NA, ability, game);
             if (isAbilityStillExists(game, ability, effect)) {
                 effect.apply(currentLayer, SubLayer.NA, ability, game);
+                applied = true;
             }
         }
+        return applied;
     }
 
     private boolean isAbilityStillExists(final Game game, final Ability ability, ContinuousEffect effect) {

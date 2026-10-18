@@ -116,10 +116,13 @@ public class StarfieldOfNyxTest extends CardTestPlayerBase {
         setStopAt(1, PhaseStep.POSTCOMBAT_MAIN);
         execute();
 
-        assertPowerToughness(playerA, "Master of the Feast", 3, 3, Filter.ComparisonScope.All);
-        assertPowerToughness(playerA, "Humility", 4, 4, Filter.ComparisonScope.All);
-        // Humility loses its ability in layer 6.  Layer 7 never gets Humility's effect
-        assertPowerToughness(playerA, "Emrakul, the Aeons Torn", 15, 15, Filter.ComparisonScope.All); // PT not affected
+        // Humility loses its ability in layer 6, its effect having started: it still applies in
+        // layer 7b (613.6; the Opalescence and Humility ruling of 2009-10-01), after Starfield's
+        // (the earlier timestamp). Every creature is 1/1. (This test had Layer 7 never get
+        // Humility's effect: Master of the Feast 3/3, Humility 4/4, Emrakul 15/15.)
+        assertPowerToughness(playerA, "Master of the Feast", 1, 1, Filter.ComparisonScope.All);
+        assertPowerToughness(playerA, "Humility", 1, 1, Filter.ComparisonScope.All);
+        assertPowerToughness(playerA, "Emrakul, the Aeons Torn", 1, 1, Filter.ComparisonScope.All);
         Permanent emrakul = getPermanent("Emrakul, the Aeons Torn", playerA.getId());
         Assert.assertNotNull(emrakul);
         Assert.assertFalse(emrakul.getAbilities().contains(FlyingAbility.getInstance())); // loses flying though
