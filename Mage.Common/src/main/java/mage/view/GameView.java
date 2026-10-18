@@ -22,6 +22,7 @@ import mage.game.permanent.PermanentToken;
 import mage.game.stack.Spell;
 import mage.game.stack.StackAbility;
 import mage.game.stack.StackObject;
+import mage.game.turn.Turn;
 import mage.players.PlayableObjectsList;
 import mage.players.Player;
 import mage.util.CardUtil;
@@ -62,6 +63,9 @@ public class GameView implements Serializable {
     // web door (723.4): the game as each player under this viewer's control sees it, filled for
     // the controlling player only (GameSessionPlayer.processControlledPlayers)
     private final Map<UUID, GameView> controlledViews = new HashMap<>();
+    // web door (723.2): the players in turnControllers whose control lasts a limited duration (Word of
+    // Command until it finishes resolving, Opposition Agent while they search), not their whole turn
+    private final Set<UUID> limitedControl = new HashSet<>();
     private final CardsView stack = new CardsView();
     private final List<ExileView> exiles = new ArrayList<>();
     private final List<RevealedView> revealed = new ArrayList<>();
@@ -105,6 +109,9 @@ public class GameView implements Serializable {
             UUID turnController = player.getTurnControlledBy();
             if (turnController != null && !turnController.equals(player.getId())) {
                 turnControllers.put(player.getId(), turnController);
+                if (!Turn.isWholeTurnControl(state, player)) {
+                    limitedControl.add(player.getId());
+                }
             }
             if (player.getId().equals(createdForPlayerId)) {
                 createdForPlayer = player;
@@ -307,6 +314,10 @@ public class GameView implements Serializable {
 
     public Map<UUID, GameView> getControlledViews() {
         return controlledViews;
+    }
+
+    public Set<UUID> getLimitedControl() {
+        return limitedControl;
     }
 
     public TurnPhase getPhase() {

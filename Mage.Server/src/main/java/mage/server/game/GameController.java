@@ -1163,8 +1163,21 @@ public class GameController implements GameCallback {
                 // e.g. you click at one of your cards, but you can't play something at that moment
             }
 
-        } else {
-            // ignore - no control over the turn
+        } else if (player != null && game.getPriorityPlayerId() != null) {
+            // web door fork: a controlled player whose own controlled player is the one asked (723,
+            // control both ways at once: B plays A's turn, and A's Opposition Agent makes A control B
+            // while B searches). A's question goes to B's socket (perform), so B's answer is A's:
+            // before, it was dropped like any other answer of a controlled player and the game hung.
+            for (UUID controlled : player.getPlayersUnderYourControl()) {
+                Player controlledPlayer = game.getPlayer(controlled);
+                if (controlledPlayer != null && controlledPlayer.getTurnControlledBy().equals(playerId)
+                        && (gameSessions.containsKey(controlled) || controlledPlayer.isComputer())
+                        && game.getPriorityPlayerId().equals(controlled)) {
+                    stopResponseIdleTimeout();
+                    command.execute(controlled);
+                }
+            }
+            // anything else: ignore - no control over the turn
         }
     }
 

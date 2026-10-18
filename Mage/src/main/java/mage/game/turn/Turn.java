@@ -4,6 +4,7 @@ import mage.abilities.Ability;
 import mage.constants.PhaseStep;
 import mage.constants.TurnPhase;
 import mage.game.Game;
+import mage.game.GameState;
 import mage.game.events.GameEvent;
 import mage.game.events.PhaseChangedEvent;
 import mage.game.permanent.Permanent;
@@ -253,22 +254,51 @@ public class Turn implements Serializable {
         // affected actually takes a turn.
 
         // remove old under control
+        // web door fork: a player who has left the game is let go too, without a line. He used to stay
+        // under his controller for good (left out of this loop), so the controller's view went on
+        // carrying him as a player whose turn he plays (GameView.turnControllers, controlledViews).
         game.getPlayers().values().forEach(player -> {
-            if (player.isInGame() && !player.isGameUnderControl()) {
+            if (!player.isGameUnderControl()) {
                 Player controllingPlayer = game.getPlayer(player.getTurnControlledBy());
-                if (player != controllingPlayer && controllingPlayer != null) {
+                if (player.isInGame() && player != controllingPlayer && controllingPlayer != null) {
                     game.informPlayers(controllingPlayer.getLogName() + " lost control over " + player.getLogName());
                 }
                 player.setGameUnderYourControl(game, true);
             }
         });
+        game.getState().setValue(WHOLE_TURN_CONTROL, null);
 
         // add new under control
         TurnMod newControllerMod = game.getState().getTurnMods().useNextNewController(activePlayerId);
         if (newControllerMod != null && !newControllerMod.getNewControllerId().equals(activePlayerId)) {
+            Player newController = game.getPlayer(newControllerMod.getNewControllerId());
+            // 800.4b: a player is never controlled by a player who has left the game
             // game logs added in child's call (controlPlayersTurn)
-            game.getPlayer(newControllerMod.getNewControllerId()).controlPlayersTurn(game, activePlayerId, newControllerMod.getInfo());
+            if (newController != null && !newController.hasLeft() && !newController.hasLost()
+                    && newController.controlPlayersTurn(game, activePlayerId, newControllerMod.getInfo())) {
+                game.getState().setValue(WHOLE_TURN_CONTROL, activePlayerId + ":" + newController.getId());
+            }
         }
+    }
+
+    /**
+     * web door fork: the game state value naming the player whose whole turn is controlled this turn
+     * and his controller ("controlled:controller"), set at the start of that turn (723.1). Control of a
+     * limited duration (723.2: Word of Command, Opposition Agent) is never written here.
+     */
+    public static final String WHOLE_TURN_CONTROL = "web723WholeTurnControl";
+
+    /**
+     * web door fork: is {@code player}'s control by another player the whole-turn kind (723.1), rather
+     * than one of a limited duration (723.2: Word of Command until it finishes resolving, Opposition
+     * Agent while he searches)? Only meaningful while another player controls him.
+     */
+    public static boolean isWholeTurnControl(GameState state, Player player) {
+        Object marked = state.getValue(WHOLE_TURN_CONTROL);
+        return marked != null
+                && marked.equals(player.getId() + ":" + player.getTurnControlledBy())
+                && player.getTurnControllers().size() == 1
+                && player.getId().equals(state.getActivePlayerId());
     }
 
     private void resetCounts() {

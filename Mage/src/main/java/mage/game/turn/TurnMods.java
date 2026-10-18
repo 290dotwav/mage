@@ -70,30 +70,27 @@ public class TurnMods extends ArrayList<TurnMod> implements Serializable, Copyab
         // If a turn is skipped, any pending player-controlling effects wait until the player
         // who would be affected actually takes a turn.
 
+        // web door fork: the LAST created mod works (723.1a). The search used to walk from the end
+        // and keep overwriting its pick, so the earliest one won: a second Mindslaver on the same
+        // player gave his turn to the first one's controller. Every one of them is used up here, and
+        // what each one adds after that turn (Emrakul, the Promised End's extra turn) still comes.
         TurnMod lastNewControllerMod = null;
-
-        // find last/actual mod
-        ListIterator<TurnMod> it = this.listIterator(this.size());
-        while (it.hasPrevious()) {
-            TurnMod turnMod = it.previous();
+        java.util.List<TurnMod> subsequent = new ArrayList<>();
+        ListIterator<TurnMod> it = this.listIterator();
+        while (it.hasNext()) {
+            TurnMod turnMod = it.next();
             if (turnMod.getNewControllerId() != null && turnMod.getPlayerId().equals(playerId)) {
                 lastNewControllerMod = turnMod;
+                if (turnMod.getSubsequentTurnMod() != null) {
+                    subsequent.add(turnMod.getSubsequentTurnMod());
+                }
                 it.remove();
             }
         }
 
-        // delete all other outdated mods
-        it = this.listIterator(this.size());
-        while (it.hasPrevious()) {
-            TurnMod turnMod = it.previous();
-            if (turnMod.getNewControllerId() != null && turnMod.getPlayerId().equals(playerId)) {
-                it.remove();
-            }
-        }
-
-        // add subsequent turn mod to execute after current
-        if (lastNewControllerMod != null && lastNewControllerMod.getSubsequentTurnMod() != null) {
-            this.add(lastNewControllerMod.getSubsequentTurnMod());
+        // add subsequent turn mods to execute after current
+        for (TurnMod mod : subsequent) {
+            this.add(mod);
         }
 
         return lastNewControllerMod;

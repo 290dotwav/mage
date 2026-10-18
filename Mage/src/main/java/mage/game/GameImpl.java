@@ -3496,6 +3496,35 @@ public abstract class GameImpl implements Game {
      *
      * @param playerId
      */
+    /**
+     * web door fork, 800.4a / 800.4b: when a player leaves the game, the control he had of other
+     * players ends (723: Mindslaver, Emrakul, the Promised End, Word of Command, Opposition Agent),
+     * and so does any control of him. Both used to last: a controller who conceded in the middle of
+     * the turn he played for somebody kept that player, whose questions went on to his empty seat;
+     * a controlled player who left stayed in his controller's players for the rest of the game (the
+     * start of a turn lets go only of players still in it). A player controlled by somebody else
+     * underneath (Opposition Agent during a Mindslaver turn) goes back to that one.
+     */
+    private void endPlayerControlOf(Player left) {
+        for (Player other : getPlayers().values()) {
+            if (other.getId().equals(left.getId())) {
+                continue;
+            }
+            boolean released = false;
+            while (!other.isGameUnderControl() && other.getTurnControlledBy().equals(left.getId())) {
+                other.setGameUnderYourControl(this, true, false);
+                released = true;
+            }
+            if (released) {
+                informPlayers(left.getLogName() + " lost control over " + other.getLogName());
+            }
+        }
+        if (!left.isGameUnderControl()) {
+            left.setGameUnderYourControl(this, true);
+        }
+        left.getPlayersUnderYourControl().clear();
+    }
+
     protected void leave(UUID playerId) { // needs to be executed from the game thread, not from the concede thread of conceding player!
         Player player = getPlayer(playerId);
         if (player == null || player.hasLeft()) {
@@ -3504,6 +3533,7 @@ public abstract class GameImpl implements Game {
         }
         logger.debug("Start leave game: " + player.getName());
         player.leave();
+        endPlayerControlOf(player);
         if (checkIfGameIsOver()) {
             // no need to remove objects if only one player is left so the game is over
             return;
