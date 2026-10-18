@@ -3977,6 +3977,11 @@ public class TestPlayer implements Player {
     }
 
     @Override
+    public boolean restoreOutcomeForRollback(Player then) {
+        return computerPlayer.restoreOutcomeForRollback(then);
+    }
+
+    @Override
     public boolean hasTimerTimeout() {
         return computerPlayer.hasTimerTimeout();
     }
