@@ -95,9 +95,6 @@ public class WishEffect extends OneShotEffect {
         if (controller == null || sourceObject == null) {
             return false;
         }
-        if (!controller.chooseUse(Outcome.Benefit, choiceText, source, game)) {
-            return false;
-        }
         Cards cards = controller.getSideboard();
         List<Card> exile = game.getExile().getCardsOwned(game, controller.getId());
         boolean noTargets = cards.isEmpty() && (!alsoFromExile || exile.isEmpty());
@@ -121,6 +118,11 @@ public class WishEffect extends OneShotEffect {
         if (filteredCards.isEmpty()) {
             game.informPlayer(controller, "You don't have " + filter.getMessage() + " outside the game" + (alsoFromExile ? " or in exile" : "") + '.');
             return true;
+        }
+        // Asked only when there is something to take: with nothing outside the game (every Commander table here has
+        // no sideboard), "Reveal a sorcery card you own from outside the game...?" offered nothing.
+        if (!controller.chooseUse(Outcome.Benefit, choiceText, source, game)) {
+            return false;
         }
 
         TargetCard target = new TargetCard(Zone.ALL, filter);
