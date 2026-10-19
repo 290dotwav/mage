@@ -42,7 +42,9 @@ public class GraftAbility extends TriggeredAbilityImpl {
     private String cardtype;
 
     public GraftAbility(Card card, int amount) {
-        super(Zone.BATTLEFIELD, new GraftDistributeCounterEffect(), true);
+        // Not optional: its "may" is asked by the effect, naming the creature that entered (a "may" asked with the
+        // keyword's reminder text did not say which creature, nor whose, and graft sees every creature that enters).
+        super(Zone.BATTLEFIELD, new GraftDistributeCounterEffect(), false);
         this.amount = amount;
         StringBuilder sb = new StringBuilder();
         for (CardType theCardtype : card.getCardType()) {
@@ -83,6 +85,19 @@ public class GraftAbility extends TriggeredAbilityImpl {
     @Override
     public GraftAbility copy() {
         return new GraftAbility(this);
+    }
+
+    /**
+     * The question of the move: "Move a +1/+1 counter from Simic Initiate [1a2] onto Grizzly Bears [3b4]?", and whose
+     * creature that is when it is not the graft's controller's.
+     */
+    public static String moveQuestion(Permanent from, Permanent onto, Ability source, Game game) {
+        String whose = "";
+        if (!onto.isControlledBy(source.getControllerId())) {
+            mage.players.Player owner = game.getPlayer(onto.getControllerId());
+            whose = owner == null ? "" : " (controlled by " + owner.getName() + ")";
+        }
+        return "Move a +1/+1 counter from " + from.getIdName() + " onto " + onto.getIdName() + whose + "?";
     }
 
     @Override
@@ -143,7 +158,9 @@ class GraftDistributeCounterEffect extends OneShotEffect {
             int numberOfCounters = sourcePermanent.getCounters(game).getCount(CounterType.P1P1);
             if (numberOfCounters > 0) {
                 Permanent targetCreature = game.getPermanent(getTargetPointer().getFirst(game, source));
-                if (targetCreature != null) {
+                mage.players.Player controller = game.getPlayer(source.getControllerId());
+                if (targetCreature != null && controller != null
+                        && controller.chooseUse(outcome, GraftAbility.moveQuestion(sourcePermanent, targetCreature, source, game), source, game)) {
                     sourcePermanent.removeCounters(CounterType.P1P1.getName(), 1, source, game);
                     targetCreature.addCounters(CounterType.P1P1.createInstance(1), source.getControllerId(), source, game);
                     return true;
