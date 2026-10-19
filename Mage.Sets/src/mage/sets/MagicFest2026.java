@@ -21,6 +21,7 @@ public class MagicFest2026 extends ExpansionSet {
         super("MagicFest 2026", "PF26", ExpansionSet.buildDate(2026, 1, 1), SetType.PROMOTIONAL);
         hasBasicLands = false;
 
+        cards.add(new SetCardInfo("Auspicious Aquarium", 17, Rarity.RARE, mage.cards.a.AuspiciousAquarium.class));
         cards.add(new SetCardInfo("Wayfarer's Bauble", "1", Rarity.RARE, mage.cards.w.WayfarersBauble.class, FULL_ART));
         cards.add(new SetCardInfo("Fyndhorn Elves", "2", Rarity.RARE, mage.cards.f.FyndhornElves.class, FULL_ART));
         cards.add(new SetCardInfo("Prismatic Ending", "3", Rarity.RARE, mage.cards.p.PrismaticEnding.class, FULL_ART));

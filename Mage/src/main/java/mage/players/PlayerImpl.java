@@ -2314,6 +2314,10 @@ public abstract class PlayerImpl implements Player, Serializable {
 
     @Override
     public int loseLife(int amount, Game game, Ability source, boolean atCombat, UUID attackerId) {
+        return loseLife(amount, game, source, atCombat, attackerId, false);
+    }
+
+    private int loseLife(int amount, Game game, Ability source, boolean atCombat, UUID attackerId, boolean fromDamage) {
         if (!canLoseLife || !this.isInGame()) {
             return 0;
         }
@@ -2330,7 +2334,7 @@ public abstract class PlayerImpl implements Player, Serializable {
                         + (atCombat ? " at combat" : "") + CardUtil.getSourceLogName(game, " from ", needId, "", ""));
             }
             if (event.getAmount() > 0) {
-                LifeLostEvent lifeLostEvent = new LifeLostEvent(playerId, source, event.getAmount(), atCombat);
+                LifeLostEvent lifeLostEvent = new LifeLostEvent(playerId, source, event.getAmount(), atCombat, fromDamage);
                 game.fireEvent(lifeLostEvent);
                 game.getState().addSimultaneousLifeLossToBatch(lifeLostEvent, game);
             }
@@ -2458,7 +2462,7 @@ public abstract class PlayerImpl implements Player, Serializable {
             GameEvent damageToLifeLossEvent = new GameEvent(GameEvent.EventType.DAMAGE_CAUSES_LIFE_LOSS,
                     playerId, source, playerId, actualDamage, combat);
             if (!game.replaceEvent(damageToLifeLossEvent)) {
-                this.loseLife(damageToLifeLossEvent.getAmount(), game, source, combat, attackerId);
+                this.loseLife(damageToLifeLossEvent.getAmount(), game, source, combat, attackerId, true);
             }
         }
         if (sourceAbilities != null && sourceAbilities.containsKey(LifelinkAbility.getInstance().getId())) {

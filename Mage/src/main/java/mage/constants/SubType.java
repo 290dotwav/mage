@@ -413,6 +413,7 @@ public enum SubType {
     SHARK("Shark", SubTypeSet.CreatureType),
     SHEEP("Sheep", SubTypeSet.CreatureType),
     SHIAR("Shi'ar", SubTypeSet.CreatureType),
+    SHRIMP("Shrimp", SubTypeSet.CreatureType),
     SIREN("Siren", SubTypeSet.CreatureType),
     SITH("Sith", SubTypeSet.CreatureType),
     SKELETON("Skeleton", SubTypeSet.CreatureType),
@@ -579,6 +580,7 @@ public enum SubType {
     SARKHAN("Sarkhan", SubTypeSet.PlaneswalkerType),
     SERRA("Serra", SubTypeSet.PlaneswalkerType),
     SIDIOUS("Sidious", SubTypeSet.PlaneswalkerType, true), // Star Wars
+    SIFA("Sifa", SubTypeSet.PlaneswalkerType),
     SIVITRI("Sivitri", SubTypeSet.PlaneswalkerType),
     SNOKE("Snoke", SubTypeSet.PlaneswalkerType, true), // Star Wars
     SORIN("Sorin", SubTypeSet.PlaneswalkerType),
@@ -588,6 +590,7 @@ public enum SubType {
     TEFERI("Teferi", SubTypeSet.PlaneswalkerType),
     TEYO("Teyo", SubTypeSet.PlaneswalkerType),
     TEZZERET("Tezzeret", SubTypeSet.PlaneswalkerType),
+    THOMIL("Thomil", SubTypeSet.PlaneswalkerType),
     TIBALT("Tibalt", SubTypeSet.PlaneswalkerType),
     TYVAR("Tyvar", SubTypeSet.PlaneswalkerType),
     UGIN("Ugin", SubTypeSet.PlaneswalkerType),

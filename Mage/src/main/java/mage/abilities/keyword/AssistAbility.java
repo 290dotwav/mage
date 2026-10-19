@@ -184,7 +184,8 @@ class AssistEffect extends OneShotEffect {
                     manaPool.addMana(Mana.ColorlessMana(amountToPay), game, source);
                     manaPool.unlockManaType(ManaType.COLORLESS); // it's unlock mana for one use/click, but it can gives more
                     game.informPlayers(targetPlayer.getLogName() + " paid {" + amountToPay + "} for " + controller.getLogName());
-                    game.getState().setValue(source.getSourceId().toString() + game.getState().getZoneChangeCounter(source.getSourceId()) + "_assisted", true);
+                    // the helper is kept: "if another player spent mana to cast it, you and that player each draw" (Yume, Chronicler of Valor)
+                    game.getState().setValue(source.getSourceId().toString() + game.getState().getZoneChangeCounter(source.getSourceId()) + "_assisted", targetPlayer.getId());
                 }
 
                 // assist must be used before activating mana abilities, so no need to switch step after usage
