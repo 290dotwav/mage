@@ -14,6 +14,7 @@ import mage.game.Game;
 import mage.game.permanent.Permanent;
 import mage.target.Target;
 import mage.target.TargetPermanent;
+import mage.target.common.TargetCreaturePermanent;
 import mage.util.functions.EmptyCopyApplier;
 
 import java.util.UUID;
@@ -28,7 +29,7 @@ public final class Cytoshape extends CardImpl {
 
         // Choose a nonlegendary creature on the battlefield. Target creature becomes a copy of that creature until end of turn.
         this.getSpellAbility().addEffect(new CytoshapeEffect());
-        this.getSpellAbility().addTarget(new TargetPermanent().withChooseHint("to become a copy"));
+        this.getSpellAbility().addTarget(new TargetCreaturePermanent().withChooseHint("to become a copy"));
     }
 
     private Cytoshape(final Cytoshape card) {
