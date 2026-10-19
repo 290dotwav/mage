@@ -17,7 +17,6 @@ public class TwoChoiceVote extends VoteHandler<Boolean> {
     private final String choice1;
     private final String choice2;
     private final Outcome outcome;
-    private final boolean secret;
 
     public TwoChoiceVote(String choice1, String choice2, Outcome outcome) {
         this(choice1, choice2, outcome, false);
@@ -27,6 +26,9 @@ public class TwoChoiceVote extends VoteHandler<Boolean> {
         this.choice1 = choice1;
         this.choice2 = choice2;
         this.outcome = outcome;
+        // VoteHandler's own field: a field of this class by the same name hid it, and doVotes read
+        // the parent's false, so a secret council vote (Truth or Consequences, Elrond) was announced
+        // to the table before the next player voted.
         this.secret = secret;
     }
 
