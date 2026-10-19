@@ -12,7 +12,8 @@ import java.util.List;
  */
 public final class SecretsOfStrixhaven extends ExpansionSet {
 
-    private static final List<String> unfinished = Arrays.asList("Decorum Dissertation", "Echocasting Symposium", "Germination Practicum", "Improvisation Capstone", "Restoration Seminar");
+    // The five paradigm Lessons were left out until paradigm (702.192) was done: 290dotwav, ParadigmAbility.
+    private static final List<String> unfinished = Arrays.asList();
     private static final SecretsOfStrixhaven instance = new SecretsOfStrixhaven();
 
     public static SecretsOfStrixhaven getInstance() {
