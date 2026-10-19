@@ -28,6 +28,11 @@ public class DiscardTargetCost extends CostImpl {
     }
 
     public DiscardTargetCost(TargetCardInHand target, boolean randomDiscard) {
+        // The pick says what it is for: a bare "Select a card" (jump-start, retrace, grandeur, a "discard a card:" cost)
+        // reads as any choice to the player and to a seat that answers for him.
+        if (target.getChooseHint() == null) {
+            target.withChooseHint("discard cost");
+        }
         this.addTarget(target);
         this.randomDiscard = randomDiscard;
         this.text = "discard " + target.getDescription();
