@@ -2046,7 +2046,8 @@ public abstract class PermanentImpl extends CardImpl implements Permanent {
 
     @Override
     public void chooseProtector(Game game, Ability source) {
-        Set<UUID> opponents = game.getOpponents(this.getControllerId());
+        // 310.11: only a player still in the game can protect it (one who left or lost can't, 800.4a)
+        Set<UUID> opponents = game.getOpponents(this.getControllerId(), true);
         Player controller = game.getPlayer(this.getControllerId());
         if (controller == null) {
             return;
@@ -2054,7 +2055,11 @@ public abstract class PermanentImpl extends CardImpl implements Permanent {
 
         Player newProtector;
         if (opponents.size() > 1) {
-            TargetPlayer target = new TargetPlayer(new FilterOpponent("protector for " + getName()));
+            FilterOpponent filter = new FilterOpponent("protector for " + getName());
+            filter.add(mage.filter.predicate.Predicates.or(opponents.stream()
+                    .map(mage.filter.predicate.other.PlayerIdPredicate::new)
+                    .collect(java.util.stream.Collectors.toList())));
+            TargetPlayer target = new TargetPlayer(filter);
             target.withNotTarget(true);
             target.setRequired(true);
             controller.choose(Outcome.Neutral, target, source, game);

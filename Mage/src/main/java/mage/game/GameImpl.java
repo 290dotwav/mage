@@ -2543,6 +2543,15 @@ public abstract class GameImpl implements Game {
      * until no further state-based actions are performed and no abilities
      * trigger. Then the player who would have received priority does so.
      */
+
+    /**
+     * 310.11: a player can be a battle's protector only while in the game.
+     */
+    private boolean canProtect(UUID playerId) {
+        Player player = playerId == null ? null : this.getPlayer(playerId);
+        return player != null && player.isInGame();
+    }
+
     protected boolean checkStateBasedActions() {
         boolean somethingHappened = false;
 
@@ -2985,10 +2994,11 @@ public abstract class GameImpl implements Game {
                         .map(CombatGroup::getDefenderId)
                         .filter(Objects::nonNull)
                         .noneMatch(perm.getId()::equals)
-                        && this.getPlayer(perm.getProtectorId()) == null
+                        && !canProtect(perm.getProtectorId())
                         || perm.isControlledBy(perm.getProtectorId())) {
+                    // 310.11: no protector, or one who can't be (a player who left the game or lost, 800.4a)
                     perm.chooseProtector(this, null);
-                    if (this.getPlayer(perm.getProtectorId()) == null) {
+                    if (!canProtect(perm.getProtectorId()) || perm.isControlledBy(perm.getProtectorId())) {
                         logger.error("Something wrong, battle without protector: " + perm + ", " + this);
                         movePermanentToGraveyardWithInfo(perm, "SBA: something wrong, battle wthout protector");
                     }
