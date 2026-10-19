@@ -309,6 +309,9 @@ public class DayNightTest extends CardTestPlayerBase {
         assertDayNight(false);
         assertPermanentCount(playerA, curse, 0);
         assertPermanentCount(playerA, lurker, 1);
+        // 704.5p: a creature attached to a player becomes unattached; the Lurker stayed on playerB.
+        Assert.assertNull("Leeching Lurker is attached to nothing", getPermanent(lurker).getAttachedTo());
+        Assert.assertTrue("playerB is enchanted by nothing", playerB.getAttachments().isEmpty());
     }
 
     @Test

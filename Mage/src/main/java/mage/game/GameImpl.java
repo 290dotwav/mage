@@ -3010,6 +3010,17 @@ public abstract class GameImpl implements Game {
                 }
             }
 
+            // 704.5p: a creature or a battle attached to a player (or a permanent that is neither an Aura, an Equipment
+            // nor a Fortification) becomes unattached: Curse of Leeches transformed into Leeching Lurker at night stayed
+            // on its player. Attachments to permanents are handled with their host below.
+            if (perm.getAttachedTo() != null
+                    && (perm.isCreature(this) || perm.isBattle(this)
+                    || !(perm.hasSubtype(SubType.AURA, this) || perm.hasSubtype(SubType.EQUIPMENT, this) || perm.hasSubtype(SubType.FORTIFICATION, this)))) {
+                Player attachedToPlayer = getPlayer(perm.getAttachedTo());
+                if (attachedToPlayer != null && attachedToPlayer.removeAttachment(perm, null, this)) {
+                    somethingHappened = true;
+                }
+            }
             if (perm.isLegendary(this) && perm.legendRuleApplies()) {
                 legendary.add(perm);
             }
