@@ -39,7 +39,7 @@ public class AmplifyEffect extends ReplacementEffectImpl {
 
     public enum AmplifyFactor {
 
-        Amplify1("Amplify 1", "put one +1/+1 counters on it", 1),
+        Amplify1("Amplify 1", "put a +1/+1 counter on it", 1),
         Amplify2("Amplify 2", "put two +1/+1 counters on it", 2),
         Amplify3("Amplify 3", "put three +1/+1 counters on it", 3);
 
@@ -83,9 +83,10 @@ public class AmplifyEffect extends ReplacementEffectImpl {
     public AmplifyEffect(AmplifyFactor amplifyFactor) {
         super(Duration.EndOfGame, Outcome.BoostCreature);
         this.amplifyFactor = amplifyFactor;
+        // 702.38a: the cards revealed share a creature type with it (the printed reminders name the type: "each Dragon card")
         this.staticText = amplifyFactor.toString() +
-                " <i>(As this enter the battlefield, " + amplifyFactor.getRuleText() + " for each card"
-                + " you reveal that shares a type with it in your hand.)</i>";
+                " <i>(As this creature enters, " + amplifyFactor.getRuleText() + " for each card"
+                + " you reveal in your hand that shares a creature type with it.)</i>";
     }
 
     protected AmplifyEffect(final AmplifyEffect effect) {
@@ -110,7 +111,7 @@ public class AmplifyEffect extends ReplacementEffectImpl {
         if (controller == null || sourceCreature == null) {
             return false;
         }
-        FilterCreatureCard filter = new FilterCreatureCard("creatures cards to reveal");
+        FilterCreatureCard filter = new FilterCreatureCard("creature cards to reveal");
         filter.add(new AmplifyPredicate(sourceCreature));
 
         // You can’t reveal this card or any other cards that are entering the battlefield at the same time as this card.
