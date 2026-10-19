@@ -82,7 +82,9 @@ class IntuitionEffect extends SearchEffect {
                 }
                 controller.revealCards("Reveal", cards, game);
 
-                TargetCard targetCard = new TargetCard(Zone.LIBRARY, new FilterCard());
+                // the opponent is told what the pick is for: it goes to the caster's hand, the rest to the graveyard
+                TargetCard targetCard = new TargetCard(Zone.LIBRARY, new FilterCard(
+                        "card for " + controller.getName() + "'s hand (the other two go to the graveyard)"));
 
                 while (!opponent.choose(Outcome.Neutral, cards, targetCard, source, game)) {
                     if (!opponent.canRespond()) {
