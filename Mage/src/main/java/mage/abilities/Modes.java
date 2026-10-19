@@ -352,6 +352,13 @@ public class Modes extends LinkedHashMap<UUID, Mode> implements Copyable<Modes> 
         this.moreRequired = required;
     }
 
+    /**
+     * "Choose both instead" (a must) rather than "you may choose both instead".
+     */
+    public boolean isMoreRequired() {
+        return moreRequired;
+    }
+
     private boolean isAlreadySelectedModesOutdated(Game game, Ability source) {
         return this.isLimitUsageResetOnNewTurn()
                 && getOnceTurnNum(game, source) != game.getTurnNum();

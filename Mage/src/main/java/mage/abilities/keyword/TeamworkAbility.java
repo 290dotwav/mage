@@ -1,6 +1,8 @@
 package mage.abilities.keyword;
 
 import mage.abilities.Ability;
+import mage.abilities.Mode;
+import mage.abilities.Modes;
 import mage.abilities.SpellAbility;
 import mage.abilities.StaticAbility;
 import mage.abilities.common.CastWithTeamworkAsThoughItHadFlashAbility;
@@ -98,6 +100,7 @@ public class TeamworkAbility extends StaticAbility implements OptionalAdditional
         boolean required = ability instanceof CastWithTeamworkAsThoughItHadFlashAbility;
         if (!required
                 && (!additionalCost.canPay(ability, this, ability.getControllerId(), game)
+                || !everyModeCanTarget(ability, game)
                 || !player.chooseUse(Outcome.Tap, "Teamwork " + amount.calculate(game, ability, null) + '?', ability, game))) {
             return;
         }
@@ -107,6 +110,24 @@ public class TeamworkAbility extends StaticAbility implements OptionalAdditional
             ability.addCost(cost.copy());
         }
         CardUtil.setSourceCostsTag(game, ability, TEAMWORK_ACTIVATION_VALUE_KEY, null);
+    }
+
+    /**
+     * "If this spell was cast using teamwork, choose both instead" (Go Nuts!): with a mode whose targets can't be
+     * chosen, teamwork could only make the cast fail (601.2c), so it is not offered. A "Yes" to it undid the whole
+     * cast without a word, to a person and to a seat answering for one alike.
+     */
+    private static boolean everyModeCanTarget(Ability ability, Game game) {
+        Modes modes = ability.getModes();
+        if (modes.size() < 2 || !modes.isMoreRequired()) {
+            return true;
+        }
+        for (Mode mode : modes.values()) {
+            if (!mode.getTargets().canChoose(ability.getControllerId(), ability, game)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
