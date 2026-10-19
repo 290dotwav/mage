@@ -20,7 +20,7 @@ public enum ControlArtifactAndEnchantmentHint implements Hint {
                 StaticFilters.FILTER_CONTROLLED_PERMANENT_ENCHANTMENT, ability, game, 1
         );
         if (artifact) {
-            return "You control and artifact" + (enchantment ? " and an enchantment" : "");
+            return "You control an artifact" + (enchantment ? " and an enchantment" : "");
         } else if (enchantment) {
             return "You control an enchantment";
         }

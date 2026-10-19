@@ -31,7 +31,7 @@ public final class CoastalBulwark extends CardImpl {
     private static final Condition condition
             = new PermanentsOnTheBattlefieldCondition(new FilterControlledPermanent(SubType.ISLAND));
     private static final Hint hint
-            = new ConditionHint(condition, "You control and Island");
+            = new ConditionHint(condition, "You control an Island");
 
     public CoastalBulwark(UUID ownerId, CardSetInfo setInfo) {
         super(ownerId, setInfo, new CardType[]{CardType.ARTIFACT, CardType.CREATURE}, "{2}");

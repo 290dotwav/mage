@@ -28,7 +28,7 @@ public final class ChargingWarBoar extends CardImpl {
 
     private static final Condition condition
             = new PermanentsOnTheBattlefieldCondition(new FilterControlledPlaneswalkerPermanent(SubType.DOMRI));
-    private static final ConditionHint hint = new ConditionHint(condition, "You control Domri planeswalker");
+    private static final ConditionHint hint = new ConditionHint(condition, "You control a Domri planeswalker");
 
     public ChargingWarBoar(UUID ownerId, CardSetInfo setInfo) {
         super(ownerId, setInfo, new CardType[]{CardType.CREATURE}, "{1}{R}{G}");
