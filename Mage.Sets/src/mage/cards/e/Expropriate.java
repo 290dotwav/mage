@@ -11,7 +11,7 @@ import mage.constants.CardType;
 import mage.constants.Duration;
 import mage.constants.Outcome;
 import mage.filter.FilterPermanent;
-import mage.filter.predicate.permanent.ControllerIdPredicate;
+import mage.filter.predicate.card.OwnerIdPredicate;
 import mage.game.Game;
 import mage.game.permanent.Permanent;
 import mage.game.turn.TurnMod;
@@ -91,8 +91,9 @@ class ExpropriateEffect extends OneShotEffect {
         List<Permanent> toSteal = new ArrayList<>();
         for (UUID playerId : vote.getVotedFor(false)) {
             int moneyCount = vote.getVotes(playerId).stream().mapToInt(x -> x ? 0 : 1).sum();
+            // "choose a permanent owned by the voter": its owner, not whoever controls it now
             FilterPermanent filter = new FilterPermanent();
-            filter.add(new ControllerIdPredicate(playerId));
+            filter.add(new OwnerIdPredicate(playerId));
             moneyCount = Math.min(game.getBattlefield().count(
                     filter, source.getControllerId(), source, game
             ), moneyCount);
