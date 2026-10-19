@@ -2290,6 +2290,10 @@ public abstract class GameImpl implements Game {
             BecomesFaceDownCreatureEffect.FaceDownType faceDownType = BecomesFaceDownCreatureEffect.findFaceDownType(this, copyFromPermanent);
             if (faceDownType != null) {
                 BecomesFaceDownCreatureEffect.makeFaceDownObject(this, null, newBluePrint, faceDownType, null);
+                // 707.2, 708.2a: the copiable values of a face-down permanent are a 2/2 with no text. What
+                // makeFaceDownObject keeps (the morph, disguise... that turns the original face up, its
+                // "becomes a 2/2 face-down creature" rule) is the original's, not the copy's.
+                newBluePrint.removeAllAbilities(null, this);
             }
             newBluePrint.assignNewId();
             if (copyFromPermanent.isPrototyped()) {
