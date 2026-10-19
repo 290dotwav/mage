@@ -6,6 +6,7 @@ import mage.abilities.effects.AsThoughEffect;
 import mage.abilities.effects.AsThoughEffectImpl;
 import mage.constants.*;
 import mage.game.Game;
+import mage.util.CardUtil;
 
 import java.util.UUID;
 
@@ -51,9 +52,15 @@ class MayhemPlayEffect extends AsThoughEffectImpl {
     }
 
     @Override
-    public boolean applies(UUID sourceId, Ability source, UUID affectedControllerId, Game game) {
-        return Zone.GRAVEYARD.match(game.getState().getZone(sourceId))
-                && MayhemWatcher.checkCard(sourceId, game);
+    public boolean applies(UUID objectId, Ability source, UUID affectedControllerId, Game game) {
+        // The land itself, by its own owner: the first argument is the object being played, not the source, so
+        // without these two checks any Oscorp Industries in any graveyard let any player play any card discarded
+        // this turn (a Grizzly Bears discarded beside it was castable from the graveyard, and the opponent's
+        // Oscorp offered itself as a second "permitting object" for this one).
+        return CardUtil.getMainCardId(game, objectId).equals(source.getSourceId())
+                && affectedControllerId.equals(source.getControllerId())
+                && Zone.GRAVEYARD.match(game.getState().getZone(objectId))
+                && MayhemWatcher.checkCard(objectId, game);
     }
 
     @Override

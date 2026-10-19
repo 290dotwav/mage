@@ -101,4 +101,38 @@ public class OscorpIndustriesTest extends CardTestPlayerBase {
         assertLife(playerA, 20);
         assertPermanentCount(playerA, oscorpIndustries, 0);
     }
+
+    /**
+     * Mayhem lets this land be played, by its owner: not a Grizzly Bears discarded beside it, and not another
+     * player's discarded card. (Before, any Oscorp Industries in any graveyard let anybody play anything discarded
+     * that turn.)
+     */
+    @Test
+    public void testOnlyTheLandItselfByItsOwner() {
+        setStrictChooseMode(true);
+
+        addCard(Zone.HAND, playerA, oscorpIndustries);
+        addCard(Zone.HAND, playerA, "Grizzly Bears");
+        addCard(Zone.BATTLEFIELD, playerA, "Forest", 2);
+        addCard(Zone.HAND, playerA, "Faithless Looting");
+        addCard(Zone.BATTLEFIELD, playerA, "Mountain", 1);
+        addCard(Zone.LIBRARY, playerA, "Island", 2);
+        // the opponent's Oscorp, discarded on his own turn before: in his graveyard all along
+        addCard(Zone.GRAVEYARD, playerB, oscorpIndustries);
+
+        castSpell(1, PhaseStep.PRECOMBAT_MAIN, playerA, "Faithless Looting");
+        setChoice(playerA, oscorpIndustries + "^Grizzly Bears");
+
+        checkPlayableAbility("the bear discarded beside it", 1, PhaseStep.POSTCOMBAT_MAIN, playerA, "Cast Grizzly Bears", false);
+        checkPlayableAbility("the land itself", 1, PhaseStep.POSTCOMBAT_MAIN, playerA, "Play " + oscorpIndustries, true);
+        playLand(1, PhaseStep.POSTCOMBAT_MAIN, playerA, oscorpIndustries);
+
+        setStopAt(1, PhaseStep.END_TURN);
+        execute();
+
+        assertLife(playerA, 20 - 2);
+        assertPermanentCount(playerA, oscorpIndustries, 1);
+        assertGraveyardCount(playerA, "Grizzly Bears", 1);
+        assertGraveyardCount(playerB, oscorpIndustries, 1);
+    }
 }
