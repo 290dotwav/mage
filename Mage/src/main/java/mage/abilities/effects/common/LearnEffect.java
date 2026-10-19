@@ -8,6 +8,7 @@ import mage.constants.SubType;
 import mage.filter.FilterCard;
 import mage.game.Game;
 import mage.game.events.GameEvent;
+import mage.players.Player;
 
 /**
  * @author TheElk801
@@ -39,7 +40,11 @@ public class LearnEffect extends OneShotEffect {
         ))) {
             return false;
         }
-        return new WishEffect(filter).apply(game, source)
+        // With no Lesson outside the game (a Commander table has no sideboard to hold one), the "reveal a Lesson?"
+        // question offers nothing, and a "yes" to it skipped the rummage, the one choice there was (701.48a).
+        Player controller = game.getPlayer(source.getControllerId());
+        boolean lessons = controller != null && controller.getSideboard().count(filter, game) > 0;
+        return (lessons && new WishEffect(filter).apply(game, source))
                 || new DoIfCostPaid(
                 new DrawCardSourceControllerEffect(1), new DiscardCardCost()
         ).apply(game, source);
