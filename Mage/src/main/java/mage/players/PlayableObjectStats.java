@@ -52,14 +52,13 @@ public class PlayableObjectStats implements Serializable, Copyable<PlayableObjec
                 dest = this.other;
             }
 
-            // collect info about abilities for card icons popup, must be simple online text (html symbols are possible)
-            // some long html tags can be miss (example: ability extra hint) -- that's ok
+            // collect info about abilities, must be simple online text (html symbols are possible)
+            // kept whole: a web client offers each record as the way to play it, and an ability no card prints
+            // (reconfigure's unattach, turning a face-down permanent face up) has nothing else to complete a cut
+            // from; the card icons popup cuts its own lines (PlayableCountIcon)
             String shortInfo = ability.toString();
             shortInfo = shortInfo.replace("<br>", " ");
             shortInfo = shortInfo.replace("\n", " ");
-            if (shortInfo.length() > 50) {
-                shortInfo = shortInfo.substring(0, 50 - 1) + "...";
-            }
             dest.add(new PlayableObjectRecord(ability.getId(), shortInfo));
         }
     }

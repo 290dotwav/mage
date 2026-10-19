@@ -33,7 +33,8 @@ public final class PlayableCountIcon extends CardIconImpl {
                     .stream()
                     .map(s -> {
                         counter[0]++;
-                        return " " + counter[0] + ". " + s;
+                        // the popup's lines are short; the records themselves are whole (PlayableObjectStats)
+                        return " " + counter[0] + ". " + (s.length() > 50 ? s.substring(0, 50 - 1) + "..." : s);
                     })
                     .collect(Collectors.joining("<br>")) + "";
         }
