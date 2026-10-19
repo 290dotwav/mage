@@ -38,7 +38,7 @@ public final class PyrrhicStrike extends CardImpl {
         this.getSpellAbility().getModes().setChooseText(
             "Choose one. If this spell's additional cost was paid, choose both instead."
         );
-        this.getSpellAbility().getModes().setMoreCondition(2, BlightedCondition.instance);
+        this.getSpellAbility().getModes().setMoreCondition(2, BlightedCondition.instance, true);
 
         // * Destroy target artifact or enchantment.
         this.getSpellAbility().addEffect(new DestroyTargetEffect());

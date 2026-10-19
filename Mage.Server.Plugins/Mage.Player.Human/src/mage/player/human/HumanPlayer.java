@@ -2650,7 +2650,7 @@ public class HumanPlayer extends PlayerImpl {
 
             // done button for "for up" choices only
             boolean isValidSelection = 
-                (modes.getMaxPawPrints() == 0 && modes.getSelectedModes().size() >= modes.getMinModes())
+                (modes.getMaxPawPrints() == 0 && modes.getSelectedModes().size() >= modes.getMinModes(game, source))
                 || (modes.getMaxPawPrints() > 0 && modes.getSelectedPawPrints() <= modes.getMaxPawPrints())
                 || (modes.isMayChooseNone() && modes.getSelectedModes().isEmpty());
             boolean canEndChoice = isValidSelection;

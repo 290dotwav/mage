@@ -32,8 +32,7 @@ public class TeamworkTest extends CardTestPlayerBase {
 
         castSpell(1, PhaseStep.PRECOMBAT_MAIN, playerA, goNuts);
         setChoice(playerA, true); // Pay Teamwork 3
-        setModeChoice(playerA, "1");
-        setModeChoice(playerA, "2");
+        // "choose both instead": both modes are a must, chosen without a question
         addTarget(playerA, bear); // +1/+1 counter mode
         addTarget(playerA, bear); // fight mode, creature you control
         addTarget(playerA, vanguard); // fight mode, creature an opponent controls
@@ -68,8 +67,7 @@ public class TeamworkTest extends CardTestPlayerBase {
 
         castSpell(1, PhaseStep.PRECOMBAT_MAIN, playerA, goNuts);
         setChoice(playerA, true); // Pay Teamwork 3
-        setModeChoice(playerA, "1");
-        setModeChoice(playerA, "2");
+        // "choose both instead": both modes are a must, chosen without a question
         addTarget(playerA, lion); // +1/+1 counter mode
         addTarget(playerA, lion); // fight mode, creature you control
         addTarget(playerA, vanguard); // fight mode, creature an opponent controls

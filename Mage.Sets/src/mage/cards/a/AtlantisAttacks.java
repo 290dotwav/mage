@@ -30,7 +30,7 @@ public final class AtlantisAttacks extends CardImpl {
         this.getSpellAbility().getModes().setChooseText(
             "Choose one. If this spell was cast using teamwork, choose both instead."
         );
-        this.getSpellAbility().getModes().setMoreCondition(2, TeamworkCondition.instance);
+        this.getSpellAbility().getModes().setMoreCondition(2, TeamworkCondition.instance, true);
 
         // * Target player creates a 6/5 blue Leviathan creature token with hexproof.
         this.getSpellAbility().addEffect(new CreateTokenTargetEffect(new LeviathanToken()));

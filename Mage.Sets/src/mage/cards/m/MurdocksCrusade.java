@@ -41,7 +41,7 @@ public final class MurdocksCrusade extends CardImpl {
         this.getSpellAbility().getModes().setChooseText(
                 "Choose one. If this spell was cast using teamwork, choose both instead."
         );
-        this.getSpellAbility().getModes().setMoreCondition(2, TeamworkCondition.instance);
+        this.getSpellAbility().getModes().setMoreCondition(2, TeamworkCondition.instance, true);
 
         // Street Justice
         // Exile target creature with toughness 4 or greater.

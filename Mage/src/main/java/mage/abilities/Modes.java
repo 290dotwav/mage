@@ -48,6 +48,7 @@ public class Modes extends LinkedHashMap<UUID, Mode> implements Copyable<Modes> 
     private Filter maxModesFilter; // calculates the max number of available modes
     private Condition moreCondition; // allows multiple modes choose (example: choose one... if condition, you may choose both)
     private int moreLimit; // if multiple modes are allowed, this limits how many additional modes may be chosen
+    private boolean moreRequired; // "choose both instead" (teamwork, 702.194; an additional cost paid): the more modes are a must, not a may
 
     private boolean limitUsageByOnce = false; // limit mode selection to once per game
     private boolean limitUsageResetOnNewTurn = false; // reset once per game limit on new turn, example: Galadriel, Light of Valinor
@@ -85,6 +86,7 @@ public class Modes extends LinkedHashMap<UUID, Mode> implements Copyable<Modes> 
         this.maxModesFilter = modes.maxModesFilter; // can't change so no copy needed
         this.moreCondition = modes.moreCondition;
         this.moreLimit = modes.moreLimit;
+        this.moreRequired = modes.moreRequired;
 
         this.limitUsageByOnce = modes.limitUsageByOnce;
         this.limitUsageResetOnNewTurn = modes.limitUsageResetOnNewTurn;
@@ -235,6 +237,18 @@ public class Modes extends LinkedHashMap<UUID, Mode> implements Copyable<Modes> 
         return this.minModes;
     }
 
+    /**
+     * Real min modes in the current game: "Choose one. If this spell was cast using teamwork, choose both instead."
+     * (Go Nuts!, 702.194) makes both a must once the condition holds, where "you may choose both instead" only lets
+     * the player. Use null params for the printed minimum.
+     */
+    public int getMinModes(Game game, Ability source) {
+        if (moreRequired && game != null && source != null && moreCondition != null && moreCondition.apply(game, source)) {
+            return Math.max(this.minModes, Math.min(this.moreLimit, this.size()));
+        }
+        return this.minModes;
+    }
+
     public void setMaxModes(int maxModes) {
         this.maxModes = maxModes;
     }
@@ -326,8 +340,16 @@ public class Modes extends LinkedHashMap<UUID, Mode> implements Copyable<Modes> 
     }
 
     public void setMoreCondition(int moreLimit, Condition moreCondition) {
+        setMoreCondition(moreLimit, moreCondition, false);
+    }
+
+    /**
+     * @param required true for "choose both instead" (a must), false for "you may choose both instead"
+     */
+    public void setMoreCondition(int moreLimit, Condition moreCondition, boolean required) {
         this.moreLimit = moreLimit;
         this.moreCondition = moreCondition;
+        this.moreRequired = required;
     }
 
     private boolean isAlreadySelectedModesOutdated(Game game, Ability source) {
@@ -339,7 +361,7 @@ public class Modes extends LinkedHashMap<UUID, Mode> implements Copyable<Modes> 
         if (isLimitUsageByOnce()) {
             setOnceSelectedModes(source, game);
         }
-        return this.selectedModes.size() >= this.getMinModes()
+        return this.selectedModes.size() >= this.getMinModes(game, source)
                 || (this.selectedModes.size() == 0 && mayChooseNone);
     }
 
@@ -405,7 +427,7 @@ public class Modes extends LinkedHashMap<UUID, Mode> implements Copyable<Modes> 
             }
 
             // UX: check if all modes can be activated automatically
-            if (this.size() == this.getMinModes() && !isMayChooseSameModeMoreThanOnce()) {
+            if (this.size() == this.getMinModes(game, source) && !isMayChooseSameModeMoreThanOnce()) {
                 Set<UUID> onceSelectedModes = null;
                 if (isLimitUsageByOnce()) {
                     onceSelectedModes = getAlreadySelectedModes(source, game, true);
@@ -772,7 +794,7 @@ public class Modes extends LinkedHashMap<UUID, Mode> implements Copyable<Modes> 
         int max = getMaxModes(game, source);
         return "Choose mode (selected " + getSelectedModes().size()
                 + (max == Integer.MAX_VALUE ? "" : " of " + max)
-                + ", min " + getMinModes() + ")";
+                + ", min " + getMinModes(game, source) + ")";
     }
 
     public boolean isMayChooseSameModeMoreThanOnce() {

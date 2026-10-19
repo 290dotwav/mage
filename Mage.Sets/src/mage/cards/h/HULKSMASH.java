@@ -31,7 +31,7 @@ public final class HULKSMASH extends CardImpl {
         this.getSpellAbility().getModes().setChooseText(
             "Choose one. If this spell was cast using teamwork, choose both instead."
         );
-        this.getSpellAbility().getModes().setMoreCondition(2, TeamworkCondition.instance);
+        this.getSpellAbility().getModes().setMoreCondition(2, TeamworkCondition.instance, true);
 
         // * Destroy target noncreature artifact.
         this.getSpellAbility().addEffect(new DestroyTargetEffect());

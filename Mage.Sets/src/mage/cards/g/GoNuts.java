@@ -39,7 +39,7 @@ public final class GoNuts extends CardImpl {
         this.getSpellAbility().getModes().setChooseText(
             "Choose one. If this spell was cast using teamwork, choose both instead."
         );
-        this.getSpellAbility().getModes().setMoreCondition(2, TeamworkCondition.instance);
+        this.getSpellAbility().getModes().setMoreCondition(2, TeamworkCondition.instance, true);
 
         // * Put a +1/+1 counter on target creature.
         this.getSpellAbility().addEffect(new AddCountersTargetEffect(CounterType.P1P1.createInstance()));

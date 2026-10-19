@@ -4674,7 +4674,7 @@ public abstract class PlayerImpl implements Player, Serializable {
 
         Modes modes = option.getModes();
         boolean isValidSelection =
-            (modes.getMaxPawPrints() == 0 && modes.getSelectedModes().size() >= modes.getMinModes())
+            (modes.getMaxPawPrints() == 0 && modes.getSelectedModes().size() >= modes.getMinModes(game, option))
             || (modes.getMaxPawPrints() > 0 && modes.getSelectedPawPrints() <= modes.getMaxPawPrints())
             || (modes.isMayChooseNone() && modes.getSelectedModes().isEmpty());
         if (isValidSelection) {

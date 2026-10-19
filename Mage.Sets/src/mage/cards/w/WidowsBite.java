@@ -30,7 +30,7 @@ public final class WidowsBite extends CardImpl {
         this.getSpellAbility().getModes().setChooseText(
             "Choose one. If this spell was cast using teamwork, choose both instead."
         );
-        this.getSpellAbility().getModes().setMoreCondition(2, TeamworkCondition.instance);
+        this.getSpellAbility().getModes().setMoreCondition(2, TeamworkCondition.instance, true);
 
         // * Target creature gains deathtouch until end of turn.
         this.getSpellAbility().addEffect(new GainAbilityTargetEffect(DeathtouchAbility.getInstance()));
