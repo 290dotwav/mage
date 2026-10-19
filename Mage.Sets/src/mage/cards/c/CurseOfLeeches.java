@@ -104,7 +104,12 @@ class CurseOfLeechesEffect extends ReplacementEffectImpl {
         if (permanent == null) {
             return false;
         }
-        permanent.addAttachment(target.getFirstTarget(), source, game);
+        // the player is enchanted by this permanent, not the other way around: entering at night (702.145b)
+        // it was never attached to the player its spell targeted, and transforming back left it unattached
+        Player player = game.getPlayer(target.getFirstTarget());
+        if (player != null) {
+            player.addAttachment(permanent.getId(), source, game);
+        }
         return false;
     }
 

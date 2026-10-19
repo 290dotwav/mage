@@ -1,6 +1,7 @@
 package mage.game;
 
 import mage.abilities.Ability;
+import mage.abilities.keyword.DayboundAbility;
 import mage.cards.*;
 import mage.constants.Outcome;
 import mage.constants.Zone;
@@ -80,6 +81,17 @@ public final class ZonesHandler {
                     if (enterTransformed == null) {
                         enterTransformed = false;
                     }
+                    // 702.145b: daybound means "if it is night and this permanent is represented by a double-faced card,
+                    // it enters transformed". It entered front face up and was transformed at once after, so a
+                    // "when this enters" of its front face triggered at night (Brutal Cathar exiled a creature).
+                    if (!enterTransformed && !info.faceDown && entersAtNightTransformed(card, game)) {
+                        enterTransformed = true;
+                        if (card instanceof DoubleFacedCard) {
+                            // put by an effect: the main card is never moved itself, its front half is (below)
+                            info.event.setTargetId(((DoubleFacedCard) card).getRightHalfCard().getId());
+                            continue;
+                        }
+                    }
 
                     // if effect put half mdf card to battlefield then it must be the main side only (example: return targeted half card to battle)
                     if (card instanceof DoubleFacedCardHalf && !source.getAbilityType().isPlayCardAbility() && !enterTransformed) {
@@ -116,6 +128,27 @@ public final class ZonesHandler {
             }
         }
         return zoneChangeInfos;
+    }
+
+    /**
+     * A transforming double-faced card whose front face has daybound, entering at night (702.145b).
+     */
+    private static boolean entersAtNightTransformed(Card card, Game game) {
+        if (!game.checkDayNight(false) || !(card.getMainCard() instanceof TransformingDoubleFacedCard)) {
+            return false;
+        }
+        Card front;
+        if (card instanceof DoubleFacedCardHalf) {
+            if (((DoubleFacedCardHalf) card).isBackSide()) {
+                return false;
+            }
+            front = card;
+        } else if (card instanceof DoubleFacedCard) {
+            front = ((DoubleFacedCard) card).getLeftHalfCard();
+        } else {
+            return false;
+        }
+        return front.getAbilities(game).containsClass(DayboundAbility.class);
     }
 
     private static void placeInDestinationZone(ZoneChangeInfo info, int createOrder, Ability source, Game game) {
