@@ -750,8 +750,9 @@ public class Modes extends LinkedHashMap<UUID, Mode> implements Copyable<Modes> 
         if (!modeText.isEmpty()) {
             modeText = Character.toUpperCase(modeText.charAt(0)) + modeText.substring(1);
         }
-        if (mode.getCost() != null && mode.getFlavorWord() == null) {
-            modeText = "+ " + mode.getCost().getText() + ": " + modeText;
+        if (mode.getCost() != null) {
+            // spree's "+ {2}: ..." (702.172a); a tiered mode's name and cost, "Fira {2}: ..." (702.183a)
+            modeText = (mode.getFlavorWord() == null ? "+" : mode.getFlavorWord()) + " " + mode.getCost().getText() + ": " + modeText;
         }
         if (isMayChooseSameModeMoreThanOnce()) {
             int timesSelected = getSelectedStats(mode.getId());

@@ -67,6 +67,21 @@ public class ModeChoiceTextTest extends CardTestPlayerBase {
     }
 
     @Test
+    public void tiered_eachModeSaysItsNameAndCost() {
+        // 702.183a: "Choose one. As an additional cost to cast this spell, pay the cost associated with that mode."
+        addCard(Zone.HAND, playerA, "Fire Magic");
+        setStopAt(1, PhaseStep.PRECOMBAT_MAIN);
+        execute();
+
+        Ability spell = spellOf("Fire Magic");
+        spell.getModes().clearSelectedModes();
+        List<String> texts = texts(spell);
+        Assert.assertTrue(texts.toString(), texts.contains("Fire {0}: Fire Magic deals 1 damage to each creature."));
+        Assert.assertTrue(texts.toString(), texts.contains("Fira {2}: Fire Magic deals 2 damage to each creature."));
+        Assert.assertTrue(texts.toString(), texts.contains("Firaga {5}: Fire Magic deals 3 damage to each creature."));
+    }
+
+    @Test
     public void plainModes_unchanged() {
         addCard(Zone.HAND, playerA, "Kolaghan's Command");
         setStopAt(1, PhaseStep.PRECOMBAT_MAIN);
