@@ -248,4 +248,29 @@ public class CommanderDeckValidationTest extends MageTestPlayerBase {
 
         deckTester.validate("Lutri can't be your companion in commander");
     }
+
+    // Rulebreaker (Mystery Booster Commander): "A deck with this commander can have Phyrexian cards of any color
+    // identity and any basic land cards."
+    @Test
+    public void testRulebreakerPhyrexianOfAnyColor() {
+        DeckTester deckTester = new DeckTester(new Commander());
+        deckTester.addMaindeck("Swamp", 97);
+        deckTester.addMaindeck("Elesh Norn, Grand Cenobite", 1);
+        deckTester.addMaindeck("Plains", 1);
+
+        deckTester.addSideboard("Valko Indorian", 1);
+
+        deckTester.validate("Valko lets a white Phyrexian and a Plains in");
+    }
+
+    @Test(expected = AssertionError.class)
+    public void testRulebreakerOnlyWhatItSays() {
+        DeckTester deckTester = new DeckTester(new Commander());
+        deckTester.addMaindeck("Swamp", 98);
+        deckTester.addMaindeck("Serra Angel", 1);
+
+        deckTester.addSideboard("Valko Indorian", 1);
+
+        deckTester.validate("Serra Angel is white and not Phyrexian");
+    }
 }
