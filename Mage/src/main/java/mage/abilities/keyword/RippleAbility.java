@@ -98,7 +98,7 @@ class RippleEffect extends OneShotEffect {
             FilterCard sameNameFilter = new FilterCard("card(s) with the name: \"" + cardNameToRipple + "\" to cast without paying their mana cost");
             sameNameFilter.add(new NamePredicate(cardNameToRipple));
             TargetCard target1 = new TargetCard(Zone.LIBRARY, sameNameFilter);
-            target1.setRequired(false);
+            target1.withOptionalChoice(); // "you may cast": asked even for a single card
 
             // choose cards to play for free
             while (player.canRespond() && cards.count(sameNameFilter, game) > 0 && player.choose(Outcome.PlayForFree, cards, target1, source, game)) {

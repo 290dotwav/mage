@@ -266,6 +266,19 @@ public interface Target extends Copyable<Target>, Serializable {
 
     boolean isRequiredExplicitlySet();
 
+    /**
+     * A "you may" pick ("you may cast a card with the same name from among
+     * them"): taking none is an answer, so it is asked even when a single card
+     * fits and never auto-chosen (see tryToAutoChoose). It makes the target
+     * non-required too, so the player is offered the Done that takes none.
+     * A cancelable cost or a cast's targets (setRequired(false) alone) are not
+     * this: there the no backs out of the action, and the sole candidate may
+     * still be chosen for the player.
+     */
+    Target withOptionalChoice();
+
+    boolean isOptionalChoice();
+
     boolean isRandom();
 
     /**

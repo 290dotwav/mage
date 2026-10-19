@@ -32,6 +32,7 @@ public abstract class TargetImpl implements Target {
     protected int minNumberOfTargets;
     protected boolean required = true;
     protected boolean requiredExplicitlySet = false;
+    protected boolean optionalChoice = false; // a "you may" pick: never auto-chosen (withOptionalChoice)
     /**
      * Simple chosen state due selected and require targets count
      * Complex targets must override isChosen method or set chosen value manually
@@ -72,6 +73,7 @@ public abstract class TargetImpl implements Target {
         this.minNumberOfTargets = target.minNumberOfTargets;
         this.required = target.required;
         this.requiredExplicitlySet = target.requiredExplicitlySet;
+        this.optionalChoice = target.optionalChoice;
         this.chosen = target.chosen;
         this.isSkipChoice = target.isSkipChoice;
         this.targets.putAll(target.targets);
@@ -778,6 +780,18 @@ public abstract class TargetImpl implements Target {
     }
 
     @Override
+    public TargetImpl withOptionalChoice() {
+        setRequired(false);
+        this.optionalChoice = true;
+        return this;
+    }
+
+    @Override
+    public boolean isOptionalChoice() {
+        return optionalChoice;
+    }
+
+    @Override
     public int getTargetTag() {
         return targetTag;
     }
@@ -872,7 +886,8 @@ public abstract class TargetImpl implements Target {
                 && possibleTargets.size() == this.getMinNumberOfTargets() - this.getSize() // Available targets are equal to the number that must be picked
                 && !strictModeEnabled  // Test AI is not set to strictChooseMode(true)
                 && playerAutoTargetLevel > 0 // Human player has enabled auto-choose in settings
-                && !abilityText.contains("search"); // Do not autochoose for any effects which involve searching
+                && !abilityText.contains("search") // Do not autochoose for any effects which involve searching
+                && !this.optionalChoice; // a "you may" pick: taking none is an answer, so it is always asked
 
 
         if (canAutoChoose) {
