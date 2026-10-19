@@ -738,7 +738,12 @@ public class CombatGroup implements Serializable, Copyable<CombatGroup> {
         if (game.getCombat().useToughnessForDamage(permanent, game)) {
             return Math.max(0, permanent.getToughness().getValue());
         } else {
-            return Math.max(0, permanent.getPower().getValue());
+            int power = permanent.getPower().getValue();
+            if (power < 0 && !game.getContinuousEffects().asThough(permanent.getId(),
+                    AsThoughEffectType.NEGATIVE_POWER_ASSIGNS_DAMAGE, null, permanent.getControllerId(), game).isEmpty()) {
+                return -power;
+            }
+            return Math.max(0, power);
         }
     }
 

@@ -62,7 +62,11 @@ public enum AsThoughEffectType {
     ALLOW_FORETELL_ANYTIME,
     // ALLOW_EXHAUST_ACTIVE_ABILITY:
     // Elvish Refueler effect allows Exhaust on your turn as though it hasn't been activated
-    ALLOW_EXHAUST_PER_TURN(true, false);
+    ALLOW_EXHAUST_PER_TURN(true, false),
+    // 704.5i: a planeswalker with 0 loyalty is not put into its owner's graveyard (Sanctum Lurker)
+    STAY_AT_ZERO_LOYALTY,
+    // 510.1a: a creature with negative power assigns combat damage as though its power were positive (Loot, the Anomaly)
+    NEGATIVE_POWER_ASSIGNS_DAMAGE;
 
     private final boolean needAffectedAbility; // mark what AsThough check must be called for specific ability, not full object (example: spell check)
     private final boolean needPlayCardAbility; // mark what AsThough check must be called for play/cast abilities
