@@ -8,6 +8,7 @@ import mage.abilities.costs.mana.ManaCost;
 import mage.abilities.costs.mana.ManaCosts;
 import mage.abilities.keyword.BestowAbility;
 import mage.abilities.keyword.PrototypeAbility;
+import mage.abilities.keyword.SneakAbility;
 import mage.cards.*;
 import mage.constants.*;
 import mage.counters.Counter;
@@ -417,7 +418,18 @@ public class Spell extends StackObjectImpl implements Card {
             } else {
                 MageObjectReference mor = new MageObjectReference(getSpellAbility());
                 game.storePermanentCostsTags(mor, getSpellAbility());
-                return controller.moveCards(card, Zone.BATTLEFIELD, ability, game, false, faceDown, false, null);
+                // 702.190b: a permanent spell whose sneak cost was paid enters tapped and attacking
+                // what the creature returned to pay it attacked.
+                boolean sneaked = CardUtil.checkSourceCostsTagExists(game, getSpellAbility(), SneakAbility.SNEAK_ACTIVATION_VALUE_KEY);
+                UUID sneakDefender = sneaked ? SneakAbility.getSneakDefender(game, getSpellAbility()) : null;
+                boolean moved = controller.moveCards(card, Zone.BATTLEFIELD, ability, game, sneaked, faceDown, false, null);
+                if (moved && sneakDefender != null && game.getCombat() != null) {
+                    Permanent permanent = game.getPermanent(card.getId());
+                    if (permanent != null && permanent.isCreature(game)) {
+                        game.getCombat().addAttackingCreature(permanent.getId(), game, sneakDefender);
+                    }
+                }
+                return moved;
             }
         }
     }
