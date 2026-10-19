@@ -2136,6 +2136,18 @@ public class HumanPlayer extends PlayerImpl {
         return null;
     }
 
+    /**
+     * The creatures that may block now: the filter's untapped ones, less those a restriction
+     * forbids to block at all (509.1a): "can't block", a suspected creature (701.60c). The list
+     * named them, the client offered them, and the declaration was refused and asked again.
+     */
+    public static java.util.List<UUID> possibleBlockers(Game game, FilterCreatureForCombatBlock filter, UUID playerId) {
+        return game.getBattlefield().getActivePermanents(filter, playerId, game).stream()
+                .filter(p -> p.canBlockAny(game))
+                .map(Permanent::getId)
+                .collect(Collectors.toList());
+    }
+
     @Override
     public void selectBlockers(Ability source, Game game, UUID defendingPlayerId) {
         if (!canCallFeedback(game)) {
@@ -2160,15 +2172,13 @@ public class HumanPlayer extends PlayerImpl {
             return;
         }
         // Skip prompt to select blockers if player has none
-        if (possibleBlockersCount == 0) return;
+        if (possibleBlockersCount == 0 || possibleBlockers(game, filter, playerId).isEmpty()) return;
 
         while (canRespond()) {
             prepareForResponse(game);
             if (!isExecutingMacro()) {
                 Map<String, Serializable> options = new HashMap<>();
-                java.util.List<UUID> possibleBlockers = game.getBattlefield().getActivePermanents(filter, playerId, game).stream()
-                        .map(p -> p.getId())
-                        .collect(Collectors.toList());
+                java.util.List<UUID> possibleBlockers = possibleBlockers(game, filter, playerId);
                 options.put(Constants.Option.POSSIBLE_BLOCKERS, (Serializable) possibleBlockers);
                 game.fireSelectEvent(playerId, "Select blockers", options);
             }

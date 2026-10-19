@@ -1705,6 +1705,10 @@ public abstract class PermanentImpl extends CardImpl implements Permanent {
         if (tapped && game.getState().getContinuousEffects().asThough(this.getId(), AsThoughEffectType.BLOCK_TAPPED, null, this.getControllerId(), game).isEmpty()) {
             return false;
         }
+        // 701.60c: a suspected creature can't block, as canBlock says for each attacker
+        if (isSuspected()) {
+            return false;
+        }
 
         //20101001 - 509.1b
         for (Map.Entry<RestrictionEffect, Set<Ability>> entry : game.getContinuousEffects().getApplicableRestrictionEffects(this, game).entrySet()) {
