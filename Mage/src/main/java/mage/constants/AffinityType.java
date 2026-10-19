@@ -19,44 +19,46 @@ public enum AffinityType {
     // Card types
     ARTIFACTS(new FilterControlledArtifactPermanent("artifacts"), ArtifactYouControlHint.instance),
     CREATURES(new FilterControlledCreaturePermanent("creatures"), CreaturesYouControlHint.instance),
-    ARTIFACT_CREATURES(AffinityFilters.ARTIFACT_CREATURES),
-    ENCHANTMENTS(new FilterControlledEnchantmentPermanent("enchantments")),
-    PLANESWALKERS(new FilterControlledPlaneswalkerPermanent("planeswalkers")),
+    ARTIFACT_CREATURES(AffinityFilters.ARTIFACT_CREATURES, "artifact creature"),
+    ENCHANTMENTS(new FilterControlledEnchantmentPermanent("enchantments"), "enchantment"),
+    PLANESWALKERS(new FilterControlledPlaneswalkerPermanent("planeswalkers"), "planeswalker"),
 
     // Basic Lands
     PLAINS(new FilterControlledPermanent(SubType.PLAINS, "Plains")),
-    ISLANDS(new FilterControlledPermanent(SubType.ISLAND, "Islands")),
-    SWAMPS(new FilterControlledPermanent(SubType.SWAMP, "Swamps")),
-    MOUNTAINS(new FilterControlledPermanent(SubType.MOUNTAIN, "Mountains")),
-    FORESTS(new FilterControlledPermanent(SubType.FOREST, "Forests")),
+    ISLANDS(new FilterControlledPermanent(SubType.ISLAND, "Islands"), "Island"),
+    SWAMPS(new FilterControlledPermanent(SubType.SWAMP, "Swamps"), "Swamp"),
+    MOUNTAINS(new FilterControlledPermanent(SubType.MOUNTAIN, "Mountains"), "Mountain"),
+    FORESTS(new FilterControlledPermanent(SubType.FOREST, "Forests"), "Forest"),
 
     // Subtypes
     ALLIES(new FilterControlledPermanent(SubType.ALLY, "Allies"), "Ally"),
-    AURAS(new FilterControlledPermanent(SubType.AURA, "Auras")),
-    BIRDS(new FilterControlledPermanent(SubType.BIRD, "Birds")),
-    CITIZENS(new FilterControlledPermanent(SubType.CITIZEN, "Citizens")),
-    DALEKS(new FilterControlledPermanent(SubType.DALEK, "Daleks")),
-    ELVES(new FilterControlledPermanent(SubType.ELF, "Elves")),
+    AURAS(new FilterControlledPermanent(SubType.AURA, "Auras"), "Aura"),
+    BIRDS(new FilterControlledPermanent(SubType.BIRD, "Birds"), "Bird"),
+    CITIZENS(new FilterControlledPermanent(SubType.CITIZEN, "Citizens"), "Citizen"),
+    DALEKS(new FilterControlledPermanent(SubType.DALEK, "Daleks"), "Dalek"),
+    ELVES(new FilterControlledPermanent(SubType.ELF, "Elves"), "Elf"),
     EQUIPMENT(new FilterControlledPermanent(SubType.EQUIPMENT, "Equipment"), "Equipment"),
     FOOD(new FilterControlledPermanent(SubType.FOOD, "Food"), "Food"),
-    FROGS(new FilterControlledPermanent(SubType.FROG, "Frogs")),
+    FROGS(new FilterControlledPermanent(SubType.FROG, "Frogs"), "Frog"),
     GATES(new FilterControlledPermanent(SubType.GATE, "Gates"), GatesYouControlHint.instance),
-    HUMANS(new FilterControlledPermanent(SubType.HUMAN, "Humans")),
-    KNIGHTS(new FilterControlledPermanent(SubType.KNIGHT, "Knights")),
-    LIZARDS(new FilterControlledPermanent(SubType.LIZARD, "Lizards")),
-    SLIVERS(new FilterControlledPermanent(SubType.SLIVER, "Slivers")),
-    SPIRITS(new FilterControlledPermanent(SubType.SPIRIT, "Spirits")),
-    TOWNS(new FilterControlledPermanent(SubType.TOWN, "Towns")),
+    HUMANS(new FilterControlledPermanent(SubType.HUMAN, "Humans"), "Human"),
+    KNIGHTS(new FilterControlledPermanent(SubType.KNIGHT, "Knights"), "Knight"),
+    LIZARDS(new FilterControlledPermanent(SubType.LIZARD, "Lizards"), "Lizard"),
+    SLIVERS(new FilterControlledPermanent(SubType.SLIVER, "Slivers"), "Sliver"),
+    SPIRITS(new FilterControlledPermanent(SubType.SPIRIT, "Spirits"), "Spirit"),
+    TOWNS(new FilterControlledPermanent(SubType.TOWN, "Towns"), "Town"),
 
-    OUTLAWS(AffinityFilters.OUTLAWS),
-    HISTORIC(AffinityFilters.HISTORIC),
-    SNOW_LANDS(AffinityFilters.SNOW_LANDS),
-    TOKENS(AffinityFilters.TOKENS);
+    OUTLAWS(AffinityFilters.OUTLAWS, "outlaw"),
+    HISTORIC(AffinityFilters.HISTORIC, "historic permanent"),
+    SNOW_LANDS(AffinityFilters.SNOW_LANDS, "snow land"),
+    TOKENS(AffinityFilters.TOKENS, "token");
 
     private final FilterControlledPermanent filter;
     private final Hint hint;
     private final String singularName;
 
+    // The reminder counts one of them ("for each snow land you control", 702.41a): a type made from its filter alone
+    // said the plural there. Every one now names its singular; Plains is its own.
     AffinityType(FilterControlledPermanent filter) {
         this(filter, filter.getMessage());
     }
