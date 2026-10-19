@@ -5,6 +5,7 @@ import java.util.stream.Stream;
 
 import org.apache.log4j.Logger;
 
+import mage.MageObject;
 import mage.abilities.condition.Condition;
 import mage.abilities.costs.OptionalAdditionalModeSourceCosts;
 import mage.abilities.effects.Effect;
@@ -732,6 +733,45 @@ public class Modes extends LinkedHashMap<UUID, Mode> implements Copyable<Modes> 
     public void setLimitUsageByOnce(boolean resetOnNewTurn) {
         this.limitUsageByOnce = true;
         this.limitUsageResetOnNewTurn = resetOnNewTurn;
+    }
+
+    /**
+     * One mode as a player choosing modes reads it (HumanPlayer.chooseMode): its words with the
+     * first letter up, a spree mode's own cost before them (702.172a: "+ {2}: Explosive Derailment
+     * deals 4 damage to target creature.", the cost the card prints beside the mode, which the
+     * dialog left out), and how many times it is chosen already when it may be chosen again
+     * (700.2d, "(selected 2x) Counter target spell...").
+     */
+    public String getChoiceText(Mode mode, MageObject sourceObject) {
+        String modeText = mode.getEffects().getText(mode);
+        if (sourceObject != null) {
+            modeText = modeText.replace("{this}", sourceObject.getName());
+        }
+        if (!modeText.isEmpty()) {
+            modeText = Character.toUpperCase(modeText.charAt(0)) + modeText.substring(1);
+        }
+        if (mode.getCost() != null && mode.getFlavorWord() == null) {
+            modeText = "+ " + mode.getCost().getText() + ": " + modeText;
+        }
+        if (isMayChooseSameModeMoreThanOnce()) {
+            int timesSelected = getSelectedStats(mode.getId());
+            if (timesSelected > 0) {
+                modeText = "(selected " + timesSelected + "x) " + modeText;
+            }
+        }
+        return modeText;
+    }
+
+    /**
+     * The mode dialog's question: how many are chosen, of how many, at least how many. Spree has
+     * no ceiling (702.172a, "one or more"): its maximum is Integer.MAX_VALUE, said as nothing
+     * rather than "of 2147483647".
+     */
+    public String getChoiceMessage(Game game, Ability source) {
+        int max = getMaxModes(game, source);
+        return "Choose mode (selected " + getSelectedModes().size()
+                + (max == Integer.MAX_VALUE ? "" : " of " + max)
+                + ", min " + getMinModes() + ")";
     }
 
     public boolean isMayChooseSameModeMoreThanOnce() {

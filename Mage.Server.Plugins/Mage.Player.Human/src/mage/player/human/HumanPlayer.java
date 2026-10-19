@@ -2604,7 +2604,6 @@ public class HumanPlayer extends PlayerImpl {
             AvailableModes:
             for (Mode mode : modes.getAvailableModes(source, game)) {
                 modeIndex++;
-                int timesSelected = modes.getSelectedStats(mode.getId());
                 for (UUID selectedModeId : modes.getSelectedModes()) {
                     Mode selectedMode = modes.get(selectedModeId);
                     if (mode.getId().equals(selectedMode.getId())) {
@@ -2619,18 +2618,7 @@ public class HumanPlayer extends PlayerImpl {
                 }
 
                 if (mode.getTargets().canChoose(source.getControllerId(), source, game)) { // and needed targets have to be available
-                    String modeText = mode.getEffects().getText(mode);
-                    if (obj != null) {
-                        modeText = modeText.replace("{this}", obj.getName());
-                    }
-                    if (modes.isMayChooseSameModeMoreThanOnce()) {
-                        if (timesSelected > 0) {
-                            modeText = "(selected " + timesSelected + "x) " + modeText;
-                        }
-                    }
-                    if (!modeText.isEmpty()) {
-                        modeText = Character.toUpperCase(modeText.charAt(0)) + modeText.substring(1);
-                    }
+                    String modeText = modes.getChoiceText(mode, obj);
                     StringBuilder sb = new StringBuilder();
                     if (mode.getPawPrintValue() > 0) {
                         for (int i = 0; i < mode.getPawPrintValue(); ++i) {
@@ -2664,8 +2652,7 @@ public class HumanPlayer extends PlayerImpl {
             // prepare dialog
             String message;
             if (modes.getMaxPawPrints() == 0) {
-                message = "Choose mode (selected " + modes.getSelectedModes().size() + " of " + modes.getMaxModes(game, source)
-                        + ", min " + modes.getMinModes() + ")";
+                message = modes.getChoiceMessage(game, source);
             } else {
                 message = "Choose mode (selected " + modes.getSelectedPawPrints() + " of " + modes.getMaxPawPrints()
                         + " {P})";
