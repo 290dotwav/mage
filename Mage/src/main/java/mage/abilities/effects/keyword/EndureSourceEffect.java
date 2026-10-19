@@ -55,6 +55,17 @@ public class EndureSourceEffect extends OneShotEffect {
         );
     }
 
+    /**
+     * The endure question (701.63a): "Put two +1/+1 counters on X or create a 2/2 Spirit token?".
+     * It read "a 2 2/2": the article was put before the number, then the size after it.
+     */
+    static String choiceText(String name, int amount) {
+        String size = amount + "/" + amount;
+        boolean an = size.startsWith("8") || size.startsWith("11/") || size.startsWith("18/");
+        return "Put " + CardUtil.numberToText(amount, "a") + " +1/+1 counter" + (amount > 1 ? "s" : "")
+                + " on " + name + " or create " + (an ? "an " : "a ") + size + " Spirit token?";
+    }
+
     public static boolean doEndure(Permanent permanent, int amount, Game game, Ability source) {
         if (permanent == null || amount < 1) {
             return false;
@@ -65,9 +76,7 @@ public class EndureSourceEffect extends OneShotEffect {
         }
         if (permanent.getZoneChangeCounter(game) == game.getState().getZoneChangeCounter(permanent.getId())
                 && controller.chooseUse(
-                Outcome.BoostCreature, "Put " + CardUtil.numberToText(amount, "a") + " +1/+1 counter" +
-                        (amount > 1 ? "s" : "") + " on " + permanent.getName() + " or create " +
-                        CardUtil.addArticle("" + amount) + ' ' + amount + '/' + amount + " Spirit token?",
+                Outcome.BoostCreature, choiceText(permanent.getName(), amount),
                 null, "Add counters", "Create token", source, game
         )) {
             return permanent.addCounters(CounterType.P1P1.createInstance(amount), source, game);
