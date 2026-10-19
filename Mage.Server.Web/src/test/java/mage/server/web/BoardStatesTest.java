@@ -48,4 +48,18 @@ class BoardStatesTest {
         assertTrue(shroud.get("shroud").getAsBoolean());
         assertFalse(shroud.has("hexproof"));
     }
+
+    @Test
+    void aSecretOpponentIsOnTheChoosersFrameOnly() {
+        java.util.UUID chooser = java.util.UUID.randomUUID();
+        java.util.UUID chosen = java.util.UUID.randomUUID();
+        JsonObject his = new JsonObject();
+        BoardStates.markSecret(his, chooser, chooser, chosen);
+        assertTrue(chosen.toString().equals(his.get("secretOpponent").getAsString()));
+        JsonObject theirs = new JsonObject();
+        BoardStates.markSecret(theirs, chosen, chooser, chosen);
+        BoardStates.markSecret(theirs, null, chooser, chosen);
+        BoardStates.markSecret(theirs, chooser, chooser, null);
+        assertFalse(theirs.has("secretOpponent"));
+    }
 }

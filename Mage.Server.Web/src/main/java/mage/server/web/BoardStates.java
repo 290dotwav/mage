@@ -4,6 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import mage.abilities.Abilities;
 import mage.abilities.Ability;
+import mage.abilities.effects.common.ChooseSecretOpponentEffect;
 import mage.abilities.keyword.HexproofAbility;
 import mage.abilities.keyword.ProtectionFromEverythingAbility;
 import mage.abilities.keyword.ShroudAbility;
@@ -42,6 +43,13 @@ import java.util.UUID;
  *   "hexproof": true                 // on that player's entry of players[]; left out otherwise
  *   "shroud": true                   // the same
  * </pre>
+ * A secret choice of an opponent (Stalking Leonin, Guardian Archon, Emissary of Grudges): the
+ * player who chose knows whom he chose, nobody else does until he reveals it. Their view says
+ * only "X has secretly chosen an opponent." to everyone, the chooser too, so in a long game he
+ * had nothing to read it back from. Only on the frame of the player who chose:
+ * <pre>
+ *   "secretOpponent": "&lt;playerId&gt;"  // on that permanent's entry; left out on every other frame
+ * </pre>
  * Read on the game thread; a concurrent change skips the enrichment for that frame.
  */
 final class BoardStates {
@@ -62,6 +70,8 @@ final class BoardStates {
             if (game.hasDayNight()) {
                 view.addProperty("dayNight", game.checkDayNight(true) ? "day" : "night");
             }
+            JsonElement me = view.get("myPlayerId");
+            UUID viewer = me != null && me.isJsonPrimitive() ? UUID.fromString(me.getAsString()) : null;
             JsonElement playersEl = view.get("players");
             if (playersEl == null || !playersEl.isJsonArray()) {
                 return;
@@ -86,13 +96,28 @@ final class BoardStates {
                         continue;
                     }
                     Permanent permanent = game.getPermanent(UUID.fromString(e.getKey()));
-                    if (permanent != null && permanent.hasSubtype(SubType.CLASS, game)) {
+                    if (permanent == null) {
+                        continue;
+                    }
+                    if (permanent.hasSubtype(SubType.CLASS, game)) {
                         e.getValue().getAsJsonObject().addProperty("classLevel", permanent.getClassLevel());
                     }
+                    // the keys ChooseSecretOpponentEffect keeps them under: the permanent's id and zone change counter
+                    String key = permanent.getId() + "_" + permanent.getZoneChangeCounter(game);
+                    markSecret(e.getValue().getAsJsonObject(), viewer,
+                            game.getState().getValue(key + ChooseSecretOpponentEffect.SECRET_OWNER),
+                            game.getState().getValue(key + ChooseSecretOpponentEffect.SECRET_OPPONENT));
                 }
             }
         } catch (RuntimeException ignore) {
             // the game changed under us (not the game thread): leave the frame as their view made it
+        }
+    }
+
+    /** `secretOpponent` on a permanent's entry, for the player who chose it only. */
+    static void markSecret(JsonObject entry, UUID viewer, Object owner, Object chosen) {
+        if (viewer != null && viewer.equals(owner) && chosen instanceof UUID) {
+            entry.addProperty("secretOpponent", chosen.toString());
         }
     }
 
