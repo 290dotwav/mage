@@ -120,6 +120,11 @@ public class ChatManagerImpl implements ChatManager {
 
     @Override
     public void broadcast(UUID chatId, String userName, String message, MessageColor color, boolean withTime, Game game, MessageType messageType, SoundToPlay soundToPlay) {
+        broadcast(chatId, userName, message, color, withTime, game, messageType, soundToPlay, 0);
+    }
+
+    @Override
+    public void broadcast(UUID chatId, String userName, String message, MessageColor color, boolean withTime, Game game, MessageType messageType, SoundToPlay soundToPlay, int gameLine) {
         String finalMessage = message;
         ChatSession chatSession = chatSessions.get(chatId);
         Optional<User> user = managerFactory.userManager().getUserByName(userName);
@@ -197,7 +202,7 @@ public class ChatManagerImpl implements ChatManager {
             }
 
             // all other messages
-            chatSession.broadcast(userName, finalMessage, color, withTime, game, messageType, soundToPlay);
+            chatSession.broadcast(userName, finalMessage, color, withTime, game, messageType, soundToPlay, gameLine);
         }
     }
 

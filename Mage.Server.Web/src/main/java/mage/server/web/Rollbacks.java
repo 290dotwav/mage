@@ -21,7 +21,12 @@ import java.util.UUID;
  *                         "player": "Bob", "playerId": "…", "step": "PRECOMBAT_MAIN",
  *                         "card": "Cyclonic Rift", "at": 1759600000000 }, … ]
  *   "rollbackVote":   { …see {@link #vote}… }
+ *   "rollbackLines":  [ [ 412, 437 ], … ]
  * </pre>
+ * {@code rollbackLines} are the lines of the game's log each going back took back, first and last
+ * by their numbers (every line of the log carries its number, {@code gameLine} in its chat
+ * message): what was said of a future that did not happen. A screen drops them from its log, the
+ * "⟲" lines excepted, and leaves out one that reaches it after the view.
  * {@code kind} is {@code step}, {@code cast}, {@code land} or {@code turn} (the start of a turn
  * older than the finer points). A point is asked for with
  * {@code sendPlayerAction("ROLLBACK_TO_POINT", id)}, and answered with their own
@@ -51,6 +56,7 @@ final class Rollbacks {
                 return;
             }
             view.add("rollbackPoints", points(game.getRollbackPoints()));
+            view.add("rollbackLines", lines(game.getRollbackPoints()));
             GameController controller = managerFactory.gameManager().getGameController().get(gameId);
             RollbackVote vote = controller == null ? null : controller.getRollbackVote();
             if (vote != null) {
@@ -65,6 +71,17 @@ final class Rollbacks {
         JsonArray out = new JsonArray();
         for (RollbackPoints.Point p : points.list()) {
             out.add(point(p));
+        }
+        return out;
+    }
+
+    static JsonArray lines(RollbackPoints points) {
+        JsonArray out = new JsonArray();
+        for (int[] run : points.takenBack()) {
+            JsonArray pair = new JsonArray();
+            pair.add(run[0]);
+            pair.add(run[1]);
+            out.add(pair);
         }
         return out;
     }

@@ -147,6 +147,8 @@ public abstract class GameImpl implements Game {
     protected transient volatile RollbackPoints.Point rollbackPointToRestore;
     // how many times the game went back, see getRollbackCount
     protected transient volatile int rollbackCount = 0;
+    // the lines of the log said so far, each numbered as it is said (getLogLinesSaid); a fresh count in a copy
+    private final transient AtomicInteger logLinesSaid = new AtomicInteger();
 
     protected Date startTime;
     protected Date endTime;
@@ -3409,7 +3411,7 @@ public abstract class GameImpl implements Game {
         }
 
         makeSureCalledOutsideLayerEffects();
-        tableEventSource.fireTableEvent(EventType.INFO, message, this);
+        tableEventSource.fireTableEvent(EventType.INFO, message, true, true, this, logLinesSaid.incrementAndGet());
     }
 
     @Override
@@ -3423,7 +3425,7 @@ public abstract class GameImpl implements Game {
             return;
         }
         makeSureCalledOutsideLayerEffects();
-        tableEventSource.fireTableEvent(EventType.STATUS, message, withTime, withTurnInfo, this);
+        tableEventSource.fireTableEvent(EventType.STATUS, message, withTime, withTurnInfo, this, logLinesSaid.incrementAndGet());
     }
 
     @Override
@@ -4294,6 +4296,12 @@ public abstract class GameImpl implements Game {
             // because restore uses the objects without copy each copy the state again
             gameStatesRollBack.put(getTurnNum(), state.copy());
             if (rollbackPoints != null) {
+                // the lines said since that turn started are the gone future's (the one just said, that
+                // the game rolls back, excepted)
+                RollbackPoints.Point start = rollbackPoints.turnStart(restore.getTurnNum());
+                if (start != null) {
+                    rollbackPoints.tookBack(start.getLogLine() + 1, logLinesSaid.get() - 1);
+                }
                 rollbackPoints.wentBackToTurn(restore.getTurnNum());
             }
 
@@ -4344,6 +4352,11 @@ public abstract class GameImpl implements Game {
     @Override
     public int getRollbackCount() {
         return rollbackCount;
+    }
+
+    @Override
+    public int getLogLinesSaid() {
+        return logLinesSaid.get();
     }
 
     @Override
@@ -4421,6 +4434,8 @@ public abstract class GameImpl implements Game {
                 state.getPlayers().resetPassed();
             }
             rollbackPoints.wentBackTo(point);
+            // the lines said since the point are the gone future's: taken back, before the line that says so
+            rollbackPoints.tookBack(point.getLogLine() + 1, logLinesSaid.get());
             for (Player playerObject : getPlayers().values()) {
                 if (playerObject.isInGame()) {
                     playerObject.abortReset();

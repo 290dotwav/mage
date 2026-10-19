@@ -66,13 +66,15 @@ public final class RollbackPoints {
         private final long createdAt;
         private final transient GameState state;
         private final PhaseStep resumeStep;
+        private final int logLine;
 
         Point(int id, Kind kind, int turn, UUID playerId, String playerName, PhaseStep step, String cardName, GameState state) {
-            this(id, kind, turn, playerId, playerName, step, cardName, state, null);
+            this(id, kind, turn, playerId, playerName, step, cardName, state, null, 0);
         }
 
-        Point(int id, Kind kind, int turn, UUID playerId, String playerName, PhaseStep step, String cardName, GameState state, PhaseStep resumeStep) {
+        Point(int id, Kind kind, int turn, UUID playerId, String playerName, PhaseStep step, String cardName, GameState state, PhaseStep resumeStep, int logLine) {
             this.resumeStep = resumeStep;
+            this.logLine = logLine;
             this.id = id;
             this.kind = kind;
             this.turn = turn;
@@ -132,6 +134,14 @@ public final class RollbackPoints {
         }
 
         /**
+         * How many lines of its log the game had said when the point was taken
+         * ({@link Game#getLogLinesSaid}): going back to it takes back the lines numbered after it.
+         */
+        public int getLogLine() {
+            return logLine;
+        }
+
+        /**
          * "Turn 5 Bob — Upkeep", "Bob casts Cyclonic Rift", "Bob plays Forest", "Turn 3 Bob — start".
          */
         public String getLabel() {
@@ -155,6 +165,8 @@ public final class RollbackPoints {
 
     private final List<Point> points = new ArrayList<>();
     private int nextId = 1;
+    // the lines of the log each going back took back, {first, last} by their numbers, oldest first
+    private final List<int[]> takenBack = new ArrayList<>();
 
     /**
      * The points a table may go back to, oldest first: every step, cast and land point, and the
@@ -197,7 +209,7 @@ public final class RollbackPoints {
         PhaseStep step = game.getTurnStepType();
         holder.add(game, new Point(holder.nextId(), Kind.STEP, game.getTurnNum(), game.getActivePlayerId(),
                 active == null ? "?" : active.getName(), step, null, game.getState().copy(),
-                holder.priorityBeforeDamage(step, game.getTurnNum())));
+                holder.priorityBeforeDamage(step, game.getTurnNum()), game.getLogLinesSaid()));
     }
 
     /**
@@ -232,7 +244,7 @@ public final class RollbackPoints {
         }
         Player active = game.getPlayer(game.getActivePlayerId());
         holder.add(game, new Point(holder.nextId(), Kind.TURN, game.getTurnNum(), game.getActivePlayerId(),
-                active == null ? "?" : active.getName(), null, null, null));
+                active == null ? "?" : active.getName(), null, null, null, null, game.getLogLinesSaid()));
     }
 
     /**
@@ -253,7 +265,7 @@ public final class RollbackPoints {
         }
         Player player = game.getPlayer(playerId);
         return new Point(0, kind, game.getTurnNum(), playerId, player == null ? "?" : player.getName(),
-                game.getTurnStepType(), card.getName(), game.getState().copy());
+                game.getTurnStepType(), card.getName(), game.getState().copy(), null, game.getLogLinesSaid());
     }
 
     public static void commit(Game game, Point captured) {
@@ -262,7 +274,7 @@ public final class RollbackPoints {
             return;
         }
         holder.add(game, new Point(holder.nextId(), captured.kind, captured.turn, captured.playerId,
-                captured.playerName, captured.step, captured.cardName, captured.state));
+                captured.playerName, captured.step, captured.cardName, captured.state, null, captured.logLine));
     }
 
     private static RollbackPoints holderFor(Game game) {
@@ -338,6 +350,39 @@ public final class RollbackPoints {
         while (points.size() > keep) {
             points.remove(points.size() - 1);
         }
+    }
+
+    /**
+     * Going back took back the lines of the log numbered {@code first} to {@code last}: they told
+     * of a future that did not happen. Nothing when there were none.
+     */
+    public synchronized void tookBack(int first, int last) {
+        if (first > 0 && last >= first) {
+            takenBack.add(new int[]{first, last});
+        }
+    }
+
+    /**
+     * Every run of log lines a going back took back in this game, {first, last} by their numbers
+     * ({@code ChatMessage.getGameLine}), oldest first: a screen drops those lines from its log, the
+     * "⟲" lines that ask for and announce a going back excepted, and leaves out one that reaches it late.
+     */
+    public synchronized List<int[]> takenBack() {
+        List<int[]> out = new ArrayList<>();
+        for (int[] run : takenBack) {
+            out.add(run.clone());
+        }
+        return out;
+    }
+
+    /** The start of {@code turn} as their turn rollback keeps it, or null when it is not kept. */
+    public synchronized Point turnStart(int turn) {
+        for (Point p : points) {
+            if (p.kind == Kind.TURN && p.turn == turn) {
+                return p;
+            }
+        }
+        return null;
     }
 
     /** The game started over (Karn Liberated, 727.1): the game every point was taken in has ended. */

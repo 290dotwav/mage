@@ -41,6 +41,7 @@ public class TableEvent extends EventObject implements ExternalEvent, Serializab
     private int timeout;
     private boolean withTime;
     private boolean withTurnInfo;
+    private int logLine;
 
     public TableEvent(EventType eventType) {
         super(eventType);
@@ -62,6 +63,12 @@ public class TableEvent extends EventObject implements ExternalEvent, Serializab
         this.eventType = eventType;
         this.withTime = withTime;
         this.withTurnInfo = withTurnInfo;
+    }
+
+    /** A line of the game's log, with its number (Game.getLogLinesSaid). */
+    public TableEvent(EventType eventType, String message, boolean withTime, boolean withTurnInfo, Game game, int logLine) {
+        this(eventType, message, withTime, withTurnInfo, game);
+        this.logLine = logLine;
     }
 
     public TableEvent(EventType eventType, String message, Cards cards, Game game) {
@@ -158,6 +165,11 @@ public class TableEvent extends EventObject implements ExternalEvent, Serializab
 
     public boolean getWithTime() {
         return withTime;
+    }
+
+    /** The game log's number for an INFO or STATUS line, 0 when it has none. */
+    public int getLogLine() {
+        return logLine;
     }
 
     public boolean getWithTurnInfo() {

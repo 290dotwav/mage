@@ -28,6 +28,11 @@ public interface ChatManager {
 
     void broadcast(UUID chatId, String userName, String message, ChatMessage.MessageColor color, boolean withTime, Game game, ChatMessage.MessageType messageType, ChatMessage.SoundToPlay soundToPlay);
 
+    /** A line of a game's log, with its number (Game.getLogLinesSaid; 0 for none). */
+    default void broadcast(UUID chatId, String userName, String message, ChatMessage.MessageColor color, boolean withTime, Game game, ChatMessage.MessageType messageType, ChatMessage.SoundToPlay soundToPlay, int gameLine) {
+        broadcast(chatId, userName, message, color, withTime, game, messageType, soundToPlay);
+    }
+
     void sendReconnectMessage(UUID userId);
 
     void sendMessageToUserChats(UUID userId, String message);

@@ -143,11 +143,11 @@ public class GameController implements GameCallback {
                                 rollbackRequests.gameChanged(); // a seat out of the game votes yes
                                 break;
                             case INFO:
-                                managerFactory.chatManager().broadcast(chatId, "", event.getMessage(), MessageColor.BLACK, true, event.getGame(), MessageType.GAME, null);
+                                managerFactory.chatManager().broadcast(chatId, "", event.getMessage(), MessageColor.BLACK, true, event.getGame(), MessageType.GAME, null, event.getLogLine());
                                 logger.trace(game.getId() + " " + event.getMessage());
                                 break;
                             case STATUS:
-                                managerFactory.chatManager().broadcast(chatId, "", event.getMessage(), MessageColor.ORANGE, event.getWithTime(), event.getWithTurnInfo() ? event.getGame() : null, MessageType.GAME, null);
+                                managerFactory.chatManager().broadcast(chatId, "", event.getMessage(), MessageColor.ORANGE, event.getWithTime(), event.getWithTurnInfo() ? event.getGame() : null, MessageType.GAME, null, event.getLogLine());
                                 logger.trace(game.getId() + " " + event.getMessage());
                                 break;
                             case ERROR:

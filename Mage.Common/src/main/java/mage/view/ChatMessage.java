@@ -19,6 +19,9 @@ public class ChatMessage implements Serializable {
     private MessageColor color;
     private SoundToPlay soundToPlay;
     private MessageType messageType;
+    // web door: the game log's own number for a line of it (Game.getLogLinesSaid), null for anything
+    // else; a rollback takes lines back by these numbers (RollbackPoints.takenBack)
+    private Integer gameLine;
 
     public enum MessageColor {
         BLACK, RED, GREEN, BLUE, ORANGE, YELLOW
@@ -55,6 +58,11 @@ public class ChatMessage implements Serializable {
         this.soundToPlay = soundToPlay;
     }
 
+    public ChatMessage(String username, String message, Date time, Game game, MessageColor color, MessageType messageType, SoundToPlay soundToPlay, int gameLine) {
+        this(username, message, time, game, color, messageType, soundToPlay);
+        this.gameLine = gameLine > 0 ? gameLine : null;
+    }
+
     public String getMessage() {
         return message;
     }
@@ -89,6 +97,11 @@ public class ChatMessage implements Serializable {
 
     public MessageType getMessageType() {
         return messageType;
+    }
+
+    /** The game log's number for this line, null when it is not a numbered line of a game's log. */
+    public Integer getGameLine() {
+        return gameLine;
     }
 
 }

@@ -708,6 +708,16 @@ public interface Game extends MageItem, Serializable, Copyable<Game> {
     }
 
     /**
+     * How many lines of its log this game has said (informPlayers and fireStatusEvent), each line
+     * numbered by the count it brought this to: a rollback point remembers the count when it is taken,
+     * and going back to it takes back the lines numbered after it ({@code RollbackPoints.takenBack}),
+     * so a screen can drop them from its log.
+     */
+    default int getLogLinesSaid() {
+        return 0;
+    }
+
+    /**
      * Add counters to permanent before ETB. Use it before put real permanent to battlefield.
      */
     void setEnterWithCounters(UUID sourceId, Counters counters);

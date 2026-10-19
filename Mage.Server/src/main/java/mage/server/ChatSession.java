@@ -142,12 +142,17 @@ public class ChatSession {
     }
 
     public void broadcast(String userName, String message, MessageColor color, boolean withTime, Game game, MessageType messageType, SoundToPlay soundToPlay) {
+        broadcast(userName, message, color, withTime, game, messageType, soundToPlay, 0);
+    }
+
+    /** {@code gameLine}: the game log's number for the line (Game.getLogLinesSaid), 0 for none. */
+    public void broadcast(String userName, String message, MessageColor color, boolean withTime, Game game, MessageType messageType, SoundToPlay soundToPlay, int gameLine) {
         // TODO: is it called by single thread for all users?
         // TODO: is it freeze on someone's connection fail/freeze?
         // TODO: is it freeze on someone's connection fail/freeze with play multiple games/chats/lobby?
         // TODO: send messages in another thread?!
         if (!message.isEmpty()) {
-            ChatMessage chatMessage = new ChatMessage(userName, message, (withTime ? new Date() : null), game, color, messageType, soundToPlay);
+            ChatMessage chatMessage = new ChatMessage(userName, message, (withTime ? new Date() : null), game, color, messageType, soundToPlay, gameLine);
 
             switch (messageType) {
                 case USER_INFO:
