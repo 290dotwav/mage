@@ -39,7 +39,9 @@ public final class TymnaTheWeaver extends CardImpl {
         this.addAbility(LifelinkAbility.getInstance());
 
         // At the beginning of your postcombat main phase, you may pay X life, where X is the number of opponents that were dealt combat damage this turn. If you do, draw X cards.
-        this.addAbility(new BeginningOfPostcombatMainTriggeredAbility(new TymnaTheWeaverEffect(), true), new TymnaTheWeaverWatcher());
+        // The "may" is asked by the effect, and only when X is more than 0: paying 0 life to draw 0 cards does nothing, and
+        // the question came at every postcombat main of a turn that hit nobody, to a person and a chair alike.
+        this.addAbility(new BeginningOfPostcombatMainTriggeredAbility(new TymnaTheWeaverEffect(), false), new TymnaTheWeaverWatcher());
 
         // Partner
         this.addAbility(PartnerAbility.getInstance());
@@ -78,8 +80,12 @@ class TymnaTheWeaverEffect extends OneShotEffect {
             TymnaTheWeaverWatcher watcher = game.getState().getWatcher(TymnaTheWeaverWatcher.class);
             if (watcher != null) {
                 int cardsToDraw = watcher.opponentsThatGotCombatDamage(source.getControllerId(), game);
+                if (cardsToDraw <= 0) {
+                    return true;
+                }
                 Cost cost = new PayLifeCost(cardsToDraw);
                 if (cost.canPay(source, source, source.getControllerId(), game)
+                        && controller.chooseUse(outcome, "Pay " + cardsToDraw + " life?", source, game)
                         && cost.pay(source, game, source, source.getControllerId(), false)) {
                     controller.drawCards(cardsToDraw, source, game);
                 }
