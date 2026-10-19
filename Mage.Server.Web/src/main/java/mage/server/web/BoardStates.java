@@ -43,6 +43,11 @@ import java.util.UUID;
  *   "hexproof": true                 // on that player's entry of players[]; left out otherwise
  *   "shroud": true                   // the same
  * </pre>
+ * A player's speed (702.179, Aetherdrift's "Start your engines!"): 1 to 4, what his max speed
+ * abilities wait for. Their PlayerView names the designation ("Speed") and not its number.
+ * <pre>
+ *   "speed": 2                       // on that player's entry of players[]; left out until he has speed
+ * </pre>
  * A secret choice of an opponent (Stalking Leonin, Guardian Archon, Emissary of Grudges): the
  * player who chose knows whom he chose, nobody else does until he reveals it. Their view says
  * only "X has secretly chosen an opponent." to everyone, the chooser too, so in a long game he
@@ -85,6 +90,7 @@ final class BoardStates {
                     Player player = game.getPlayer(UUID.fromString(idEl.getAsString()));
                     if (player != null) {
                         markProtection(el.getAsJsonObject(), player.getAbilities());
+                        markSpeed(el.getAsJsonObject(), player.getSpeed());
                     }
                 }
                 JsonElement bf = el.getAsJsonObject().get("battlefield");
@@ -111,6 +117,13 @@ final class BoardStates {
             }
         } catch (RuntimeException ignore) {
             // the game changed under us (not the game thread): leave the frame as their view made it
+        }
+    }
+
+    /** `speed` on a player's entry once he has any (702.179a: it starts at 1, never above 4). */
+    static void markSpeed(JsonObject entry, int speed) {
+        if (speed > 0) {
+            entry.addProperty("speed", speed);
         }
     }
 

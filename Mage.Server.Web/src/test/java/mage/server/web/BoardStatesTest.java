@@ -62,4 +62,14 @@ class BoardStatesTest {
         BoardStates.markSecret(theirs, chooser, chooser, null);
         assertFalse(theirs.has("secretOpponent"));
     }
+
+    @Test
+    void aPlayersSpeedOnceHeHasAny() {
+        JsonObject fast = new JsonObject();
+        BoardStates.markSpeed(fast, 3);
+        assertTrue(fast.get("speed").getAsInt() == 3);
+        JsonObject none = new JsonObject();
+        BoardStates.markSpeed(none, 0);
+        assertFalse(none.has("speed"));
+    }
 }
