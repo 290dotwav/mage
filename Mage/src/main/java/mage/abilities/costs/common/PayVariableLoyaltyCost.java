@@ -25,7 +25,7 @@ public class PayVariableLoyaltyCost extends VariableCostImpl {
     private int costModification = 0;
 
     public PayVariableLoyaltyCost() {
-        super(VariableCostType.NORMAL, "loyality counters to remove");
+        super(VariableCostType.NORMAL, "loyalty counters to remove");
         this.text = "-X";
     }
 
