@@ -130,7 +130,7 @@ public class WinLoseEffectsTest extends CardTestPlayerBase {
         castSpell(1, PhaseStep.PRECOMBAT_MAIN, playerA, "Angel's Grace");
         waitStackResolved(1, PhaseStep.PRECOMBAT_MAIN);
         castSpell(1, PhaseStep.PRECOMBAT_MAIN, playerA, "Ad Nauseam");
-        setChoice(playerA, true);
+        // the first card is not asked; three repetitions take the rest
         setChoice(playerA, true);
         setChoice(playerA, true);
         setChoice(playerA, true);

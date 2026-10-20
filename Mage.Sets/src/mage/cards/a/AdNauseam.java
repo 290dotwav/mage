@@ -1,5 +1,6 @@
 package mage.cards.a;
 
+import mage.MageObject;
 import mage.abilities.Ability;
 import mage.abilities.effects.OneShotEffect;
 import mage.cards.Card;
@@ -55,12 +56,22 @@ class AdNauseamEffect extends OneShotEffect {
     @Override
     public boolean apply(Game game, Ability source) {
         String message = "Reveal the top card of your library and put that card into your hand? You lose life equal to its mana value.";
-        Card sourceCard = game.getCard(source.getSourceId());
         Player controller = game.getPlayer(source.getControllerId());
-        if (controller == null || sourceCard == null) {
+        if (controller == null) {
             return false;
         }
-        while (controller.chooseUse(outcome, message, source, game) && controller.getLibrary().hasCards()) {
+        MageObject sourceObject = source.getSourceObject(game);
+        String name = sourceObject != null ? sourceObject.getIdName() : "Ad Nauseam";
+        // The first reveal is not optional: only the repetitions are ("You may repeat this process").
+        boolean first = true;
+        while (controller.getLibrary().hasCards()) {
+            if (!first) {
+                // AI workaround to stop infinite choose (only one card allows)
+                if (controller.isComputer() || !controller.chooseUse(outcome, message, source, game)) {
+                    break;
+                }
+            }
+            first = false;
             Card card = controller.getLibrary().getFromTop(game);
             if (card == null) {
                 break;
@@ -70,12 +81,7 @@ class AdNauseamEffect extends OneShotEffect {
             if (cmc > 0) {
                 controller.loseLife(cmc, game, source, false);
             }
-            controller.revealCards(sourceCard.getIdName() + " put into hand", new CardsImpl(card), game);
-
-            // AI workaround to stop infinite choose (only one card allows)
-            if (controller.isComputer()) {
-                break;
-            }
+            controller.revealCards(name + " put into hand", new CardsImpl(card), game);
         }
         return true;
     }
