@@ -23,11 +23,13 @@ public enum CardTypesInGraveyardCount implements DynamicValue {
     ALL("all graveyards"),
     OPPONENTS("your opponents' graveyards");
 
+    private final String where;
     private final String message;
     private final CardTypesInGraveyardHint hint;
 
-    CardTypesInGraveyardCount(String message) {
-        this.message = "the number of card types among cards in " + message;
+    CardTypesInGraveyardCount(String where) {
+        this.where = where;
+        this.message = "the number of card types among cards in " + where;
         this.hint = new CardTypesInGraveyardHint(this);
     }
 
@@ -58,6 +60,13 @@ public enum CardTypesInGraveyardCount implements DynamicValue {
 
     public Hint getHint() {
         return hint;
+    }
+
+    /**
+     * The graveyards counted, as the hint names them ("your graveyard").
+     */
+    String getWhere() {
+        return where;
     }
 
     public Stream<Card> getGraveyardCards(Game game, Ability ability) {
@@ -108,7 +117,9 @@ class CardTypesInGraveyardHint implements Hint {
                 .map(CardType::toString)
                 .sorted()
                 .collect(Collectors.toList());
-        return "Card types in " + this.value.getMessage() + ": " + types.size()
+        // "Card types in your graveyard: 2 (Creature, Land)": the graveyards, not the count's own words
+        // ("Card types in the number of card types among cards in your graveyard" before)
+        return "Card types in " + this.value.getWhere() + ": " + types.size()
                 + (types.size() > 0 ? " (" + String.join(", ", types) + ')' : "");
     }
 
