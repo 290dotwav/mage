@@ -28,6 +28,9 @@ public class UserManagerImpl implements UserManager {
     private static final int USER_CONNECTION_TIMEOUT_INFORM_AFTER_SECS = 30; // inform user's opponents about problem
     private static final int USER_CONNECTION_TIMEOUT_SESSION_EXPIRE_AFTER_SECS = 3 * 60; // session expire - remove from all tables and chats (can't reconnect after it)
     private static final int USER_CONNECTION_TIMEOUT_REMOVE_FROM_SERVER_SECS = 8 * 60; // removes from users list
+    // a person of the site's tables seated in a running game (User.isKeptWhileAway): the half hour of the
+    // idle timer (maxSecondsIdle, 1800 in deploy/xmage), not three minutes, before his session expires
+    static final int USER_CONNECTION_TIMEOUT_IN_GAME_EXPIRE_AFTER_SECS = 30 * 60;
 
     private static final int SERVER_USERS_LIST_UPDATE_SECS = 10; // server side updates (client use own timeouts to request users list)
 
@@ -182,9 +185,7 @@ public class UserManagerImpl implements UserManager {
         try {
             Calendar calInform = Calendar.getInstance();
             calInform.add(Calendar.SECOND, -1 * USER_CONNECTION_TIMEOUT_INFORM_AFTER_SECS);
-            Calendar calSessionExpire = Calendar.getInstance();
-            calSessionExpire.add(Calendar.SECOND, -1 * USER_CONNECTION_TIMEOUT_SESSION_EXPIRE_AFTER_SECS);
-            Calendar calUserRemove = Calendar.getInstance();
+                Calendar calUserRemove = Calendar.getInstance();
             calUserRemove.add(Calendar.SECOND, -1 * USER_CONNECTION_TIMEOUT_REMOVE_FROM_SERVER_SECS);
             List<User> usersToRemove = new ArrayList<>();
             logger.debug("Start Check Expired");
@@ -204,8 +205,13 @@ public class UserManagerImpl implements UserManager {
                     // - if something outdated then it will be removed from a server
                     // - user lifecycle: created -> connected/disconnected (bad connection, bad session) -> offline
 
+                    // a person whose phone put the page away keeps his seat in a running game for the
+                    // longer grace; a program's seat (no site header) and a user at no game keep three minutes
+                    int expireSecs = sessionExpireAfterSecs(user.isKeptWhileAway() && user.isPlayingAGame());
+                    Calendar calUserExpire = Calendar.getInstance();
+                    calUserExpire.add(Calendar.SECOND, -1 * expireSecs);
                     boolean isBadConnection = user.isExpired(calInform.getTime());
-                    boolean isBadSession = user.isExpired(calSessionExpire.getTime());
+                    boolean isBadSession = user.isExpired(calUserExpire.getTime());
                     boolean isBadUser = user.isExpired(calUserRemove.getTime());
 
                     switch (user.getUserState()) {
@@ -224,12 +230,12 @@ public class UserManagerImpl implements UserManager {
 
                         case Connected:
                         case Disconnected: {
-                            if (isBadConnection) {
-                                long secsInfo = (Calendar.getInstance().getTimeInMillis() - user.getLastActivity().getTime()) / 1000;
+                            long secsInfo = (Calendar.getInstance().getTimeInMillis() - user.getLastActivity().getTime()) / 1000;
+                            if (isBadConnection && informNow(secsInfo, expireSecs)) {
                                 informUserOpponents(user.getId(), String.format("%s catch connection problems for %s secs (left before expire: %d secs)",
                                         user.getName(),
                                         secsInfo,
-                                        Math.max(0, USER_CONNECTION_TIMEOUT_SESSION_EXPIRE_AFTER_SECS - secsInfo)
+                                        Math.max(0, expireSecs - secsInfo)
                                 ));
                             }
                             if (isBadSession) {
@@ -275,6 +281,30 @@ public class UserManagerImpl implements UserManager {
         } catch (Exception ex) {
             handleException(ex);
         }
+    }
+
+    /**
+     * Seconds without a sign of life before a user's session expires, which removes him from every table
+     * and game for good (DisconnectReason.SessionExpired).
+     *
+     * @param keptInGame a person of the site's tables seated in a running game ({@link User#isKeptWhileAway},
+     *                   {@link User#isPlayingAGame}): his priority waits for him, or his idle timer runs,
+     *                   and a reconnection inside the grace gives him his seat back (User.onReconnect)
+     */
+    static int sessionExpireAfterSecs(boolean keptInGame) {
+        return keptInGame ? USER_CONNECTION_TIMEOUT_IN_GAME_EXPIRE_AFTER_SECS : USER_CONNECTION_TIMEOUT_SESSION_EXPIRE_AFTER_SECS;
+    }
+
+    /**
+     * Whether this check tells the table about the lost connection: every check while the grace is the
+     * usual three minutes (as before), and over the half hour every check of the first three minutes then
+     * one every five, so the game log does not get sixty lines of it.
+     */
+    static boolean informNow(long secsAway, int expireSecs) {
+        if (expireSecs <= USER_CONNECTION_TIMEOUT_SESSION_EXPIRE_AFTER_SECS || secsAway < USER_CONNECTION_TIMEOUT_SESSION_EXPIRE_AFTER_SECS) {
+            return true;
+        }
+        return secsAway % (5 * 60) < USER_CONNECTION_TIMEOUTS_CHECK_SECS;
     }
 
     /**

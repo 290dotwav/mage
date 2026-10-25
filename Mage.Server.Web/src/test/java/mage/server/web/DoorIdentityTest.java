@@ -27,6 +27,15 @@ class DoorIdentityTest {
     }
 
     @Test
+    void onlyAPersonOfTheSiteKeepsHisSeatWhileAway() {
+        // the site's player header: a person, whose phone may put the page away
+        assertTrue(TableOps.keptWhileAway(DoorIdentity.fromHeader("fgmuller")));
+        // no header: a chair on the loopback, a harness; three minutes as before
+        assertFalse(TableOps.keptWhileAway(DoorIdentity.ANYONE));
+        assertFalse(TableOps.keptWhileAway(DoorIdentity.fromHeader("  ")));
+    }
+
+    @Test
     void theHeaderIsTheAccountUriEncoded() {
         DoorIdentity fg = DoorIdentity.fromHeader("fgmuller");
         assertTrue(fg.restricted());

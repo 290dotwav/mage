@@ -127,6 +127,7 @@ final class TableOps {
             if (user != null && !name.equals(user.getName())) {
                 throw new IllegalStateException("this socket is connected as '" + user.getName() + "': a human seat uses that name");
             }
+            keepWhileAway(web, user);
             return;
         }
         if (!server.connectUser(name, "", web.sessionId, "", Main.getVersion(), "web")) {
@@ -134,6 +135,25 @@ final class TableOps {
         }
         server.connectSetUserData(web.sessionId, webUserData(), Main.getVersion().toString(), "web");
         logger.info("Web door: " + web.sessionId + " connected as " + name);
+        keepWhileAway(web, managerFactory.userManager().getUser(session(web).getUserId()).orElse(null));
+    }
+
+    /**
+     * A person of the site (the socket carries the site's player header, DoorIdentity): his seat in a
+     * running game outlasts a dropped connection for half an hour instead of three minutes
+     * (User.setKeptWhileAway, UserManagerImpl.sessionExpireAfterSecs). « j'essaye de jouer un land mais
+     * ça marche pas »: his iPhone had the page in the background three minutes, their server took him
+     * out of the game, and the door sat him back down at a game he was no longer in. A socket without
+     * the header (the chairs on the loopback, a harness) keeps the three minutes.
+     */
+    static boolean keptWhileAway(DoorIdentity identity) {
+        return identity.player != null;
+    }
+
+    private static void keepWhileAway(WebSession web, User user) {
+        if (user != null && keptWhileAway(web.identity)) {
+            user.setKeptWhileAway(true);
+        }
     }
 
     /**

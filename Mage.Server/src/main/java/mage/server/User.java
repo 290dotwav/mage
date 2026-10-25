@@ -72,6 +72,7 @@ public class User {
     private final AuthorizedUser authorizedUser;
     private String clientVersion;
     private String userIdStr;
+    private volatile boolean keptWhileAway;
 
     public User(ManagerFactory managerFactory, String userName, String host, AuthorizedUser authorizedUser) {
         this.managerFactory = managerFactory;
@@ -490,6 +491,31 @@ public class User {
                 logger.debug(getName() + " reconnects during sideboarding but tableId not found: " + entry.getKey());
             }
         }
+    }
+
+    /**
+     * A person at the site's table, not a program: set by the web door for a socket that carries the
+     * site's player header (DoorIdentity). Such a user whose connection drops while seated in a running
+     * game keeps the session for {@link UserManagerImpl#sessionExpireAfterSecs} rather than three
+     * minutes: a phone puts the page in the background (another app, the screen locked) and the page's
+     * socket goes with it, and three minutes away used to put him out of the game for good.
+     */
+    public void setKeptWhileAway(boolean kept) {
+        this.keptWhileAway = kept;
+    }
+
+    public boolean isKeptWhileAway() {
+        return keptWhileAway;
+    }
+
+    /** Seated in a game that is still being played (its controller is still there). */
+    public boolean isPlayingAGame() {
+        for (GameSessionPlayer gameSession : gameSessions.values()) {
+            if (managerFactory.gameManager().getGameController().containsKey(gameSession.getGameId())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void addGame(UUID playerId, GameSessionPlayer gameSession) {
