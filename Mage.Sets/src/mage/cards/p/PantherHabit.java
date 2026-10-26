@@ -2,7 +2,6 @@ package mage.cards.p;
 
 import mage.abilities.Ability;
 import mage.abilities.common.SimpleStaticAbility;
-import mage.abilities.effects.PreventionEffectData;
 import mage.abilities.effects.PreventionEffectImpl;
 import mage.abilities.keyword.EquipAbility;
 import mage.cards.CardImpl;
@@ -15,10 +14,11 @@ import mage.game.Game;
 import mage.game.events.GameEvent;
 import mage.game.permanent.Permanent;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author DarioBarrabinoDev
  */
 public final class PantherHabit extends CardImpl {
 
@@ -31,7 +31,7 @@ public final class PantherHabit extends CardImpl {
         this.addAbility(new SimpleStaticAbility(new PantherHabitEffect()));
 
         // Equip {2}
-        this.addAbility(new EquipAbility(2));
+        this.addAbility(new EquipAbility(2, false));
     }
 
     private PantherHabit(final PantherHabit card) {
@@ -47,7 +47,7 @@ public final class PantherHabit extends CardImpl {
 class PantherHabitEffect extends PreventionEffectImpl {
 
     PantherHabitEffect() {
-        super(Duration.WhileOnBattlefield);
+        super(Duration.WhileOnBattlefield, Integer.MAX_VALUE, false, false);
         staticText = "if equipped creature would be dealt damage, prevent that damage and put that many +1/+1 counters on it";
     }
 
@@ -61,30 +61,24 @@ class PantherHabitEffect extends PreventionEffectImpl {
     }
 
     @Override
-    public boolean replaceEvent(GameEvent event, Ability source, Game game) {
-        PreventionEffectData preventionEffectData = preventDamageAction(event, source, game);
-        if (preventionEffectData.getPreventedDamage() > 0) {
-            Permanent permanent = game.getPermanent(event.getTargetId());
-            if (permanent != null) {
-                permanent.addCounters(CounterType.P1P1.createInstance(preventionEffectData.getPreventedDamage()), source.getControllerId(), source, game);
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public boolean checksEventType(GameEvent event, Game game) {
-        return event.getType() == GameEvent.EventType.DAMAGE_PERMANENT;
-    }
-
-    @Override
     public boolean applies(GameEvent event, Ability source, Game game) {
-        if (!super.applies(event, source, game)) {
-            return false;
-        }
-        Permanent equipment = game.getPermanent(source.getSourceId());
-        return equipment != null
-                && equipment.getAttachedTo() != null
-                && equipment.getAttachedTo().equals(event.getTargetId());
+        // counters are put even if the damage can't be prevented, same as the Gatta and Luzzu ruling
+        return event.getTargetId().equals(getEquippedCreatureId(source, game));
+    }
+
+    @Override
+    public boolean replaceEvent(GameEvent event, Ability source, Game game) {
+        Optional.ofNullable(getEquippedCreatureId(source, game))
+                .map(game::getPermanent)
+                .ifPresent(permanent -> permanent.addCounters(
+                        CounterType.P1P1.createInstance(event.getAmount()), source, game
+                ));
+        return super.replaceEvent(event, source, game);
+    }
+
+    private static UUID getEquippedCreatureId(Ability source, Game game) {
+        return Optional.ofNullable(source.getSourcePermanentIfItStillExists(game))
+                .map(Permanent::getAttachedTo)
+                .orElse(null);
     }
 }

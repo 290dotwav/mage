@@ -67,7 +67,7 @@ public class SneakAbility extends SpellAbility {
                 .filter(java.util.Objects::nonNull)
                 .findFirst()
                 .orElse(null);
-        CardUtil.setSourceCostsTag(game, this, SNEAK_ACTIVATION_VALUE_KEY, defender);
+        this.setCostsTag(SNEAK_ACTIVATION_VALUE_KEY, defender);
         return true;
     }
 

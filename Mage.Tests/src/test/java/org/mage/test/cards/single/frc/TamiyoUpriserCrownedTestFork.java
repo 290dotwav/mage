@@ -10,7 +10,7 @@ import org.mage.test.serverside.base.CardTestPlayerBase;
 /**
  * @author Claude
  */
-public class TamiyoUpriserCrownedTest extends CardTestPlayerBase {
+public class TamiyoUpriserCrownedTestFork extends CardTestPlayerBase {
 
     private static final String tamiyo = "Tamiyo, Upriser Crowned";
 

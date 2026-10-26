@@ -5,8 +5,6 @@ import mage.abilities.common.SimpleStaticAbility;
 import mage.abilities.condition.Condition;
 import mage.abilities.effects.OneShotEffect;
 import mage.abilities.effects.common.cost.SpellCostReductionSourceEffect;
-import mage.abilities.hint.ConditionHint;
-import mage.abilities.hint.Hint;
 import mage.cards.CardImpl;
 import mage.cards.CardSetInfo;
 import mage.constants.CardType;
@@ -27,7 +25,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author DarioBarrabinoDev
  */
 public final class Avenge extends CardImpl {
 
@@ -38,7 +36,6 @@ public final class Avenge extends CardImpl {
         Ability ability = new SimpleStaticAbility(
                 Zone.ALL, new SpellCostReductionSourceEffect(2, AvengeCondition.instance)
         ).setRuleAtTheTop(true);
-        ability.addHint(AvengeCondition.getHint());
         this.addAbility(ability, new AvengeWatcher());
 
         // Destroy all creatures. You gain 1 life for each creature destroyed this way.
@@ -57,15 +54,11 @@ public final class Avenge extends CardImpl {
 
 enum AvengeCondition implements Condition {
     instance;
-    private static final Hint hint = new ConditionHint(instance);
-
-    public static Hint getHint() {
-        return hint;
-    }
 
     @Override
     public boolean apply(Game game, Ability source) {
-        return AvengeWatcher.wasAttackedLastTurn(source.getControllerId(), game);
+        AvengeWatcher watcher = game.getState().getWatcher(AvengeWatcher.class);
+        return watcher != null && watcher.wasAttackedDuringLastTurn(source.getControllerId(), game);
     }
 
     @Override
@@ -74,12 +67,9 @@ enum AvengeCondition implements Condition {
     }
 }
 
-/**
- * For each player, the players attacked during that player's most recent turn.
- */
 class AvengeWatcher extends Watcher {
 
-    private final Map<UUID, Set<UUID>> attackedLastTurn = new HashMap<>();
+    private final Map<UUID, Set<UUID>> attackedPlayers = new HashMap<>();
 
     AvengeWatcher() {
         super(WatcherScope.GAME);
@@ -89,27 +79,23 @@ class AvengeWatcher extends Watcher {
     public void watch(GameEvent event, Game game) {
         switch (event.getType()) {
             case BEGINNING_PHASE_PRE:
-                // a new turn of that player starts: their previous turn is no longer their last turn
-                attackedLastTurn.remove(game.getActivePlayerId());
+                attackedPlayers.remove(game.getActivePlayerId());
                 return;
             case ATTACKER_DECLARED:
-                if (game.getPlayer(event.getTargetId()) != null) {
-                    attackedLastTurn
-                            .computeIfAbsent(event.getPlayerId(), x -> new HashSet<>())
-                            .add(event.getTargetId());
-                }
+                attackedPlayers
+                        .computeIfAbsent(event.getPlayerId(), x -> new HashSet<>())
+                        .add(event.getTargetId());
         }
     }
 
-    static boolean wasAttackedLastTurn(UUID playerId, Game game) {
-        AvengeWatcher watcher = game.getState().getWatcher(AvengeWatcher.class);
-        if (watcher == null) {
-            return false;
-        }
-        return watcher.attackedLastTurn
-                .entrySet()
+    // 800.4i A player who left the game still counts until their next turn would have begun
+    boolean wasAttackedDuringLastTurn(UUID defendingPlayerId, Game game) {
+        return attackedPlayers.entrySet()
                 .stream()
-                .anyMatch(entry -> !entry.getKey().equals(playerId) && entry.getValue().contains(playerId));
+                .filter(entry -> entry.getValue().contains(defendingPlayerId))
+                .map(entry -> game.getPlayer(entry.getKey()))
+                .anyMatch(player -> player != null
+                        && (player.isInGame() || !player.hasReachedNextTurnAfterLeaving()));
     }
 }
 
@@ -135,16 +121,17 @@ class AvengeEffect extends OneShotEffect {
         if (controller == null) {
             return false;
         }
-        int destroyed = 0;
+        int destroyedCreatures = 0;
         for (Permanent creature : game.getBattlefield().getActivePermanents(
-                StaticFilters.FILTER_PERMANENT_CREATURE, controller.getId(), game)) {
+                StaticFilters.FILTER_PERMANENT_CREATURE, controller.getId(), source, game
+        )) {
             if (creature.destroy(source, game, false)) {
-                destroyed++;
+                destroyedCreatures++;
             }
         }
-        if (destroyed > 0) {
+        if (destroyedCreatures > 0) {
             game.processAction();
-            controller.gainLife(destroyed, game, source);
+            controller.gainLife(destroyedCreatures, game, source);
         }
         return true;
     }
