@@ -96,7 +96,7 @@ public class HumanPlayer extends PlayerImpl {
     // 
     // There are special async commands that can income at any time like concede.
     // It's save in sending player response, but processing by any GAME thread any any player priority
-    private transient Boolean responseOpenedForAnswer = false; // GAME thread waiting new answer
+    private transient volatile Boolean responseOpenedForAnswer = false; // GAME thread waiting new answer (read by a reconnection, isWaitingForAnswer)
     private transient long responseLastWaitingThreadId = 0;
     // An abort (a rollback granted, a disconnect) ends the question that was open: an answer sent
     // for it must not be taken by the next question the game asks. abortCount counts the aborts;
@@ -193,6 +193,11 @@ public class HumanPlayer extends PlayerImpl {
         return !recordingMacro
                 && (!actionQueue.isEmpty()
                 || (actionIterations > 0 && !actionQueueSaved.isEmpty()));
+    }
+
+    @Override
+    public boolean isWaitingForAnswer() {
+        return responseOpenedForAnswer;
     }
 
     /**

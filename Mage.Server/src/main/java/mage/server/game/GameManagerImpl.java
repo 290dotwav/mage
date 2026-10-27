@@ -89,6 +89,14 @@ public class GameManagerImpl implements GameManager {
     }
 
     @Override
+    public void resendOpenQuestion(UUID gameId, UUID userId) {
+        GameController gameController = getGameControllerSafe(gameId);
+        if (gameController != null) {
+            gameController.resendOpenQuestion(userId);
+        }
+    }
+
+    @Override
     public void sendPlayerManaType(UUID gameId, UUID playerId, UUID userId, ManaType data) {
         GameController gameController = getGameControllerSafe(gameId);
         if (gameController != null) {

@@ -74,6 +74,20 @@ public class GameController implements GameCallback {
 
     private final ConcurrentMap<UUID, PriorityTimer> timers = new ConcurrentHashMap<>();
 
+    // the latest question put to each player (asked player id), and when: resendOpenQuestion
+    private final ConcurrentMap<UUID, AskedQuestion> openQuestions = new ConcurrentHashMap<>();
+    // a question this fresh whose player is not waiting yet is between its asking and its wait
+    private static final long JUST_ASKED_MS = 2000;
+
+    private static final class AskedQuestion {
+        final PlayerQueryEvent event;
+        final long askedAt = System.currentTimeMillis();
+
+        AskedQuestion(PlayerQueryEvent event) {
+            this.event = event;
+        }
+    }
+
     private final ConcurrentMap<UUID, UUID> userPlayerMap;
     private final UUID gameSessionId;
     private final Game game;
@@ -202,61 +216,11 @@ public class GameController implements GameCallback {
         game.addPlayerQueryEventListener(
                 (Listener<PlayerQueryEvent>) event -> {
                     logger.trace(new StringBuilder(event.getPlayerId().toString()).append("--").append(event.getQueryType()).append("--").append(event.getMessage()).toString());
-                    try {
-                        switch (event.getQueryType()) {
-                            case ASK:
-                                ask(event.getPlayerId(), event.getMessage(), event.getOptions());
-                                break;
-                            case PICK_TARGET:
-                                target(event.getPlayerId(), event.getMessage(), event.getCards(), event.getPerms(), event.getTargets(), event.isRequired(), event.getOptions());
-                                break;
-                            case PICK_ABILITY:
-                                target(event.getPlayerId(), event.getMessage(), event.getAbilities(), event.isRequired(), event.getOptions());
-                                break;
-                            case SELECT:
-                                select(event.getPlayerId(), event.getMessage(), event.getOptions());
-                                break;
-                            case PLAY_MANA:
-                                playMana(event.getPlayerId(), event.getMessage(), event.getOptions());
-                                break;
-                            case PLAY_X_MANA:
-                                playXMana(event.getPlayerId(), event.getMessage());
-                                break;
-                            case CHOOSE_ABILITY:
-                                String objectName = null;
-                                if (event.getChoices() != null && !event.getChoices().isEmpty()) {
-                                    objectName = event.getChoices().iterator().next();
-                                }
-                                chooseAbility(event.getPlayerId(), objectName, event.getAbilities(), event.getMessage());
-                                break;
-                            case CHOOSE_PILE:
-                                choosePile(event.getPlayerId(), event.getMessage(), event.getPile1(), event.getPile2());
-                                break;
-                            case CHOOSE_MODE:
-                                chooseMode(event.getPlayerId(), event.getModes(), event.getMessage());
-                                break;
-                            case CHOOSE_CHOICE:
-                                chooseChoice(event.getPlayerId(), event.getChoice());
-                                break;
-                            case AMOUNT:
-                                amount(event.getPlayerId(), event.getMessage(), event.getMin(), event.getMax());
-                                break;
-                            case MULTI_AMOUNT:
-                                multiAmount(event.getPlayerId(), event.getMessages(), event.getMin(), event.getMax(), event.getOptions());
-                                break;
-                            case PERSONAL_MESSAGE:
-                                informPersonal(event.getPlayerId(), event.getMessage());
-                                break;
-                            case TOURNAMENT_CONSTRUCT:
-                            case DRAFT_PICK_CARD:
-                                // tournament and draft events, impossible to catch it here
-                                break;
-                            default:
-                                throw new IllegalArgumentException("Unknown game event: " + event.getQueryType());
-                        }
-                    } catch (MageException ex) {
-                        logger.fatal("Player event listener error ", ex);
+                    if (event.getQueryType() != PlayerQueryEvent.QueryType.PERSONAL_MESSAGE) {
+                        // the latest question put to this player is the one it waits on (resendOpenQuestion)
+                        openQuestions.put(event.getPlayerId(), new AskedQuestion(event));
                     }
+                    putQuestion(event);
                 }
         );
 
@@ -275,6 +239,116 @@ public class GameController implements GameCallback {
         }, GAME_TIMEOUTS_CHECK_JOINING_STATUS_EVERY_SECS, GAME_TIMEOUTS_CHECK_JOINING_STATUS_EVERY_SECS, TimeUnit.SECONDS);
 
         checkJoinAndStart();
+    }
+
+    /**
+     * A question of the game to its player's screen (the PlayerQueryEvent listener), and again on a
+     * reconnection (resendOpenQuestion).
+     */
+    private void putQuestion(PlayerQueryEvent event) {
+        try {
+            switch (event.getQueryType()) {
+                case ASK:
+                    ask(event.getPlayerId(), event.getMessage(), event.getOptions());
+                    break;
+                case PICK_TARGET:
+                    target(event.getPlayerId(), event.getMessage(), event.getCards(), event.getPerms(), event.getTargets(), event.isRequired(), event.getOptions());
+                    break;
+                case PICK_ABILITY:
+                    target(event.getPlayerId(), event.getMessage(), event.getAbilities(), event.isRequired(), event.getOptions());
+                    break;
+                case SELECT:
+                    select(event.getPlayerId(), event.getMessage(), event.getOptions());
+                    break;
+                case PLAY_MANA:
+                    playMana(event.getPlayerId(), event.getMessage(), event.getOptions());
+                    break;
+                case PLAY_X_MANA:
+                    playXMana(event.getPlayerId(), event.getMessage());
+                    break;
+                case CHOOSE_ABILITY:
+                    String objectName = null;
+                    if (event.getChoices() != null && !event.getChoices().isEmpty()) {
+                        objectName = event.getChoices().iterator().next();
+                    }
+                    chooseAbility(event.getPlayerId(), objectName, event.getAbilities(), event.getMessage());
+                    break;
+                case CHOOSE_PILE:
+                    choosePile(event.getPlayerId(), event.getMessage(), event.getPile1(), event.getPile2());
+                    break;
+                case CHOOSE_MODE:
+                    chooseMode(event.getPlayerId(), event.getModes(), event.getMessage());
+                    break;
+                case CHOOSE_CHOICE:
+                    chooseChoice(event.getPlayerId(), event.getChoice());
+                    break;
+                case AMOUNT:
+                    amount(event.getPlayerId(), event.getMessage(), event.getMin(), event.getMax());
+                    break;
+                case MULTI_AMOUNT:
+                    multiAmount(event.getPlayerId(), event.getMessages(), event.getMin(), event.getMax(), event.getOptions());
+                    break;
+                case PERSONAL_MESSAGE:
+                    informPersonal(event.getPlayerId(), event.getMessage());
+                    break;
+                case TOURNAMENT_CONSTRUCT:
+                case DRAFT_PICK_CARD:
+                    // tournament and draft events, impossible to catch it here
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown game event: " + event.getQueryType());
+            }
+        } catch (MageException ex) {
+            logger.fatal("Player event listener error ", ex);
+        }
+    }
+
+    /**
+     * Web door fork: the question a player is still waiting on, put to its screen again after a
+     * reconnection (User.onReconnect, and the forced join before the game starts).
+     * <p>
+     * Before, the reconnection "kicked" the waiting player with an empty string answer
+     * (sendPlayerString(""), as their own client has since 2013). A required question re-asked
+     * itself on it, but any question that may be left took the empty answer as Done: a library
+     * search for a card with a stated quality (701.23b), an "up to" target, an optional choice.
+     * The owner, 27 October, game b7d586c2: his iPhone put the page away while Riveteers
+     * Overlook's search was being asked (asked while he was away, so never shown: User.fireCallback
+     * drops it), and the reconnection 29 s later answered it for him: "fgmuller has reconnected",
+     * "fgmuller's library is shuffled", "fgmuller gains 1 life", no land. Twice. Nothing is answered
+     * for him now: the question he is waiting on is asked again, as it stands, and waits for him.
+     */
+    public void resendOpenQuestion(UUID userId) {
+        UUID playerId = userPlayerMap.get(userId);
+        if (playerId == null) {
+            return;
+        }
+        for (Entry<UUID, AskedQuestion> entry : openQuestions.entrySet()) {
+            Player asked = game.getPlayer(entry.getKey());
+            // its question goes to the player controlling its turn (perform), as when it was asked
+            if (asked == null || !playerId.equals(asked.getTurnControlledBy()) || !waitsOn(asked, entry.getValue())) {
+                continue;
+            }
+            logger.info("Question re-asked after a reconnection: " + asked.getName() + " - "
+                    + entry.getValue().event.getQueryType() + " - " + entry.getValue().event.getMessage());
+            putQuestion(entry.getValue().event);
+        }
+    }
+
+    /**
+     * The game thread waits on this player's answer to this question, the latest it was asked. A
+     * question asked a moment ago may be between its asking (the callback dropped while he was
+     * away) and the wait that opens it: given that moment rather than left unasked for ever.
+     */
+    private boolean waitsOn(Player asked, AskedQuestion question) {
+        long until = question.askedAt + JUST_ASKED_MS;
+        while (!asked.isWaitingForAnswer()) {
+            if (System.currentTimeMillis() >= until || openQuestions.get(asked.getId()) != question) {
+                return false;
+            }
+            ThreadUtils.sleep(50);
+        }
+        // a newer question went out while he was back: it was put to his screen as it came
+        return openQuestions.get(asked.getId()) == question;
     }
 
     /**
@@ -430,7 +504,7 @@ public class GameController implements GameCallback {
                                 if (table != null) {
                                     user.ccGameStarted(table.getId(), table.getParentTableId(), session.getGameId(), player.getId());
                                     session.init();
-                                    managerFactory.gameManager().sendPlayerString(session.getGameId(), user.getId(), "");
+                                    resendOpenQuestion(user.getId());
                                 } else {
                                     logger.error("Can't find table on fix and re-send start game event: " + this.tableId);
                                 }

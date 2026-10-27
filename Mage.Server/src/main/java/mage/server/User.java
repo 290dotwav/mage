@@ -454,7 +454,9 @@ public class User {
                 if (table != null) {
                     ccGameStarted(table.getId(), table.getParentTableId(), entry.getValue().getGameId(), entry.getKey());
                     entry.getValue().init();
-                    managerFactory.gameManager().sendPlayerString(entry.getValue().getGameId(), userId, "");
+                    // web door fork: the open question asked again, never answered for him (an empty
+                    // answer here took any question he may leave as Done), see GameController#resendOpenQuestion
+                    managerFactory.gameManager().resendOpenQuestion(entry.getValue().getGameId(), userId);
                 }
             }
         }

@@ -24,6 +24,12 @@ public interface GameManager {
 
     void sendPlayerString(UUID gameId, UUID userId, String data);
 
+    /**
+     * The question the game is still waiting on from this user's player, put to its screen again
+     * (after a reconnection), see GameController#resendOpenQuestion
+     */
+    void resendOpenQuestion(UUID gameId, UUID userId);
+
     void sendPlayerManaType(UUID gameId, UUID playerId, UUID userId, ManaType data);
 
     void sendPlayerBoolean(UUID gameId, UUID userId, Boolean data);

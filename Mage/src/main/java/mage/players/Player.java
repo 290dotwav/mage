@@ -600,6 +600,15 @@ public interface Player extends MageItem, Copyable<Player> {
 
     void abortReset();
 
+    /**
+     * Web door fork: the game thread is waiting on this player's answer to the question it was
+     * last asked (a human player only). A reconnection asks that question again, see
+     * GameController#resendOpenQuestion.
+     */
+    default boolean isWaitingForAnswer() {
+        return false;
+    }
+
     void signalPlayerConcede(boolean stopCurrentChooseDialog);
 
     void signalPlayerCheat();
