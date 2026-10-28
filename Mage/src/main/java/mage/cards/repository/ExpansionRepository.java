@@ -32,7 +32,7 @@ public enum ExpansionRepository {
     private static final long EXPANSION_DB_VERSION = 5;
     private static final long EXPANSION_CONTENT_VERSION = 18;
 
-    private Dao<ExpansionInfo, Object> expansionDao;
+    private volatile Dao<ExpansionInfo, Object> expansionDao;
     private final RepositoryEventSource eventSource = new RepositoryEventSource();
     public boolean instanceInitialized = false;
 
@@ -61,6 +61,26 @@ public enum ExpansionRepository {
             e.printStackTrace();
         }
 
+    }
+
+    /**
+     * Connect again to cards.h2 after CardRepository restarted it (CardRepository.checkDatabaseHealthAndFix).
+     * Sets live in the same database: a connection opened before the restart stays bound to the
+     * closed one, and every set lookup would fail with "The database has been closed" until the
+     * server restarts.
+     */
+    public void openDB() {
+        Dao<ExpansionInfo, Object> old = expansionDao;
+        try {
+            ConnectionSource connectionSource = new JdbcConnectionSource(DatabaseUtils.prepareH2Connection(DatabaseUtils.DB_NAME_CARDS, true));
+            expansionDao = DaoManager.createDao(connectionSource, ExpansionInfo.class);
+        } catch (SQLException e) {
+            logger.error("Error opening sets repository - " + e, e);
+            return;
+        }
+        if (old != null && old.getConnectionSource() != null) {
+            old.getConnectionSource().closeQuietly();
+        }
     }
 
     /**

@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 
 /**
  * One browser socket = one server {@link mage.server.Session}.
@@ -56,6 +57,8 @@ final class WebSession implements AsynchInvokerCallbackHandler {
     private final GameOps games;
     private final TableGate gate;
     private final ExecutorService inbound;
+    /** The socket is gone: frames not yet started are dropped (see close). */
+    private volatile boolean closed;
     /** Who this socket may play as: the site's account, or anyone (DoorIdentity). */
     final DoorIdentity identity;
 
@@ -80,7 +83,14 @@ final class WebSession implements AsynchInvokerCallbackHandler {
     }
 
     void close() {
-        inbound.shutdownNow();
+        // Never shutdownNow(): it interrupts the frame being handled, and an interrupt that lands
+        // during an H2 read (a deck being parsed, a card looked up) closes the FileChannel of
+        // cards.h2 for the whole server - every later card or set lookup then fails with "The
+        // database has been closed" until XMage restarts (28 Oct 2026, decks refused). The frame
+        // in hand runs to its end, its answer goes nowhere (send() checks the socket); the frames
+        // queued behind it are dropped.
+        closed = true;
+        inbound.shutdown();
         // same path as a lost JBoss connection: the user keeps his tables for a while and may
         // reconnect by name. If the user already moved to another socket (reconnected before this
         // one noticed it was gone), do not report a lost connection on his behalf.
@@ -91,7 +101,18 @@ final class WebSession implements AsynchInvokerCallbackHandler {
     }
 
     void receive(String text) {
-        inbound.execute(() -> handle(text));
+        if (closed) {
+            return;
+        }
+        try {
+            inbound.execute(() -> {
+                if (!closed) {
+                    handle(text);
+                }
+            });
+        } catch (RejectedExecutionException ignored) {
+            // closed between the check and the execute: the frame is dropped like a queued one
+        }
     }
 
     /**
