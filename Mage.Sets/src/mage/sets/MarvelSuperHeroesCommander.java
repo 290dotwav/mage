@@ -422,6 +422,8 @@ public final class MarvelSuperHeroesCommander extends ExpansionSet {
         cards.add(new SetCardInfo("Lurking Lizards", 816, Rarity.COMMON, mage.cards.l.LurkingLizards.class));
         cards.add(new SetCardInfo("Luxury Suite", 252, Rarity.RARE, mage.cards.l.LuxurySuite.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Luxury Suite", 482, Rarity.RARE, mage.cards.l.LuxurySuite.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("M'Baku, Jabari Chieftain", 382, Rarity.RARE, mage.cards.m.MBakuJabariChieftain.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("M'Baku, Jabari Chieftain", 67, Rarity.RARE, mage.cards.m.MBakuJabariChieftain.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("M.O.D.O.K., Evil Intellect", 509, Rarity.RARE, mage.cards.m.MODOKEvilIntellect.class));
         cards.add(new SetCardInfo("MACH-1, Swooping Scoundrel", 662, Rarity.COMMON, mage.cards.m.MACH1SwoopingScoundrel.class));
         cards.add(new SetCardInfo("MJ, Rising Star", 773, Rarity.UNCOMMON, mage.cards.m.MJRisingStar.class));
@@ -713,6 +715,8 @@ public final class MarvelSuperHeroesCommander extends ExpansionSet {
         cards.add(new SetCardInfo("The Great Mound", 479, Rarity.RARE, mage.cards.t.TheGreatMound.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("The Howling Commandos", 598, Rarity.COMMON, mage.cards.t.TheHowlingCommandos.class));
         cards.add(new SetCardInfo("The Immortal Weapons", 547, Rarity.RARE, mage.cards.t.TheImmortalWeapons.class));
+        cards.add(new SetCardInfo("The Spear of Bashenga", 25, Rarity.RARE, mage.cards.t.TheSpearOfBashenga.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("The Spear of Bashenga", 322, Rarity.RARE, mage.cards.t.TheSpearOfBashenga.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("The Spot's Portal", 798, Rarity.UNCOMMON, mage.cards.t.TheSpotsPortal.class));
         cards.add(new SetCardInfo("The Squadron Sinister", 417, Rarity.RARE, mage.cards.t.TheSquadronSinister.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("The Squadron Sinister", 96, Rarity.RARE, mage.cards.t.TheSquadronSinister.class, NON_FULL_USE_VARIOUS));
@@ -855,12 +859,8 @@ public final class MarvelSuperHeroesCommander extends ExpansionSet {
         cards.add(new SetCardInfo("Mister Immortal", 727, Rarity.RARE, mage.cards.m.MisterImmortal.class));
         cards.add(new SetCardInfo("First Family", 83, Rarity.RARE, mage.cards.f.FirstFamily.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("First Family", 401, Rarity.RARE, mage.cards.f.FirstFamily.class, NON_FULL_USE_VARIOUS));
-        cards.add(new SetCardInfo("M'Baku, Jabari Chieftain", 67, Rarity.RARE, mage.cards.m.MBakuJabariChieftain.class, NON_FULL_USE_VARIOUS));
-        cards.add(new SetCardInfo("M'Baku, Jabari Chieftain", 382, Rarity.RARE, mage.cards.m.MBakuJabariChieftain.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Okoye, Mighty and Adored", 89, Rarity.RARE, mage.cards.o.OkoyeMightyAndAdored.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Okoye, Mighty and Adored", 410, Rarity.RARE, mage.cards.o.OkoyeMightyAndAdored.class, NON_FULL_USE_VARIOUS));
-        cards.add(new SetCardInfo("The Spear of Bashenga", 25, Rarity.RARE, mage.cards.t.TheSpearOfBashenga.class, NON_FULL_USE_VARIOUS));
-        cards.add(new SetCardInfo("The Spear of Bashenga", 322, Rarity.RARE, mage.cards.t.TheSpearOfBashenga.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Strategic Intervention", 609, Rarity.UNCOMMON, mage.cards.s.StrategicIntervention.class));
         cards.add(new SetCardInfo("Nick Fury, Spymaster", 603, Rarity.RARE, mage.cards.n.NickFurySpymaster.class));
         cards.add(new SetCardInfo("Photon, Mighty Marvel", 58, Rarity.RARE, mage.cards.p.PhotonMightyMarvel.class, NON_FULL_USE_VARIOUS));

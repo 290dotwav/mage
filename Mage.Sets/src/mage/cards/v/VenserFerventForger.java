@@ -7,38 +7,31 @@ import mage.abilities.common.EntersBattlefieldTriggeredAbility;
 import mage.abilities.effects.OneShotEffect;
 import mage.abilities.effects.common.CopyTargetStackObjectEffect;
 import mage.abilities.effects.common.CreateTokenCopyTargetEffect;
+import mage.abilities.effects.common.continuous.GainAbilityTargetEffect;
 import mage.abilities.keyword.FlashAbility;
+import mage.abilities.keyword.HasteAbility;
 import mage.cards.CardImpl;
 import mage.cards.CardSetInfo;
-import mage.constants.CardType;
-import mage.constants.Outcome;
-import mage.constants.SubType;
-import mage.constants.SuperType;
-import mage.constants.TargetController;
-import mage.filter.FilterPermanent;
+import mage.constants.*;
 import mage.filter.FilterSpell;
-import mage.filter.predicate.Predicates;
+import mage.filter.StaticFilters;
+import mage.filter.common.FilterInstantOrSorcerySpell;
 import mage.game.Game;
 import mage.target.TargetPermanent;
 import mage.target.TargetSpell;
+import mage.target.targetpointer.FixedTargets;
 
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author DarioBarrabinoDev
  */
 public final class VenserFerventForger extends CardImpl {
 
-    private static final FilterSpell filterSpell = new FilterSpell("instant or sorcery spell an opponent controls");
-    private static final FilterPermanent filterPermanent = new FilterPermanent("permanent an opponent controls");
+    private static final FilterSpell filter = new FilterInstantOrSorcerySpell("instant or sorcery spell an opponent controls");
 
     static {
-        filterSpell.add(Predicates.or(
-                CardType.INSTANT.getPredicate(),
-                CardType.SORCERY.getPredicate()
-        ));
-        filterSpell.add(TargetController.OPPONENT.getControllerPredicate());
-        filterPermanent.add(TargetController.OPPONENT.getControllerPredicate());
+        filter.add(TargetController.OPPONENT.getControllerPredicate());
     }
 
     public VenserFerventForger(UUID ownerId, CardSetInfo setInfo) {
@@ -57,15 +50,12 @@ public final class VenserFerventForger extends CardImpl {
         // * Copy target instant or sorcery spell an opponent controls twice. You may choose new targets for the copies.
         Ability ability = new EntersBattlefieldTriggeredAbility(
                 new CopyTargetStackObjectEffect(false, false, true, 2, null)
-                        .setText("copy target instant or sorcery spell an opponent controls twice. "
-                                + "You may choose new targets for the copies")
         );
-        ability.addTarget(new TargetSpell(filterSpell));
+        ability.addTarget(new TargetSpell(filter));
 
         // * Create two tokens that are copies of target permanent an opponent controls. They gain haste. At the beginning of the next end step, sacrifice them.
-        Mode mode = new Mode(new VenserFerventForgerTokenEffect());
-        mode.addTarget(new TargetPermanent(filterPermanent));
-        ability.addMode(mode);
+        ability.addMode(new Mode(new VenserFerventForgerEffect())
+                .addTarget(new TargetPermanent(StaticFilters.FILTER_OPPONENTS_PERMANENT)));
         this.addAbility(ability);
     }
 
@@ -79,32 +69,30 @@ public final class VenserFerventForger extends CardImpl {
     }
 }
 
-class VenserFerventForgerTokenEffect extends OneShotEffect {
+class VenserFerventForgerEffect extends OneShotEffect {
 
-    VenserFerventForgerTokenEffect() {
+    VenserFerventForgerEffect() {
         super(Outcome.PutCreatureInPlay);
-        staticText = "create two tokens that are copies of target permanent an opponent controls. "
-                + "They gain haste. At the beginning of the next end step, sacrifice them";
+        staticText = "create two tokens that are copies of target permanent an opponent controls. " +
+                "They gain haste. At the beginning of the next end step, sacrifice them";
     }
 
-    private VenserFerventForgerTokenEffect(final VenserFerventForgerTokenEffect effect) {
+    private VenserFerventForgerEffect(final VenserFerventForgerEffect effect) {
         super(effect);
     }
 
     @Override
-    public VenserFerventForgerTokenEffect copy() {
-        return new VenserFerventForgerTokenEffect(this);
+    public VenserFerventForgerEffect copy() {
+        return new VenserFerventForgerEffect(this);
     }
 
     @Override
     public boolean apply(Game game, Ability source) {
-        CreateTokenCopyTargetEffect effect = new CreateTokenCopyTargetEffect(
-                null, null, true, 2
-        );
-        effect.setTargetPointer(getTargetPointer().copy());
-        if (!effect.apply(game, source)) {
-            return false;
-        }
+        CreateTokenCopyTargetEffect effect = new CreateTokenCopyTargetEffect(null, null, false, 2);
+        effect.apply(game, source);
+        game.addEffect(new GainAbilityTargetEffect(
+                HasteAbility.getInstance(), Duration.Custom
+        ).setTargetPointer(new FixedTargets(effect.getAddedPermanents(), game)), source);
         effect.sacrificeTokensCreatedAtNextEndStep(game, source);
         return true;
     }

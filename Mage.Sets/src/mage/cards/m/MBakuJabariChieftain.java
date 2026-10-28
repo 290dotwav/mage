@@ -3,6 +3,7 @@ package mage.cards.m;
 import mage.MageInt;
 import mage.abilities.Ability;
 import mage.abilities.TriggeredAbilityImpl;
+import mage.abilities.condition.Condition;
 import mage.abilities.condition.common.MonarchIsNotSetCondition;
 import mage.abilities.effects.common.BecomesMonarchTargetEffect;
 import mage.abilities.effects.common.continuous.BoostTargetEffect;
@@ -13,10 +14,8 @@ import mage.abilities.triggers.BeginningOfEndStepTriggeredAbility;
 import mage.cards.CardImpl;
 import mage.cards.CardSetInfo;
 import mage.constants.CardType;
-import mage.constants.Duration;
 import mage.constants.SubType;
 import mage.constants.SuperType;
-import mage.constants.TargetController;
 import mage.constants.Zone;
 import mage.game.Game;
 import mage.game.events.GameEvent;
@@ -26,7 +25,7 @@ import mage.target.targetpointer.FixedTarget;
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author DarioBarrabinoDev
  */
 public final class MBakuJabariChieftain extends CardImpl {
 
@@ -41,12 +40,10 @@ public final class MBakuJabariChieftain extends CardImpl {
         this.toughness = new MageInt(3);
 
         // At the beginning of your end step, if there is no monarch, target opponent becomes the monarch.
-        Ability ability = new BeginningOfEndStepTriggeredAbility(
-                TargetController.YOU, new BecomesMonarchTargetEffect(), false, MonarchIsNotSetCondition.instance
-        );
+        Ability ability = new BeginningOfEndStepTriggeredAbility(new BecomesMonarchTargetEffect())
+                .withInterveningIf(MonarchIsNotSetCondition.instance);
         ability.addTarget(new TargetOpponent());
-        ability.addHint(MonarchHint.instance);
-        this.addAbility(ability);
+        this.addAbility(ability.addHint(MonarchHint.instance));
 
         // Whenever a creature attacks one of your opponents, if that player is the monarch, that creature gets +1/+1 and gains trample until end of turn.
         this.addAbility(new MBakuJabariChieftainTriggeredAbility());
@@ -65,9 +62,13 @@ public final class MBakuJabariChieftain extends CardImpl {
 class MBakuJabariChieftainTriggeredAbility extends TriggeredAbilityImpl {
 
     MBakuJabariChieftainTriggeredAbility() {
-        super(Zone.BATTLEFIELD, new BoostTargetEffect(1, 1).setText("that creature gets +1/+1"));
-        this.addEffect(new GainAbilityTargetEffect(TrampleAbility.getInstance()).setText("and gains trample until end of turn"));
-        setTriggerPhrase("Whenever a creature attacks one of your opponents, if that player is the monarch, ");
+        super(Zone.BATTLEFIELD, new BoostTargetEffect(1, 1)
+                .setText("that creature gets +1/+1"));
+        this.addEffect(new GainAbilityTargetEffect(TrampleAbility.getInstance())
+                .setText("and gains trample until end of turn"));
+        this.withInterveningIf(MBakuJabariChieftainCondition.instance);
+        this.setTriggerPhrase("Whenever a creature attacks one of your opponents, ");
+        this.addHint(MonarchHint.instance);
     }
 
     private MBakuJabariChieftainTriggeredAbility(final MBakuJabariChieftainTriggeredAbility ability) {
@@ -86,19 +87,26 @@ class MBakuJabariChieftainTriggeredAbility extends TriggeredAbilityImpl {
 
     @Override
     public boolean checkTrigger(GameEvent event, Game game) {
-        UUID defenderId = event.getTargetId();
-        if (!game.getOpponents(getControllerId()).contains(defenderId)
-                || !defenderId.equals(game.getMonarchId())) {
+        if (!game.getOpponents(getControllerId()).contains(event.getTargetId())) {
             return false;
         }
-        this.getEffects().setTargetPointer(new FixedTarget(event.getSourceId(), game));
-        this.getEffects().setValue("defenderId", defenderId);
+        getEffects().setTargetPointer(new FixedTarget(event.getSourceId(), game));
+        getEffects().setValue("attackedPlayer", event.getTargetId());
         return true;
+    }
+}
+
+enum MBakuJabariChieftainCondition implements Condition {
+    instance;
+
+    @Override
+    public boolean apply(Game game, Ability source) {
+        UUID attackedPlayerId = (UUID) source.getEffects().get(0).getValue("attackedPlayer");
+        return attackedPlayerId != null && attackedPlayerId.equals(game.getMonarchId());
     }
 
     @Override
-    public boolean checkInterveningIfClause(Game game) {
-        Object defenderId = getEffects().get(0).getValue("defenderId");
-        return defenderId != null && defenderId.equals(game.getMonarchId());
+    public String toString() {
+        return "that player is the monarch";
     }
 }

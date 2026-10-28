@@ -4,20 +4,13 @@ import mage.MageInt;
 import mage.abilities.Ability;
 import mage.abilities.Mode;
 import mage.abilities.common.EntersBattlefieldTriggeredAbility;
-import mage.abilities.effects.ContinuousEffect;
 import mage.abilities.effects.OneShotEffect;
 import mage.abilities.effects.common.CreateTokenTargetEffect;
 import mage.abilities.effects.common.asthought.PlayFromNotOwnHandZoneTargetEffect;
 import mage.cards.Card;
 import mage.cards.CardImpl;
 import mage.cards.CardSetInfo;
-import mage.constants.CardType;
-import mage.constants.Duration;
-import mage.constants.Outcome;
-import mage.constants.SubType;
-import mage.constants.SuperType;
-import mage.constants.TargetController;
-import mage.constants.Zone;
+import mage.constants.*;
 import mage.filter.FilterPlayer;
 import mage.filter.predicate.other.AnotherTargetPredicate;
 import mage.game.Game;
@@ -29,7 +22,7 @@ import mage.target.targetpointer.FixedTarget;
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author DarioBarrabinoDev
  */
 public final class CaseyAndRaphHotheads extends CardImpl {
 
@@ -56,7 +49,7 @@ public final class CaseyAndRaphHotheads extends CardImpl {
         // When Casey & Raph enter, choose one or both. Each mode must target a different player.
         // * Target player exiles the top card of their library. Until that player's next end step, they may play that card without paying its mana cost.
         Ability ability = new EntersBattlefieldTriggeredAbility(new CaseyAndRaphHotheadsEffect());
-        ability.addTarget(new TargetPlayer(filter1).setTargetTag(1).withChooseHint("to exile and play the top card of their library"));
+        ability.addTarget(new TargetPlayer(filter1).setTargetTag(1).withChooseHint("to exile the top card of their library"));
         ability.getModes().setMinModes(1);
         ability.getModes().setMaxModes(2);
         ability.getModes().setLimitUsageByOnce(false);
@@ -82,8 +75,8 @@ class CaseyAndRaphHotheadsEffect extends OneShotEffect {
 
     CaseyAndRaphHotheadsEffect() {
         super(Outcome.PlayForFree);
-        staticText = "target player exiles the top card of their library. Until that player's next end step, " +
-                "they may play that card without paying its mana cost";
+        staticText = "target player exiles the top card of their library. Until that player's next end step, "
+                + "they may play that card without paying its mana cost";
     }
 
     private CaseyAndRaphHotheadsEffect(final CaseyAndRaphHotheadsEffect effect) {
@@ -109,22 +102,18 @@ class CaseyAndRaphHotheadsEffect extends OneShotEffect {
         if (game.getState().getZone(card.getId()) != Zone.EXILED) {
             return true;
         }
-        ContinuousEffect effect = new CaseyAndRaphHotheadsPlayEffect(player.getId());
-        effect.setTargetPointer(new FixedTarget(card, game));
-        game.addEffect(effect, source);
+        game.addEffect(new CaseyAndRaphHotheadsPlayEffect(player.getId())
+                .setTargetPointer(new FixedTarget(card, game)), source);
         return true;
     }
 }
 
-/**
- * The owner of the exiled card may play it free until their next end step.
- */
 class CaseyAndRaphHotheadsPlayEffect extends PlayFromNotOwnHandZoneTargetEffect {
 
     private final UUID playerId;
 
     CaseyAndRaphHotheadsPlayEffect(UUID playerId) {
-        super(Zone.EXILED, TargetController.OWNER, Duration.UntilYourNextEndStep, true, false);
+        super(Zone.EXILED, TargetController.ANY, Duration.UntilYourNextEndStep, true);
         this.playerId = playerId;
     }
 
@@ -141,7 +130,13 @@ class CaseyAndRaphHotheadsPlayEffect extends PlayFromNotOwnHandZoneTargetEffect 
     @Override
     public void init(Ability source, Game game, UUID activePlayerId) {
         super.init(source, game, activePlayerId);
-        // "until that player's next end step"
+        // until that player's next end step, not the controller's
         setStartingControllerAndTurnNum(game, playerId, activePlayerId);
+    }
+
+    @Override
+    public boolean applies(UUID objectId, Ability affectedAbility, Ability source, Game game, UUID playerId) {
+        return this.playerId.equals(playerId)
+                && super.applies(objectId, affectedAbility, source, game, playerId);
     }
 }

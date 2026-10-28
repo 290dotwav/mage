@@ -1,7 +1,7 @@
 package mage.cards.t;
 
 import mage.abilities.Ability;
-import mage.abilities.TriggeredAbilityImpl;
+import mage.abilities.common.AttacksAttachedTriggeredAbility;
 import mage.abilities.common.EntersBattlefieldTriggeredAbility;
 import mage.abilities.common.SimpleStaticAbility;
 import mage.abilities.condition.common.MonarchIsNotSetCondition;
@@ -18,23 +18,27 @@ import mage.constants.AttachmentType;
 import mage.constants.CardType;
 import mage.constants.SubType;
 import mage.constants.SuperType;
-import mage.constants.Zone;
 import mage.filter.FilterPermanent;
 import mage.filter.common.FilterNonlandPermanent;
+import mage.filter.predicate.permanent.DefendingPlayerControlsAttachedAttackingPredicate;
 import mage.filter.predicate.permanent.TappedPredicate;
 import mage.game.Game;
 import mage.game.events.GameEvent;
-import mage.game.permanent.Permanent;
 import mage.target.TargetPermanent;
-import mage.target.targetadjustment.ThatPlayerControlsTargetAdjuster;
-import mage.target.targetpointer.FixedTarget;
 
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author DarioBarrabinoDev
  */
 public final class TheSpearOfBashenga extends CardImpl {
+
+    private static final FilterPermanent filter = new FilterNonlandPermanent("tapped nonland permanent that player controls");
+
+    static {
+        filter.add(TappedPredicate.TAPPED);
+        filter.add(DefendingPlayerControlsAttachedAttackingPredicate.instance);
+    }
 
     public TheSpearOfBashenga(UUID ownerId, CardSetInfo setInfo) {
         super(ownerId, setInfo, new CardType[]{CardType.ARTIFACT}, "{4}{W}");
@@ -48,15 +52,16 @@ public final class TheSpearOfBashenga extends CardImpl {
 
         // Equipped creature gets +2/+2 and has vigilance.
         Ability ability = new SimpleStaticAbility(new BoostEquippedEffect(2, 2));
-        ability.addEffect(new GainAbilityAttachedEffect(VigilanceAbility.getInstance(), AttachmentType.EQUIPMENT)
-                .setText("and has vigilance"));
+        ability.addEffect(new GainAbilityAttachedEffect(VigilanceAbility.getInstance(), AttachmentType.EQUIPMENT).setText("and has vigilance"));
         this.addAbility(ability);
 
         // Whenever equipped creature attacks the monarch, destroy target tapped nonland permanent that player controls.
-        this.addAbility(new TheSpearOfBashengaTriggeredAbility());
+        ability = new TheSpearOfBashengaTriggeredAbility();
+        ability.addTarget(new TargetPermanent(filter));
+        this.addAbility(ability);
 
         // Equip {2}
-        this.addAbility(new EquipAbility(2));
+        this.addAbility(new EquipAbility(2, false));
     }
 
     private TheSpearOfBashenga(final TheSpearOfBashenga card) {
@@ -69,18 +74,10 @@ public final class TheSpearOfBashenga extends CardImpl {
     }
 }
 
-class TheSpearOfBashengaTriggeredAbility extends TriggeredAbilityImpl {
-
-    private static final FilterPermanent filter = new FilterNonlandPermanent("tapped nonland permanent that player controls");
-
-    static {
-        filter.add(TappedPredicate.TAPPED);
-    }
+class TheSpearOfBashengaTriggeredAbility extends AttacksAttachedTriggeredAbility {
 
     TheSpearOfBashengaTriggeredAbility() {
-        super(Zone.BATTLEFIELD, new DestroyTargetEffect());
-        this.addTarget(new TargetPermanent(filter));
-        this.setTargetAdjuster(new ThatPlayerControlsTargetAdjuster());
+        super(new DestroyTargetEffect());
         setTriggerPhrase("Whenever equipped creature attacks the monarch, ");
     }
 
@@ -94,20 +91,7 @@ class TheSpearOfBashengaTriggeredAbility extends TriggeredAbilityImpl {
     }
 
     @Override
-    public boolean checkEventType(GameEvent event, Game game) {
-        return event.getType() == GameEvent.EventType.ATTACKER_DECLARED;
-    }
-
-    @Override
     public boolean checkTrigger(GameEvent event, Game game) {
-        Permanent equipment = getSourcePermanentIfItStillExists(game);
-        if (equipment == null
-                || equipment.getAttachedTo() == null
-                || !equipment.getAttachedTo().equals(event.getSourceId())
-                || !event.getTargetId().equals(game.getMonarchId())) {
-            return false;
-        }
-        this.getEffects().setTargetPointer(new FixedTarget(event.getTargetId()));
-        return true;
+        return event.getTargetId().equals(game.getMonarchId()) && super.checkTrigger(event, game);
     }
 }

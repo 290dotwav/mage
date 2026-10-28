@@ -9,12 +9,10 @@ import mage.abilities.costs.common.TapSourceCost;
 import mage.abilities.costs.mana.GenericManaCost;
 import mage.abilities.effects.OneShotEffect;
 import mage.abilities.effects.common.BecomesMonarchSourceEffect;
-import mage.abilities.keyword.FlashAbility;
 import mage.abilities.hint.common.MonarchHint;
+import mage.abilities.keyword.FlashAbility;
 import mage.cards.CardImpl;
 import mage.cards.CardSetInfo;
-import mage.cards.Cards;
-import mage.cards.CardsImpl;
 import mage.constants.CardType;
 import mage.constants.ComparisonType;
 import mage.constants.Outcome;
@@ -24,20 +22,20 @@ import mage.filter.FilterPermanent;
 import mage.filter.predicate.mageobject.ManaValuePredicate;
 import mage.game.Game;
 import mage.game.permanent.Permanent;
-import mage.game.permanent.PermanentToken;
 import mage.players.Player;
 import mage.target.TargetPermanent;
 import mage.target.targetadjustment.ForEachPlayerTargetsAdjuster;
 import mage.target.targetpointer.EachTargetPointer;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
- * @author Claude
+ * @author DarioBarrabinoDev
  */
 public final class KingSolomonsFrogs extends CardImpl {
 
@@ -56,18 +54,19 @@ public final class KingSolomonsFrogs extends CardImpl {
         this.addAbility(FlashAbility.getInstance());
 
         // When King Solomon's Frogs enters, if you cast it, for each opponent, exile up to one target permanent that player controls with mana value 3 or greater. For each permanent exiled this way, its controller draws a card.
-        Ability ability = new EntersBattlefieldTriggeredAbility(new KingSolomonsFrogsEffect())
-                .withInterveningIf(CastFromEverywhereSourceCondition.instance);
+        Ability ability = new EntersBattlefieldTriggeredAbility(
+                new KingSolomonsFrogsEffect().setTargetPointer(new EachTargetPointer())
+        ).withInterveningIf(CastFromEverywhereSourceCondition.instance);
         ability.addTarget(new TargetPermanent(0, 1, filter));
         ability.setTargetAdjuster(new ForEachPlayerTargetsAdjuster(false, true));
         this.addAbility(ability);
 
         // {3}, {T}, Exile King Solomon's Frogs: You become the monarch.
-        Ability monarchAbility = new SimpleActivatedAbility(new BecomesMonarchSourceEffect(), new GenericManaCost(3));
-        monarchAbility.addCost(new TapSourceCost());
-        monarchAbility.addCost(new ExileSourceCost());
-        monarchAbility.addHint(MonarchHint.instance);
-        this.addAbility(monarchAbility);
+        ability = new SimpleActivatedAbility(new BecomesMonarchSourceEffect(), new GenericManaCost(3));
+        ability.addCost(new TapSourceCost());
+        ability.addCost(new ExileSourceCost());
+        ability.addHint(MonarchHint.instance);
+        this.addAbility(ability);
     }
 
     private KingSolomonsFrogs(final KingSolomonsFrogs card) {
@@ -83,10 +82,9 @@ public final class KingSolomonsFrogs extends CardImpl {
 class KingSolomonsFrogsEffect extends OneShotEffect {
 
     KingSolomonsFrogsEffect() {
-        super(Outcome.Exile);
-        this.setTargetPointer(new EachTargetPointer());
-        staticText = "for each opponent, exile up to one target permanent that player controls with mana value 3 or greater. " +
-                "For each permanent exiled this way, its controller draws a card";
+        super(Outcome.Removal);
+        staticText = "for each opponent, exile up to one target permanent that player controls "
+                + "with mana value 3 or greater. For each permanent exiled this way, its controller draws a card";
     }
 
     private KingSolomonsFrogsEffect(final KingSolomonsFrogsEffect effect) {
@@ -100,41 +98,34 @@ class KingSolomonsFrogsEffect extends OneShotEffect {
 
     @Override
     public boolean apply(Game game, Ability source) {
-        Player controller = game.getPlayer(source.getControllerId());
-        if (controller == null) {
+        Player player = game.getPlayer(source.getControllerId());
+        if (player == null) {
             return false;
         }
-        Map<UUID, UUID> controllerOf = new HashMap<>();
-        Set<UUID> tokens = new HashSet<>();
-        Cards cards = new CardsImpl();
-        for (UUID targetId : getTargetPointer().getTargets(game, source)) {
-            Permanent permanent = game.getPermanent(targetId);
-            if (permanent != null) {
-                controllerOf.put(permanent.getId(), permanent.getControllerId());
-                if (permanent instanceof PermanentToken) {
-                    tokens.add(permanent.getId());
-                }
-                cards.add(permanent);
-            }
-        }
-        if (cards.isEmpty()) {
+        Set<Permanent> permanents = getTargetPointer()
+                .getTargets(game, source)
+                .stream()
+                .map(game::getPermanent)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (permanents.isEmpty()) {
             return false;
         }
-        controller.moveCards(cards, Zone.EXILED, source, game);
-        Map<UUID, Integer> draws = new HashMap<>();
-        for (Map.Entry<UUID, UUID> entry : controllerOf.entrySet()) {
-            // a token that was exiled has ceased to exist; a card must actually be in exile (not, e.g., a commander moved to the command zone instead)
-            boolean exiled = tokens.contains(entry.getKey())
-                    ? game.getPermanent(entry.getKey()) == null
-                    : game.getState().getZone(entry.getKey()) == Zone.EXILED;
-            if (exiled) {
-                draws.merge(entry.getValue(), 1, Integer::sum);
+        // controllers must be known before the permanents leave the battlefield
+        Map<UUID, UUID> controllers = permanents
+                .stream()
+                .collect(Collectors.toMap(Permanent::getId, Permanent::getControllerId));
+        player.moveCards(permanents, Zone.EXILED, source, game);
+        Map<UUID, Integer> playerMap = new HashMap<>();
+        for (Map.Entry<UUID, UUID> entry : controllers.entrySet()) {
+            if (game.getState().getZone(entry.getKey()) == Zone.EXILED) {
+                playerMap.merge(entry.getValue(), 1, Integer::sum);
             }
         }
-        for (Map.Entry<UUID, Integer> entry : draws.entrySet()) {
-            Player player = game.getPlayer(entry.getKey());
-            if (player != null) {
-                player.drawCards(entry.getValue(), source, game);
+        for (Map.Entry<UUID, Integer> entry : playerMap.entrySet()) {
+            Player controller = game.getPlayer(entry.getKey());
+            if (controller != null) {
+                controller.drawCards(entry.getValue(), source, game);
             }
         }
         return true;
