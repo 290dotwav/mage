@@ -806,6 +806,8 @@ public enum CardRepository {
         // DB seems to have a problem - try to restart the DB (useless in 99% due out of memory problems)
         instance.closeDB(false);
         instance.openDB();
+        // sets live in the same cards.h2: their connection is bound to the database just closed
+        ExpansionRepository.instance.openDB();
         cardInfo = safeFindKnownCard();
         if (cardInfo != null) {
             logger.warn(String.format("Database: trying to restart (%d try)... GOOD - db fixed", databaseFixes.get()));
