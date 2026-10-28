@@ -84,6 +84,9 @@ public final class StarTrek extends ExpansionSet {
         cards.add(new SetCardInfo("Command Subadjunct", 9, Rarity.UNCOMMON, mage.cards.c.CommandSubadjunct.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Commander Raffi Musiker", 100, Rarity.UNCOMMON, mage.cards.c.CommanderRaffiMusiker.class));
         cards.add(new SetCardInfo("Common Goal", 190, Rarity.COMMON, mage.cards.c.CommonGoal.class));
+        cards.add(new SetCardInfo("Conquest Mission", 10, Rarity.UNCOMMON, mage.cards.c.ConquestMission.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Conquest Mission", 342, Rarity.UNCOMMON, mage.cards.c.ConquestMission.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Conquest Mission", 570, Rarity.UNCOMMON, mage.cards.c.ConquestMission.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Consider the Prime Directive", 51, Rarity.COMMON, mage.cards.c.ConsiderThePrimeDirective.class));
         cards.add(new SetCardInfo("Constable Odo", 230, Rarity.UNCOMMON, mage.cards.c.ConstableOdo.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Constable Odo", 348, Rarity.UNCOMMON, mage.cards.c.ConstableOdo.class, NON_FULL_USE_VARIOUS));
@@ -156,7 +159,7 @@ public final class StarTrek extends ExpansionSet {
         cards.add(new SetCardInfo("Horta", 152, Rarity.COMMON, mage.cards.h.Horta.class));
         cards.add(new SetCardInfo("Hoshi Sato, Exolinguist", 64, Rarity.UNCOMMON, mage.cards.h.HoshiSatoExolinguist.class));
         cards.add(new SetCardInfo("Humpback Whales", 65, Rarity.COMMON, mage.cards.h.HumpbackWhales.class));
-        cards.add(new SetCardInfo("I'm a Doctor, Not a ...", 203, Rarity.COMMON, mage.cards.i.ImADoctorNotA.class));
+        cards.add(new SetCardInfo("I'm a Doctor, Not a . . .", 203, Rarity.COMMON, mage.cards.i.ImADoctorNotA.class));
         cards.add(new SetCardInfo("Impossible Choice", 116, Rarity.UNCOMMON, mage.cards.i.ImpossibleChoice.class));
         cards.add(new SetCardInfo("In the Pale Moonlight", 117, Rarity.UNCOMMON, mage.cards.i.InThePaleMoonlight.class));
         cards.add(new SetCardInfo("Interstellar Effigy", 66, Rarity.COMMON, mage.cards.i.InterstellarEffigy.class));
@@ -248,7 +251,7 @@ public final class StarTrek extends ExpansionSet {
         cards.add(new SetCardInfo("Sacred Foundry", 400, Rarity.RARE, mage.cards.s.SacredFoundry.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Sacred Foundry", 495, Rarity.RARE, mage.cards.s.SacredFoundry.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Saurian Explorer", 213, Rarity.COMMON, mage.cards.s.SaurianExplorer.class));
-        cards.add(new SetCardInfo("Set Phasers to...", 34, Rarity.COMMON, mage.cards.s.SetPhasersTo.class));
+        cards.add(new SetCardInfo("Set Phasers to . . .", 34, Rarity.COMMON, mage.cards.s.SetPhasersTo.class));
         cards.add(new SetCardInfo("Seven of Nine, Unassimilated", 1705, Rarity.MYTHIC, mage.cards.s.SevenOfNineUnassimilated.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Seven of Nine, Unassimilated", 373, Rarity.MYTHIC, mage.cards.s.SevenOfNineUnassimilated.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Seven of Nine, Unassimilated", 507, Rarity.MYTHIC, mage.cards.s.SevenOfNineUnassimilated.class, NON_FULL_USE_VARIOUS));
