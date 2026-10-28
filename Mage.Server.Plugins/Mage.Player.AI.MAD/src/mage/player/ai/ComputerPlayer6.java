@@ -896,9 +896,15 @@ public class ComputerPlayer6 extends ComputerPlayer {
         return super.choose(outcome, cards, target, source, game);
     }
 
-    private void declareBlockers(Game game, UUID activePlayerId) {
-        game.fireEvent(new GameEvent(GameEvent.EventType.DECLARE_BLOCKERS_STEP_PRE, null, null, activePlayerId));
-        if (!game.replaceEvent(GameEvent.getEvent(GameEvent.EventType.DECLARING_BLOCKERS, activePlayerId, activePlayerId))) {
+    private void declareBlockers(Game game, UUID defendingPlayerId) {
+        game.fireEvent(new GameEvent(GameEvent.EventType.DECLARE_BLOCKERS_STEP_PRE, null, null, playerId));
+        // No DECLARING_BLOCKERS here: Combat.selectBlockers raised it once, before asking anyone. Raised again from
+        // inside this answer, a "you choose which creatures block" effect this AI controls (ChooseBlockersEffect:
+        // Master Warcraft, Brutal Hordechief, Odric, Master Tactician...) asked this same AI again, for ever:
+        // StackOverflowError, the game stopped.
+        // Another player's creatures, given to this AI to choose by such an effect: none blocks by choice (the
+        // trades below are judged for the AI's own creatures); Combat still adds the blocks a requirement asks for.
+        if (defendingPlayerId == null || defendingPlayerId.equals(playerId)) {
             List<Permanent> attackers = getAttackers(game);
             if (attackers == null) {
                 return;
@@ -1162,7 +1168,7 @@ public class ComputerPlayer6 extends ComputerPlayer {
     @Override
     public void selectBlockers(Ability source, Game game, UUID defendingPlayerId) {
         logger.debug("selectBlockers");
-        declareBlockers(game, playerId);
+        declareBlockers(game, defendingPlayerId);
     }
 
     /**
