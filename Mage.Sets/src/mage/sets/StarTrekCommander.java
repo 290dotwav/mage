@@ -159,6 +159,8 @@ public final class StarTrekCommander extends ExpansionSet {
         cards.add(new SetCardInfo("Herald's Horn", 493, Rarity.UNCOMMON, mage.cards.h.HeraldsHorn.class));
         cards.add(new SetCardInfo("Howling Mine", 345, Rarity.RARE, mage.cards.h.HowlingMine.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Howling Mine", 494, Rarity.RARE, mage.cards.h.HowlingMine.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Hugh, First of Many", 94, Rarity.RARE, mage.cards.h.HughFirstOfMany.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Hugh, First of Many", 321, Rarity.RARE, mage.cards.h.HughFirstOfMany.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Irrigated Farmland", 388, Rarity.RARE, mage.cards.i.IrrigatedFarmland.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Irrigated Farmland", 538, Rarity.RARE, mage.cards.i.IrrigatedFarmland.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Isolated Chapel", 389, Rarity.RARE, mage.cards.i.IsolatedChapel.class, NON_FULL_USE_VARIOUS));
@@ -332,6 +334,8 @@ public final class StarTrekCommander extends ExpansionSet {
         cards.add(new SetCardInfo("Vic Fontaine, One Night Only", 108, Rarity.RARE, mage.cards.v.VicFontaineOneNightOnly.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Vic Fontaine, One Night Only", 333, Rarity.RARE, mage.cards.v.VicFontaineOneNightOnly.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Vindicate", 482, Rarity.RARE, mage.cards.v.Vindicate.class));
+        cards.add(new SetCardInfo("Vox, Child of the Collective", 54, Rarity.RARE, mage.cards.v.VoxChildOfTheCollective.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Vox, Child of the Collective", 268, Rarity.RARE, mage.cards.v.VoxChildOfTheCollective.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Warleader's Call", 483, Rarity.RARE, mage.cards.w.WarleadersCall.class));
         cards.add(new SetCardInfo("Warship Flight Crew", 168, Rarity.COMMON, mage.cards.w.WarshipFlightCrew.class));
         cards.add(new SetCardInfo("Wayfarer's Bauble", 511, Rarity.COMMON, mage.cards.w.WayfarersBauble.class));
