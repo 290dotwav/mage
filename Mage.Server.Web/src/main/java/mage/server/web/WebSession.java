@@ -155,8 +155,14 @@ final class WebSession implements AsynchInvokerCallbackHandler {
                     // { kind: "server", op: "load" }: what the lobby shows, "5/12 tables" (TableGate.load)
                     String op = Frames.optString(frame, "op", "?");
                     what = "server " + op;
+                    // { kind: "server", op: "check", deck }: the names of a .dck text the card database
+                    // does not know, read as `table create` would read it, without a table (DeckText.check)
+                    if ("check".equals(op)) {
+                        send(Frames.result("server.check", DeckText.check(Frames.requireString(frame, "deck")), id));
+                        break;
+                    }
                     if (!"load".equals(op)) {
-                        throw new IllegalArgumentException("unknown server op '" + op + "' (load)");
+                        throw new IllegalArgumentException("unknown server op '" + op + "' (load, check)");
                     }
                     send(Frames.result("server.load", gate.load(), id));
                     break;
