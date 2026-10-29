@@ -95,4 +95,14 @@ public class RemoveCountersSourceCost extends CostImpl {
     public RemoveCountersSourceCost copy() {
         return new RemoveCountersSourceCost(this);
     }
+
+    /** How many counters it removes. */
+    public int getAmount() {
+        return amount;
+    }
+
+    /** The kind of counter it removes ("+1/+1"); empty for a counter of any kind. */
+    public String getCounterName() {
+        return name;
+    }
 }

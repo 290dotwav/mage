@@ -49,6 +49,59 @@ public class PaidCostTest extends CardTestPlayerBase {
         Assert.assertEquals("spent on " + object.getName(), spent, paid.getSpent());
     }
 
+    /** The kinds of its other costs, in order: "tap,sacrifice". */
+    public static String others(PaidCost paid) {
+        StringBuilder out = new StringBuilder();
+        for (PaidCost.Part part : paid.getOthers()) {
+            out.append(out.length() == 0 ? "" : ",").append(part.getKind());
+        }
+        return out.toString();
+    }
+
+    @Test
+    public void test_AdditionalCost_SacrificeTellsWhatWasSacrificed() {
+        // Village Rites {B}, as an additional cost to cast this spell, sacrifice a creature. Draw two cards.
+        addCard(Zone.HAND, playerA, "Village Rites");
+        addCard(Zone.BATTLEFIELD, playerA, "Swamp");
+        addCard(Zone.BATTLEFIELD, playerA, "Grizzly Bears");
+
+        castSpell(1, PhaseStep.PRECOMBAT_MAIN, playerA, "Village Rites");
+        setChoice(playerA, "Grizzly Bears");
+        runCode("on the stack", 1, PhaseStep.PRECOMBAT_MAIN, playerA, (info, player, game) -> {
+            PaidCost paid = PaidCost.of(spell(game, "Village Rites"), game);
+            Assert.assertNotNull(paid);
+            Assert.assertEquals("{B}", paid.getSpent());
+            Assert.assertEquals("sacrifice", others(paid));
+            Assert.assertEquals(java.util.Collections.singletonList("Grizzly Bears"), paid.getOthers().get(0).getNames());
+            Assert.assertFalse(paid.getOthers().get(0).isSource());
+        });
+
+        setStrictChooseMode(true);
+        setStopAt(1, PhaseStep.END_TURN);
+        execute();
+        assertGraveyardCount(playerA, "Grizzly Bears", 1);
+    }
+
+    @Test
+    public void test_RemovedCounters() {
+        // Triskelion enters with three +1/+1 counters. Remove a +1/+1 counter from Triskelion: It deals 1 damage to any target.
+        addCard(Zone.BATTLEFIELD, playerA, "Triskelion");
+
+        activateAbility(1, PhaseStep.PRECOMBAT_MAIN, playerA, "Remove a +1/+1 counter", playerB);
+        runCode("on the stack", 1, PhaseStep.PRECOMBAT_MAIN, playerA, (info, player, game) -> {
+            PaidCost paid = PaidCost.of(ability(game, "Triskelion"), game);
+            Assert.assertNotNull(paid);
+            Assert.assertEquals("counters", others(paid));
+            Assert.assertEquals(1, paid.getOthers().get(0).getAmount());
+            Assert.assertEquals("+1/+1", paid.getOthers().get(0).getCounter());
+            Assert.assertTrue(paid.getOthers().get(0).isSource());
+        });
+
+        setStrictChooseMode(true);
+        setStopAt(1, PhaseStep.END_TURN);
+        execute();
+    }
+
     @Test
     public void test_NormalSpell_GenericPaidWithAnotherColour() {
         // Grizzly Bears {1}{G}
@@ -148,7 +201,13 @@ public class PaidCostTest extends CardTestPlayerBase {
         activateAbility(1, PhaseStep.PRECOMBAT_MAIN, playerA, "{T}, Sacrifice");
         setChoice(playerA, "Balduvian Bears");
         runCode("tap and sacrifice is no mana", 1, PhaseStep.PRECOMBAT_MAIN, playerA, (info, player, game) -> {
-            Assert.assertNull("an ability whose cost holds no mana", PaidCost.of(ability(game, "Dauthi Voidwalker")));
+            // no mana, but its other costs: {T} and the sacrifice of the Voidwalker itself
+            PaidCost paid = PaidCost.of(ability(game, "Dauthi Voidwalker"));
+            Assert.assertNotNull("an ability paid with no mana still tells its other costs", paid);
+            Assert.assertEquals("", paid.getSpent());
+            Assert.assertEquals("tap,sacrifice", others(paid));
+            Assert.assertTrue("{T} is the source", paid.getOthers().get(0).isSource());
+            Assert.assertTrue("Sacrifice {this}", paid.getOthers().get(1).isSource());
         });
         waitStackResolved(1, PhaseStep.PRECOMBAT_MAIN);
         castSpell(1, PhaseStep.PRECOMBAT_MAIN, playerA, "Balduvian Bears");
@@ -171,6 +230,7 @@ public class PaidCostTest extends CardTestPlayerBase {
         activateAbility(1, PhaseStep.PRECOMBAT_MAIN, playerA, "{1}, {T}, Sacrifice");
         runCode("on the stack", 1, PhaseStep.PRECOMBAT_MAIN, playerA, (info, player, game) -> {
             assertPaid(ability(game, "Mind Stone"), "{1}", null, "{G}");
+            Assert.assertEquals("tap,sacrifice", others(PaidCost.of(ability(game, "Mind Stone"))));
         });
 
         setStrictChooseMode(true);

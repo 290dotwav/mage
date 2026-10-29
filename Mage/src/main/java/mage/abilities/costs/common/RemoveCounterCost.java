@@ -188,4 +188,9 @@ public class RemoveCounterCost extends CostImpl {
     public Targets getTargets() {
         return new Targets(this.target);
     }
+
+    /** The kind of counter it removes ("+1/+1"); empty for a counter of any kind. */
+    public String getCounterTypeName() {
+        return counterTypeToRemove == null ? "" : counterTypeToRemove.getName();
+    }
 }

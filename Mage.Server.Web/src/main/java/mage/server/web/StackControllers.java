@@ -1,5 +1,6 @@
 package mage.server.web;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import mage.game.Game;
@@ -30,6 +31,11 @@ import java.util.UUID;
  * for X when the cost had one, and {@code lifePaid} the life paid for it (Phyrexian mana, a
  * "pay N life" cost, K'rrik), only when some was. Left out for a triggered ability, a copy, and an activated ability
  * whose cost holds no mana and no life: nothing was paid for those.
+ * <p>
+ * And {@code others}, every other cost paid ({@link PaidCost#getOthers()}): one entry each,
+ * {@code kind} (sacrifice, discard, exile, reveal, return, tap, untap, counters), {@code names}
+ * of what it took, {@code source: true} when the source itself was the price ({T}, "Sacrifice
+ * {this}"), {@code amount} and {@code counter} for counters removed. Left out when none.
  */
 final class StackControllers {
 
@@ -46,7 +52,8 @@ final class StackControllers {
             return;
         }
         try {
-            Map<String, StackObject> objects = objects(gameId, managerFactory);
+            Game game = LiveGame.of(gameId, managerFactory);
+            Map<String, StackObject> objects = objects(game);
             if (objects == null) {
                 return;
             }
@@ -60,7 +67,7 @@ final class StackControllers {
                 if (object.getControllerId() != null) {
                     entry.addProperty("controllerId", object.getControllerId().toString());
                 }
-                JsonObject paid = paid(object);
+                JsonObject paid = paid(object, game);
                 if (paid != null) {
                     entry.add("manaPaid", paid);
                 }
@@ -70,8 +77,7 @@ final class StackControllers {
         }
     }
 
-    private static Map<String, StackObject> objects(UUID gameId, ManagerFactory managerFactory) {
-        Game game = LiveGame.of(gameId, managerFactory);
+    private static Map<String, StackObject> objects(Game game) {
         if (game == null) {
             return null;
         }
@@ -84,7 +90,12 @@ final class StackControllers {
 
     /** The {@code manaPaid} object of one stack entry, or null when nothing was paid for it. */
     static JsonObject paid(StackObject object) {
-        PaidCost paid = PaidCost.of(object);
+        return paid(object, null);
+    }
+
+    /** The same, the names of what its other costs took read off {@code game} where the cost keeps only ids. */
+    static JsonObject paid(StackObject object, Game game) {
+        PaidCost paid = PaidCost.of(object, game);
         if (paid == null) {
             return null;
         }
@@ -96,6 +107,29 @@ final class StackControllers {
         }
         if (paid.getLifePaid() > 0) {
             out.addProperty("lifePaid", paid.getLifePaid());
+        }
+        if (!paid.getOthers().isEmpty()) {
+            JsonArray others = new JsonArray();
+            for (PaidCost.Part part : paid.getOthers()) {
+                JsonObject one = new JsonObject();
+                one.addProperty("kind", part.getKind());
+                if (part.isSource()) {
+                    one.addProperty("source", true);
+                }
+                if (!part.getNames().isEmpty()) {
+                    JsonArray names = new JsonArray();
+                    part.getNames().forEach(names::add);
+                    one.add("names", names);
+                }
+                if (part.getAmount() > 0) {
+                    one.addProperty("amount", part.getAmount());
+                }
+                if (!part.getCounter().isEmpty()) {
+                    one.addProperty("counter", part.getCounter());
+                }
+                others.add(one);
+            }
+            out.add("others", others);
         }
         return out;
     }
