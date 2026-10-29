@@ -42,6 +42,8 @@ public final class StarTrekCommander extends ExpansionSet {
         cards.add(new SetCardInfo("Beverly Crusher, Ship's Doctor", 214, Rarity.RARE, mage.cards.b.BeverlyCrusherShipsDoctor.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Bio-Asset Allocator", 196, Rarity.RARE, mage.cards.b.BioAssetAllocator.class));
         cards.add(new SetCardInfo("Bitter Triumph", 445, Rarity.UNCOMMON, mage.cards.b.BitterTriumph.class));
+        cards.add(new SetCardInfo("Borg Incursion", 12, Rarity.RARE, mage.cards.b.BorgIncursion.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Borg Incursion", 215, Rarity.RARE, mage.cards.b.BorgIncursion.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Borg Queen, One Who Is Many", 131, Rarity.RARE, mage.cards.b.BorgQueenOneWhoIsMany.class));
         cards.add(new SetCardInfo("Borg Scout Sphere", 248, Rarity.RARE, mage.cards.b.BorgScoutSphere.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Borg Scout Sphere", 36, Rarity.RARE, mage.cards.b.BorgScoutSphere.class, NON_FULL_USE_VARIOUS));
@@ -86,6 +88,8 @@ public final class StarTrekCommander extends ExpansionSet {
         cards.add(new SetCardInfo("Data, Exploring Humanity", 202, Rarity.RARE, mage.cards.d.DataExploringHumanity.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Data, Exploring Humanity", 40, Rarity.RARE, mage.cards.d.DataExploringHumanity.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Defense Force Aggressor", 161, Rarity.COMMON, mage.cards.d.DefenseForceAggressor.class));
+        cards.add(new SetCardInfo("Deliver from Chaos", 93, Rarity.RARE, mage.cards.d.DeliverFromChaos.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Deliver from Chaos", 318, Rarity.RARE, mage.cards.d.DeliverFromChaos.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Desolate Lighthouse", 374, Rarity.RARE, mage.cards.d.DesolateLighthouse.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Desolate Lighthouse", 523, Rarity.RARE, mage.cards.d.DesolateLighthouse.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Direct Hit", 162, Rarity.COMMON, mage.cards.d.DirectHit.class));
@@ -112,6 +116,8 @@ public final class StarTrekCommander extends ExpansionSet {
         cards.add(new SetCardInfo("Exocomp", 145, Rarity.COMMON, mage.cards.e.Exocomp.class));
         cards.add(new SetCardInfo("Exotic Orchard", 378, Rarity.RARE, mage.cards.e.ExoticOrchard.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Exotic Orchard", 528, Rarity.RARE, mage.cards.e.ExoticOrchard.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Extraction Integrant", 59, Rarity.RARE, mage.cards.e.ExtractionIntegrant.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Extraction Integrant", 272, Rarity.RARE, mage.cards.e.ExtractionIntegrant.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Fabled Passage", 379, Rarity.RARE, mage.cards.f.FabledPassage.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Fabled Passage", 529, Rarity.RARE, mage.cards.f.FabledPassage.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Faithful Mending", 473, Rarity.UNCOMMON, mage.cards.f.FaithfulMending.class));
