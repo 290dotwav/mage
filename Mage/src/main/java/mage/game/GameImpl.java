@@ -163,6 +163,12 @@ public abstract class GameImpl implements Game {
     protected GameOptions gameOptions;
     protected String startMessage;
 
+    /**
+     * The stack object {@link #resolve()} is resolving right now, null outside a resolution. Read
+     * by the web door (Mage.Server.Web, SameToCome) to tell a question asked while a triggered
+     * ability is put on the stack (its targets) from one asked while it resolves.
+     */
+    private transient UUID resolvingId = null;
     private boolean scopeRelevant = false; // replacement effects: used to indicate that currently applied replacement effects have to check for scope relevance (614.12 13/01/18)
     private boolean saveGame = false; // replay code, not done
     private int priorityTime; // Match time limit (per player). Set at the start of the match and only goes down.
@@ -2022,13 +2028,20 @@ public abstract class GameImpl implements Game {
         }
     }
 
+    /** The stack object being resolved right now, null outside a resolution ({@link #resolve()}). */
+    public UUID getResolvingId() {
+        return resolvingId;
+    }
+
     protected void resolve() {
         StackObject top = null;
         boolean wasError = false;
         boolean applied = false;
+        UUID resolvingBefore = resolvingId;
         try {
             top = state.getStack().peek();
             DataCollectorServices.getInstance().onTestsStackResolveStart(this, top);
+            resolvingId = top == null ? null : top.getId();
             applied = top.resolve(this);
             resetControlAfterSpellResolve(top.getId());
         } catch (Throwable e) {
@@ -2036,6 +2049,7 @@ public abstract class GameImpl implements Game {
             wasError = true;
             throw e;
         } finally {
+            resolvingId = resolvingBefore;
             if (top != null) {
                 state.getStack().remove(top, this); // seems partly redundant because move card from stack to grave is already done and the stack removed
                 if (!wasError) {
