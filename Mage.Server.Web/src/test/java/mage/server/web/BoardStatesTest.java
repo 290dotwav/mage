@@ -72,4 +72,19 @@ class BoardStatesTest {
         BoardStates.markSpeed(none, 0);
         assertFalse(none.has("speed"));
     }
+
+    @Test
+    void aPlayersLandPlaysAsTheEngineCountsThem() {
+        JsonObject druid = new JsonObject();
+        BoardStates.markLands(druid, 0, 2);
+        assertTrue(druid.get("landsPlayed").getAsInt() == 0);
+        assertTrue(druid.get("landsPerTurn").getAsInt() == 2);
+        JsonObject explored = new JsonObject();
+        BoardStates.markLands(explored, 1, 3);
+        assertTrue(explored.get("landsPlayed").getAsInt() == 1);
+        assertTrue(explored.get("landsPerTurn").getAsInt() == 3);
+        JsonObject any = new JsonObject();
+        BoardStates.markLands(any, 4, Integer.MAX_VALUE);
+        assertTrue(any.get("landsPerTurn").getAsInt() == Integer.MAX_VALUE);
+    }
 }

@@ -48,6 +48,14 @@ import java.util.UUID;
  * <pre>
  *   "speed": 2                       // on that player's entry of players[]; left out until he has speed
  * </pre>
+ * A player's land plays this turn (305.2, 305.2a): how many he has played and how many he may play.
+ * The second is what their engine allows now (Exploration, Azusa, a Class at its level: the
+ * effects that raise it are applied before each frame), so the screen never has to read a card's
+ * text to know it. Their PlayerView carries neither.
+ * <pre>
+ *   "landsPlayed": 0                 // on that player's entry of players[]
+ *   "landsPerTurn": 2                // the same; 2147483647 when he may play any number
+ * </pre>
  * A secret choice of an opponent (Stalking Leonin, Guardian Archon, Emissary of Grudges): the
  * player who chose knows whom he chose, nobody else does until he reveals it. Their view says
  * only "X has secretly chosen an opponent." to everyone, the chooser too, so in a long game he
@@ -91,6 +99,7 @@ final class BoardStates {
                     if (player != null) {
                         markProtection(el.getAsJsonObject(), player.getAbilities());
                         markSpeed(el.getAsJsonObject(), player.getSpeed());
+                        markLands(el.getAsJsonObject(), player.getLandsPlayed(), player.getLandsPerTurn());
                     }
                 }
                 JsonElement bf = el.getAsJsonObject().get("battlefield");
@@ -125,6 +134,12 @@ final class BoardStates {
         if (speed > 0) {
             entry.addProperty("speed", speed);
         }
+    }
+
+    /** `landsPlayed` and `landsPerTurn` on a player's entry: the turn's land plays as their engine counts them (305.2). */
+    static void markLands(JsonObject entry, int played, int perTurn) {
+        entry.addProperty("landsPlayed", Math.max(0, played));
+        entry.addProperty("landsPerTurn", Math.max(0, perTurn));
     }
 
     /** `secretOpponent` on a permanent's entry, for the player who chose it only. */
