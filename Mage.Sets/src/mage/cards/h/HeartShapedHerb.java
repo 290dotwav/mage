@@ -1,12 +1,16 @@
 package mage.cards.h;
 
+import java.util.UUID;
+
 import mage.abilities.Ability;
 import mage.abilities.common.SimpleActivatedAbility;
 import mage.abilities.common.SimpleStaticAbility;
 import mage.abilities.costs.common.SacrificeSourceCost;
+import mage.abilities.costs.common.SacrificeTargetCost;
 import mage.abilities.costs.common.TapSourceCost;
 import mage.abilities.costs.mana.GenericManaCost;
 import mage.abilities.effects.OneShotEffect;
+import mage.abilities.effects.common.BecomesMonarchSourceEffect;
 import mage.abilities.effects.PreventionEffectImpl;
 import mage.abilities.hint.common.MonarchHint;
 import mage.cards.Card;
@@ -17,30 +21,29 @@ import mage.constants.Duration;
 import mage.constants.Outcome;
 import mage.constants.Zone;
 import mage.counters.CounterType;
-import mage.counters.Counters;
 import mage.filter.StaticFilters;
 import mage.game.Game;
 import mage.game.events.GameEvent;
 import mage.game.permanent.Permanent;
-import mage.game.permanent.PermanentToken;
 import mage.players.Player;
-import mage.target.TargetPermanent;
-
-import java.util.UUID;
+import mage.util.CardUtil;
 
 /**
- * @author Claude
+ *
+ * @author muz
  */
 public final class HeartShapedHerb extends CardImpl {
 
     public HeartShapedHerb(UUID ownerId, CardSetInfo setInfo) {
         super(ownerId, setInfo, new CardType[]{CardType.ARTIFACT}, "{4}");
 
+
         // If a source an opponent controls would deal damage to you, prevent 1 of that damage.
         this.addAbility(new SimpleStaticAbility(new HeartShapedHerbPreventionEffect()));
 
-        // {2}, {T}, Sacrifice this artifact: You may sacrifice a creature. If you do, return that card to the battlefield under its owner's control with three +1/+1 counters on it and you become the monarch.
-        Ability ability = new SimpleActivatedAbility(new HeartShapedHerbEffect(), new GenericManaCost(2));
+        // {2}, {T}, Sacrifice this artifact: You may sacrifice a creature.
+        // If you do, return that card to the battlefield under its owner's control with three +1/+1 counters on it and you become the monarch.
+        Ability ability = new SimpleActivatedAbility(new HeartShapedHerbOneShotEffect(), new GenericManaCost(2));
         ability.addCost(new TapSourceCost());
         ability.addCost(new SacrificeSourceCost());
         ability.addHint(MonarchHint.instance);
@@ -75,13 +78,13 @@ class HeartShapedHerbPreventionEffect extends PreventionEffectImpl {
 
     @Override
     public boolean applies(GameEvent event, Ability source, Game game) {
-        if (!event.getTargetId().equals(source.getControllerId())) {
-            return false;
+        if (event.getTargetId().equals(source.getControllerId())) {
+            UUID sourceControllerId = game.getControllerId(event.getSourceId());
+            if (sourceControllerId != null && game.getOpponents(source.getControllerId()).contains(sourceControllerId)) {
+                return super.applies(event, source, game);
+            }
         }
-        UUID sourceControllerId = game.getControllerId(event.getSourceId());
-        return sourceControllerId != null
-                && game.getOpponents(source.getControllerId()).contains(sourceControllerId)
-                && super.applies(event, source, game);
+        return false;
     }
 
     @Override
@@ -90,21 +93,22 @@ class HeartShapedHerbPreventionEffect extends PreventionEffectImpl {
     }
 }
 
-class HeartShapedHerbEffect extends OneShotEffect {
+class HeartShapedHerbOneShotEffect extends OneShotEffect {
 
-    HeartShapedHerbEffect() {
+    HeartShapedHerbOneShotEffect() {
         super(Outcome.Benefit);
-        staticText = "you may sacrifice a creature. If you do, return that card to the battlefield under its owner's " +
-                "control with three +1/+1 counters on it and you become the monarch";
+        this.staticText = "You may sacrifice a creature. If you do, return"
+         + " that card to the battlefield under its owner's control with three"
+         + " +1/+1 counters on it and you become the monarch";
     }
 
-    private HeartShapedHerbEffect(final HeartShapedHerbEffect effect) {
+    private HeartShapedHerbOneShotEffect(final HeartShapedHerbOneShotEffect effect) {
         super(effect);
     }
 
     @Override
-    public HeartShapedHerbEffect copy() {
-        return new HeartShapedHerbEffect(this);
+    public HeartShapedHerbOneShotEffect copy() {
+        return new HeartShapedHerbOneShotEffect(this);
     }
 
     @Override
@@ -113,32 +117,40 @@ class HeartShapedHerbEffect extends OneShotEffect {
         if (controller == null) {
             return false;
         }
-        TargetPermanent target = new TargetPermanent(0, 1, StaticFilters.FILTER_CONTROLLED_CREATURE, true);
-        if (!target.canChoose(controller.getId(), source, game)
-                || !controller.chooseUse(Outcome.Benefit, "Sacrifice a creature?", source, game)) {
+
+        SacrificeTargetCost cost = new SacrificeTargetCost(StaticFilters.FILTER_PERMANENT_CREATURE);
+        if (!cost.canPay(source, source, controller.getId(), game)) {
             return false;
         }
-        controller.choose(Outcome.Sacrifice, target, source, game);
-        Permanent permanent = game.getPermanent(target.getFirstTarget());
-        if (permanent == null) {
+
+        if (!controller.chooseUse(outcome, "Sacrifice a creature?", source, game)) {
             return false;
         }
-        boolean isToken = permanent instanceof PermanentToken;
-        if (!permanent.sacrifice(source, game)) {
+
+        cost.clearPaid();
+        if (!cost.pay(source, game, source, controller.getId(), false) || cost.getPermanents().isEmpty()) {
             return false;
         }
-        // "that card": a token or a card that isn't in the graveyard (e.g. a commander put into the command zone) isn't returned
-        Card card = isToken ? null : game.getCard(permanent.getId());
-        if (card != null && game.getState().getZone(card.getId()) == Zone.GRAVEYARD) {
+
+        game.processAction();
+
+        Permanent sacrificed = cost.getPermanents().get(0);
+        // a merged (mutated) permanent leaves as several cards, and each one returns (rule 730.3c)
+        // tokens aren't in the graveyard, so only cards are returned
+        for (Card card : CardUtil.getAllCardsFromPermanentLeftBattlefield(sacrificed, game)) {
+            if (game.getState().getZone(card.getId()) != Zone.GRAVEYARD) {
+                continue;
+            }
             Player owner = game.getPlayer(card.getOwnerId());
-            if (owner != null) {
-                Counters counters = new Counters();
-                counters.addCounter(CounterType.P1P1.createInstance(3));
-                game.setEnterWithCounters(card.getId(), counters);
-                owner.moveCards(card, Zone.BATTLEFIELD, source, game);
+            if (owner != null && owner.moveCards(card, Zone.BATTLEFIELD, source, game)) {
+                Permanent returned = CardUtil.getPermanentFromCardPutToBattlefield(card, game);
+                if (returned != null) {
+                    returned.addCounters(CounterType.P1P1.createInstance(3), source.getControllerId(), source, game);
+                }
             }
         }
-        game.setMonarchId(source, controller.getId());
+
+        new BecomesMonarchSourceEffect().apply(game, source);
         return true;
     }
 }

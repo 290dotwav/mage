@@ -13,7 +13,7 @@ import mage.filter.StaticFilters;
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author muz
  */
 public final class OptimizationAnnex extends CardImpl {
 
@@ -26,7 +26,7 @@ public final class OptimizationAnnex extends CardImpl {
 
         // If one or more charge counters would be put on an artifact you control, that many plus one charge counters are put on it instead.
         this.addAbility(new SimpleStaticAbility(new ModifyCountersAddedEffect(
-                StaticFilters.FILTER_CONTROLLED_PERMANENT_ARTIFACT, CounterType.CHARGE
+            StaticFilters.FILTER_CONTROLLED_PERMANENT_ARTIFACT, CounterType.CHARGE
         )));
     }
 

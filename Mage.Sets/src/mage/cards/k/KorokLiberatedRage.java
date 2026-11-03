@@ -15,7 +15,7 @@ import mage.watchers.common.PlayersAttackedThisTurnWatcher;
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author muz
  */
 public final class KorokLiberatedRage extends CardImpl {
 
@@ -29,11 +29,16 @@ public final class KorokLiberatedRage extends CardImpl {
         this.toughness = new MageInt(2);
 
         // Battlefront -- Whenever Korok attacks, creatures you control get +X/+X until end of turn, where X is the number of opponents you attacked this turn.
-        this.addAbility(new AttacksTriggeredAbility(new BoostControlledEffect(
-                AttackedThisTurnOpponentsCount.instance, AttackedThisTurnOpponentsCount.instance, Duration.EndOfTurn
-        ).setText("creatures you control get +X/+X until end of turn, where X is the number of opponents you attacked this turn"))
-                .withFlavorWord("Battlefront").addHint(AttackedThisTurnOpponentsCount.getHint()),
-                new PlayersAttackedThisTurnWatcher());
+        this.addAbility(new AttacksTriggeredAbility(
+            new BoostControlledEffect(
+                AttackedThisTurnOpponentsCount.instance,
+                AttackedThisTurnOpponentsCount.instance,
+                Duration.EndOfTurn
+            ).setText("creatures you control get +X/+X until end of turn, where X is the number of opponents you attacked this turn"))
+                .withFlavorWord("Battlefront")
+                .addHint(AttackedThisTurnOpponentsCount.getHint()),
+            new PlayersAttackedThisTurnWatcher()
+        );
     }
 
     private KorokLiberatedRage(final KorokLiberatedRage card) {

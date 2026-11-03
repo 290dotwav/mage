@@ -1,12 +1,13 @@
 package mage.cards.o;
 
+import java.util.UUID;
+
 import mage.MageInt;
-import mage.MageObjectReference;
 import mage.abilities.Ability;
 import mage.abilities.DelayedTriggeredAbility;
 import mage.abilities.common.EntersBattlefieldTriggeredAbility;
-import mage.abilities.effects.OneShotEffect;
 import mage.abilities.effects.common.BecomesMonarchSourceEffect;
+import mage.abilities.effects.common.CreateDelayedTriggeredAbilityEffect;
 import mage.abilities.effects.common.continuous.GainAbilityTargetEffect;
 import mage.abilities.effects.common.counter.AddCountersTargetEffect;
 import mage.abilities.hint.common.MonarchHint;
@@ -17,20 +18,16 @@ import mage.cards.CardImpl;
 import mage.cards.CardSetInfo;
 import mage.constants.CardType;
 import mage.constants.Duration;
-import mage.constants.Outcome;
 import mage.constants.SubType;
 import mage.constants.SuperType;
 import mage.counters.CounterType;
 import mage.game.Game;
 import mage.game.events.GameEvent;
-import mage.game.permanent.Permanent;
 import mage.target.common.TargetCreaturePermanent;
-import mage.target.targetpointer.FixedTarget;
-
-import java.util.UUID;
 
 /**
- * @author Claude
+ *
+ * @author muz
  */
 public final class OkoyeMightyAndAdored extends CardImpl {
 
@@ -49,7 +46,7 @@ public final class OkoyeMightyAndAdored extends CardImpl {
 
         // At the beginning of combat on your turn, put a +1/+1 counter on target creature. Whenever that creature attacks the monarch this turn, it gains double strike and trample until end of turn.
         Ability ability = new BeginningOfCombatTriggeredAbility(new AddCountersTargetEffect(CounterType.P1P1.createInstance()));
-        ability.addEffect(new OkoyeMightyAndAdoredEffect());
+        ability.addEffect(new CreateDelayedTriggeredAbilityEffect(new OkoyeMightyAndAdoredDelayedTriggeredAbility()));
         ability.addTarget(new TargetCreaturePermanent());
         this.addAbility(ability);
     }
@@ -64,50 +61,18 @@ public final class OkoyeMightyAndAdored extends CardImpl {
     }
 }
 
-class OkoyeMightyAndAdoredEffect extends OneShotEffect {
-
-    OkoyeMightyAndAdoredEffect() {
-        super(Outcome.AddAbility);
-        staticText = "Whenever that creature attacks the monarch this turn, it gains double strike and trample until end of turn";
-    }
-
-    private OkoyeMightyAndAdoredEffect(final OkoyeMightyAndAdoredEffect effect) {
-        super(effect);
-    }
-
-    @Override
-    public OkoyeMightyAndAdoredEffect copy() {
-        return new OkoyeMightyAndAdoredEffect(this);
-    }
-
-    @Override
-    public boolean apply(Game game, Ability source) {
-        Permanent permanent = game.getPermanent(getTargetPointer().getFirst(game, source));
-        if (permanent == null) {
-            return false;
-        }
-        game.addDelayedTriggeredAbility(new OkoyeMightyAndAdoredDelayedTriggeredAbility(permanent, game), source);
-        return true;
-    }
-}
-
 class OkoyeMightyAndAdoredDelayedTriggeredAbility extends DelayedTriggeredAbility {
 
-    private final MageObjectReference creature;
-
-    OkoyeMightyAndAdoredDelayedTriggeredAbility(Permanent permanent, Game game) {
+    OkoyeMightyAndAdoredDelayedTriggeredAbility() {
         super(new GainAbilityTargetEffect(DoubleStrikeAbility.getInstance(), Duration.EndOfTurn)
-                .setText("it gains double strike"), Duration.EndOfTurn, false, false);
+            .setText("it gains double strike"), Duration.EndOfTurn, false, false);
         this.addEffect(new GainAbilityTargetEffect(TrampleAbility.getInstance(), Duration.EndOfTurn)
-                .setText("and trample until end of turn"));
-        this.creature = new MageObjectReference(permanent, game);
-        this.getEffects().setTargetPointer(new FixedTarget(permanent, game));
-        setTriggerPhrase("Whenever that creature attacks the monarch this turn, ");
+            .setText("and trample until end of turn"));
+        this.setTriggerPhrase("Whenever that creature attacks the monarch this turn, ");
     }
 
     private OkoyeMightyAndAdoredDelayedTriggeredAbility(final OkoyeMightyAndAdoredDelayedTriggeredAbility ability) {
         super(ability);
-        this.creature = ability.creature;
     }
 
     @Override
@@ -122,7 +87,7 @@ class OkoyeMightyAndAdoredDelayedTriggeredAbility extends DelayedTriggeredAbilit
 
     @Override
     public boolean checkTrigger(GameEvent event, Game game) {
-        return creature.refersTo(game.getPermanent(event.getSourceId()), game)
-                && event.getTargetId().equals(game.getMonarchId());
+        return event.getSourceId().equals(getEffects().get(0).getTargetPointer().getFirst(game, this))
+            && event.getTargetId().equals(game.getMonarchId());
     }
 }

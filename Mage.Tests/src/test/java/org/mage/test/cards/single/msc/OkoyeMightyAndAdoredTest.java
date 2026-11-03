@@ -1,73 +1,75 @@
 package org.mage.test.cards.single.msc;
 
+import mage.abilities.keyword.DoubleStrikeAbility;
+import mage.abilities.keyword.TrampleAbility;
 import mage.constants.PhaseStep;
 import mage.constants.Zone;
 import mage.counters.CounterType;
-import org.junit.Assert;
 import org.junit.Test;
 import org.mage.test.serverside.base.CardTestPlayerBase;
 
 /**
- * @author Claude
+ * @author muz
  */
 public class OkoyeMightyAndAdoredTest extends CardTestPlayerBase {
 
+    // Okoye, Mighty and Adored {2}{G}{W}
     // When Okoye enters, you become the monarch.
-    // At the beginning of combat on your turn, put a +1/+1 counter on target creature. Whenever that creature
-    // attacks the monarch this turn, it gains double strike and trample until end of turn.
+    // At the beginning of combat on your turn, put a +1/+1 counter on target creature. Whenever that creature attacks the monarch this turn, it gains double strike and trample until end of turn.
     private static final String OKOYE = "Okoye, Mighty and Adored";
 
+    private static final String BEARS = "Grizzly Bears";
+
+    // Thorn of the Black Rose {3}{B}
+    // When Thorn of the Black Rose enters, you become the monarch.
+    private static final String THORN = "Thorn of the Black Rose";
+
     @Test
-    public void test_EntersMonarch() {
+    public void testAttackingTheMonarchGainsDoubleStrikeAndTrample() {
+        setStrictChooseMode(true);
+
+        addCard(Zone.BATTLEFIELD, playerA, "Forest", 2);
+        addCard(Zone.BATTLEFIELD, playerA, "Plains", 2);
+        addCard(Zone.BATTLEFIELD, playerA, BEARS);
         addCard(Zone.HAND, playerA, OKOYE);
-        addCard(Zone.BATTLEFIELD, playerA, "Savannah", 4);
+        addCard(Zone.BATTLEFIELD, playerB, "Swamp", 4);
+        addCard(Zone.HAND, playerB, THORN);
 
-        castSpell(1, PhaseStep.PRECOMBAT_MAIN, playerA, OKOYE);
-        addTarget(playerA, OKOYE); // its beginning of combat trigger
+        castSpell(1, PhaseStep.POSTCOMBAT_MAIN, playerA, OKOYE);
+        castSpell(2, PhaseStep.PRECOMBAT_MAIN, playerB, THORN);
 
-        setStrictChooseMode(true);
-        setStopAt(1, PhaseStep.END_TURN);
+        addTarget(playerA, BEARS);
+        attack(3, playerA, BEARS, playerB);
+
+        setStopAt(3, PhaseStep.POSTCOMBAT_MAIN);
         execute();
 
-        Assert.assertEquals("monarch", playerA.getId(), currentGame.getMonarchId());
+        assertCounterCount(playerA, BEARS, CounterType.P1P1, 1);
+        assertAbility(playerA, BEARS, DoubleStrikeAbility.getInstance(), true);
+        assertAbility(playerA, BEARS, TrampleAbility.getInstance(), true);
+        assertLife(playerB, 20 - 6);
     }
 
     @Test
-    public void test_AttacksMonarchDoubleStrike() {
-        addCard(Zone.BATTLEFIELD, playerA, OKOYE);
-        addCard(Zone.BATTLEFIELD, playerA, "Grizzly Bears");
-        // B's own Okoye makes B the monarch
-        addCard(Zone.HAND, playerB, OKOYE);
-        addCard(Zone.BATTLEFIELD, playerB, "Savannah", 4);
-
-        addTarget(playerA, "Grizzly Bears"); // turn 1 beginning of combat
-        castSpell(2, PhaseStep.PRECOMBAT_MAIN, playerB, OKOYE);
-        addTarget(playerB, OKOYE); // B's turn 2 beginning of combat
-        addTarget(playerA, "Grizzly Bears"); // turn 3 beginning of combat
-
-        attack(3, playerA, "Grizzly Bears", playerB);
-
+    public void testAttackingNonMonarchGainsNothing() {
         setStrictChooseMode(true);
-        setStopAt(3, PhaseStep.END_COMBAT);
+
+        addCard(Zone.BATTLEFIELD, playerA, "Forest", 2);
+        addCard(Zone.BATTLEFIELD, playerA, "Plains", 2);
+        addCard(Zone.BATTLEFIELD, playerA, BEARS);
+        addCard(Zone.HAND, playerA, OKOYE);
+
+        castSpell(1, PhaseStep.POSTCOMBAT_MAIN, playerA, OKOYE);
+
+        addTarget(playerA, BEARS);
+        attack(3, playerA, BEARS, playerB);
+
+        setStopAt(3, PhaseStep.POSTCOMBAT_MAIN);
         execute();
 
-        assertCounterCount(playerA, "Grizzly Bears", CounterType.P1P1, 2);
-        // 4/4 double strike
-        assertLife(playerB, 20 - 8);
-    }
-
-    @Test
-    public void test_AttacksNonMonarchNoDoubleStrike() {
-        addCard(Zone.BATTLEFIELD, playerA, OKOYE);
-        addCard(Zone.BATTLEFIELD, playerA, "Grizzly Bears");
-
-        addTarget(playerA, "Grizzly Bears");
-        attack(1, playerA, "Grizzly Bears", playerB);
-
-        setStrictChooseMode(true);
-        setStopAt(1, PhaseStep.END_COMBAT);
-        execute();
-
+        assertCounterCount(playerA, BEARS, CounterType.P1P1, 1);
+        assertAbility(playerA, BEARS, DoubleStrikeAbility.getInstance(), false);
+        assertAbility(playerA, BEARS, TrampleAbility.getInstance(), false);
         assertLife(playerB, 20 - 3);
     }
 }

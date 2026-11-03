@@ -1,7 +1,7 @@
 package mage.cards.c;
 
 import mage.abilities.Ability;
-import mage.abilities.common.EntersBattlefieldControlledTriggeredAbility;
+import mage.abilities.common.EntersBattlefieldAllTriggeredAbility;
 import mage.abilities.condition.common.SourceHasCounterCondition;
 import mage.abilities.decorator.ConditionalOneShotEffect;
 import mage.abilities.effects.common.CreateTokenEffect;
@@ -17,11 +17,11 @@ import mage.game.permanent.token.BorgToken;
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author muz
  */
 public final class ConquestMission extends CardImpl {
 
-    private static final FilterControlledArtifactPermanent filter = new FilterControlledArtifactPermanent("nontoken artifact");
+    private static final FilterControlledArtifactPermanent filter = new FilterControlledArtifactPermanent("a nontoken artifact you control");
 
     static {
         filter.add(TokenPredicate.FALSE);
@@ -31,16 +31,12 @@ public final class ConquestMission extends CardImpl {
         super(ownerId, setInfo, new CardType[]{CardType.ENCHANTMENT}, "{2}{W}");
 
         // Whenever a nontoken artifact you control enters, put a quest counter on this enchantment. Create a 1/1 colorless Borg artifact creature token. If this enchantment has six or more quest counters on it, create two of those tokens instead.
-        Ability ability = new EntersBattlefieldControlledTriggeredAbility(
-                new AddCountersSourceEffect(CounterType.QUEST.createInstance()), filter
-        );
+        Ability ability = new EntersBattlefieldAllTriggeredAbility(new AddCountersSourceEffect(CounterType.QUEST.createInstance()), filter);
         ability.addEffect(new ConditionalOneShotEffect(
-                new CreateTokenEffect(new BorgToken(), 2),
-                new CreateTokenEffect(new BorgToken()),
-                new SourceHasCounterCondition(CounterType.QUEST, 6),
-                "Create a 1/1 colorless Borg artifact creature token. If this enchantment has "
-                        + "six or more quest counters on it, create two of those tokens instead"
-        ));
+            new CreateTokenEffect(new BorgToken(), 2),
+            new CreateTokenEffect(new BorgToken()),
+            new SourceHasCounterCondition(CounterType.QUEST, 6),
+            "create a 1/1 colorless Borg artifact creature token. If {this} has six or more quest counters on it, create two of those tokens instead"));
         this.addAbility(ability);
     }
 

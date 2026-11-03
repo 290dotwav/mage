@@ -347,8 +347,13 @@ public class Spell extends StackObjectImpl implements Card {
                 boolean permanentCreated;
                 if (isCopy()) {
                     Token token = CopyTokenFunction.createTokenCopy(card, game, this);
+                    // TODO: if more sneak style mechanics arrive then combine to shared logic and methods like CardUtil.getForcedAttackingDefenders(Game game, Ability source)
+                    Set<UUID> sneakDefenders = SneakAbility.getSneakDefenders(this, game);
+                    boolean needTapped = sneakDefenders != null;
+                    boolean needAttacking = sneakDefenders != null;
+                    Set<UUID> needAttackingDefenders = sneakDefenders;
                     // The token that a resolving copy of a spell becomes isn’t said to have been “created.” (2020-09-25)
-                    if (token.putOntoBattlefield(1, game, ability, getControllerId(), false, false, null, null, false)) {
+                    if (token.putOntoBattlefield(1, game, ability, getControllerId(), needTapped, needAttacking, needAttackingDefenders, null, false)) {
                         permId = token.getLastAddedTokenIds().stream().findFirst().orElse(null);
                         permanentCreated = true;
                     } else {
@@ -412,24 +417,18 @@ public class Spell extends StackObjectImpl implements Card {
             }
             if (isCopy()) {
                 Token token = CopyTokenFunction.createTokenCopy(card, game, this);
+                // TODO: if more sneak style mechanics arrive then combine to shared logic and methods like CardUtil.getForcedAttackingDefenders(Game game, Ability source)
+                Set<UUID> sneakDefenders = SneakAbility.getSneakDefenders(this, game);
+                boolean needTapped = sneakDefenders != null;
+                boolean needAttacking = sneakDefenders != null;
+                Set<UUID> needAttackingDefenders = sneakDefenders;
                 // The token that a resolving copy of a spell becomes isn’t said to have been “created.” (2020-09-25)
-                token.putOntoBattlefield(1, game, ability, getControllerId(), false, false, null, null, false);
+                token.putOntoBattlefield(1, game, ability, getControllerId(), needTapped, needAttacking, needAttackingDefenders, null, false);
                 return true;
             } else {
                 MageObjectReference mor = new MageObjectReference(getSpellAbility());
                 game.storePermanentCostsTags(mor, getSpellAbility());
-                // 702.190b: a permanent spell whose sneak cost was paid enters tapped and attacking
-                // what the creature returned to pay it attacked.
-                boolean sneaked = CardUtil.checkSourceCostsTagExists(game, getSpellAbility(), SneakAbility.SNEAK_ACTIVATION_VALUE_KEY);
-                UUID sneakDefender = sneaked ? SneakAbility.getSneakDefender(game, getSpellAbility()) : null;
-                boolean moved = controller.moveCards(card, Zone.BATTLEFIELD, ability, game, sneaked, faceDown, false, null);
-                if (moved && sneakDefender != null && game.getCombat() != null) {
-                    Permanent permanent = game.getPermanent(card.getId());
-                    if (permanent != null && permanent.isCreature(game)) {
-                        game.getCombat().addAttackingCreature(permanent.getId(), game, sneakDefender);
-                    }
-                }
-                return moved;
+                return controller.moveCards(card, Zone.BATTLEFIELD, ability, game, false, faceDown, false, null);
             }
         }
     }

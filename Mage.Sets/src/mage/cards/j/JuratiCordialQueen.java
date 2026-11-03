@@ -17,7 +17,7 @@ import mage.target.TargetPermanent;
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author muz
  */
 public final class JuratiCordialQueen extends CardImpl {
 
@@ -38,7 +38,8 @@ public final class JuratiCordialQueen extends CardImpl {
 
         // Whenever one or more artifact creatures you control deal combat damage to a player, create a token that's a copy of target artifact token you control.
         Ability ability = new OneOrMoreCombatDamagePlayerTriggeredAbility(
-                new CreateTokenCopyTargetEffect(), StaticFilters.FILTER_PERMANENTS_ARTIFACT_CREATURE
+            new CreateTokenCopyTargetEffect(),
+            StaticFilters.FILTER_PERMANENTS_ARTIFACT_CREATURE
         );
         ability.addTarget(new TargetPermanent(filter));
         this.addAbility(ability);
