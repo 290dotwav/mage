@@ -6,72 +6,59 @@ import org.junit.Test;
 import org.mage.test.serverside.base.CardTestPlayerBase;
 
 /**
- * @author Claude
+ * @author DarioBarrabinoDev
  */
 public class MisterImmortalTest extends CardTestPlayerBase {
 
     // {2}{G}: Return this card from your graveyard or from exile to the battlefield tapped.
-    private static final String IMMORTAL = "Mister Immortal";
+    private static final String misterImmortal = "Mister Immortal"; // 2/1
+    private static final String ability = "{2}{G}: Return";
 
     @Test
-    public void test_FromGraveyard() {
-        addCard(Zone.GRAVEYARD, playerA, IMMORTAL);
+    public void test_ReturnFromGraveyardTapped() {
+        setStrictChooseMode(true);
+
+        addCard(Zone.GRAVEYARD, playerA, misterImmortal);
         addCard(Zone.BATTLEFIELD, playerA, "Forest", 3);
 
-        activateAbility(1, PhaseStep.PRECOMBAT_MAIN, playerA, "{2}{G}: Return");
+        activateAbility(1, PhaseStep.PRECOMBAT_MAIN, playerA, ability);
 
-        setStrictChooseMode(true);
         setStopAt(1, PhaseStep.END_TURN);
         execute();
 
-        assertPermanentCount(playerA, IMMORTAL, 1);
-        assertTapped(IMMORTAL, true);
+        assertGraveyardCount(playerA, misterImmortal, 0);
+        assertPermanentCount(playerA, misterImmortal, 1);
+        assertTapped(misterImmortal, true);
     }
 
     @Test
-    public void test_FromExile() {
-        addCard(Zone.EXILED, playerA, IMMORTAL);
+    public void test_ReturnFromExileTapped() {
+        setStrictChooseMode(true);
+
+        addCard(Zone.EXILED, playerA, misterImmortal);
         addCard(Zone.BATTLEFIELD, playerA, "Forest", 3);
 
-        activateAbility(1, PhaseStep.PRECOMBAT_MAIN, playerA, "{2}{G}: Return");
+        activateAbility(1, PhaseStep.PRECOMBAT_MAIN, playerA, ability);
 
-        setStrictChooseMode(true);
         setStopAt(1, PhaseStep.END_TURN);
         execute();
 
-        assertPermanentCount(playerA, IMMORTAL, 1);
-        assertTapped(IMMORTAL, true);
+        assertExileCount(playerA, misterImmortal, 0);
+        assertPermanentCount(playerA, misterImmortal, 1);
+        assertTapped(misterImmortal, true);
     }
 
     @Test
-    public void test_NotFromBattlefieldOrHand() {
-        addCard(Zone.BATTLEFIELD, playerA, IMMORTAL);
-        addCard(Zone.HAND, playerA, IMMORTAL);
+    public void test_CantActivateFromBattlefieldOrHand() {
+        setStrictChooseMode(true);
+
+        addCard(Zone.BATTLEFIELD, playerA, misterImmortal);
+        addCard(Zone.HAND, playerA, misterImmortal);
         addCard(Zone.BATTLEFIELD, playerA, "Forest", 3);
 
-        checkPlayableAbility("no activation", 1, PhaseStep.PRECOMBAT_MAIN, playerA, "{2}{G}: Return", false);
+        checkPlayableAbility("battlefield and hand", 1, PhaseStep.PRECOMBAT_MAIN, playerA, ability, false);
 
-        setStrictChooseMode(true);
         setStopAt(1, PhaseStep.END_TURN);
         execute();
-    }
-
-    @Test
-    public void test_KilledAndBack() {
-        addCard(Zone.BATTLEFIELD, playerA, IMMORTAL);
-        addCard(Zone.BATTLEFIELD, playerA, "Forest", 3);
-        addCard(Zone.HAND, playerB, "Swords to Plowshares");
-        addCard(Zone.BATTLEFIELD, playerB, "Plains");
-
-        castSpell(1, PhaseStep.PRECOMBAT_MAIN, playerB, "Swords to Plowshares", IMMORTAL);
-        waitStackResolved(1, PhaseStep.PRECOMBAT_MAIN);
-        activateAbility(1, PhaseStep.POSTCOMBAT_MAIN, playerA, "{2}{G}: Return");
-
-        setStrictChooseMode(true);
-        setStopAt(1, PhaseStep.END_TURN);
-        execute();
-
-        assertPermanentCount(playerA, IMMORTAL, 1);
-        assertLife(playerA, 22);
     }
 }

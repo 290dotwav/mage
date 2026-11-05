@@ -7,25 +7,20 @@ import mage.abilities.common.AttacksTriggeredAbility;
 import mage.abilities.dynamicvalue.common.SavedDamageValue;
 import mage.abilities.effects.OneShotEffect;
 import mage.abilities.effects.common.DamageTargetEffect;
+import mage.abilities.effects.common.asthought.PlayFromNotOwnHandZoneTargetEffect;
 import mage.cards.Card;
 import mage.cards.CardImpl;
 import mage.cards.CardSetInfo;
-import mage.constants.CardType;
-import mage.constants.Duration;
-import mage.constants.Outcome;
-import mage.constants.SubType;
-import mage.constants.SuperType;
-import mage.constants.Zone;
+import mage.constants.*;
 import mage.game.Game;
 import mage.game.events.GameEvent;
 import mage.players.Player;
 import mage.target.common.TargetOpponent;
-import mage.util.CardUtil;
 
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author DarioBarrabinoDev
  */
 public final class DaredevilFearlessFighter extends CardImpl {
 
@@ -79,12 +74,11 @@ class DaredevilFearlessFighterTriggeredAbility extends TriggeredAbilityImpl {
 
     @Override
     public boolean checkTrigger(GameEvent event, Game game) {
-        if (!isControlledBy(event.getTargetId())
-                || !isControlledBy(game.getControllerId(event.getSourceId()))) {
-            return false;
+        if (isControlledBy(event.getTargetId()) && isControlledBy(game.getControllerId(event.getSourceId()))) {
+            this.getEffects().setValue("damage", event.getAmount());
+            return true;
         }
-        this.getEffects().setValue("damage", event.getAmount());
-        return true;
+        return false;
     }
 }
 
@@ -92,7 +86,8 @@ class DaredevilFearlessFighterEffect extends OneShotEffect {
 
     DaredevilFearlessFighterEffect() {
         super(Outcome.Benefit);
-        staticText = "exile the top card of your library. {this} deals damage to you equal to that card's mana value. You may play it this turn";
+        staticText = "exile the top card of your library. {this} deals damage to you " +
+                "equal to that card's mana value. You may play it this turn";
     }
 
     private DaredevilFearlessFighterEffect(final DaredevilFearlessFighterEffect effect) {
@@ -114,14 +109,11 @@ class DaredevilFearlessFighterEffect extends OneShotEffect {
         if (card == null) {
             return false;
         }
-        player.moveCards(card, Zone.EXILED, source, game);
-        int manaValue = card.getManaValue();
-        if (manaValue > 0) {
-            player.damage(manaValue, source.getSourceId(), source, game);
-        }
-        if (game.getState().getZone(card.getId()) == Zone.EXILED) {
-            CardUtil.makeCardPlayable(game, source, card, false, Duration.EndOfTurn, false);
-        }
+        PlayFromNotOwnHandZoneTargetEffect.exileAndPlayFromExile(
+                game, source, card, TargetController.YOU, Duration.EndOfTurn,
+                false, false, false
+        );
+        player.damage(card.getManaValue(), source.getSourceId(), source, game);
         return true;
     }
 }

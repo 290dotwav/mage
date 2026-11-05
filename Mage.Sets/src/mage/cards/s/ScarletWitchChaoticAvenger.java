@@ -3,7 +3,9 @@ package mage.cards.s;
 import mage.MageInt;
 import mage.abilities.Ability;
 import mage.abilities.common.DealsCombatDamageToAPlayerTriggeredAbility;
+import mage.abilities.effects.ContinuousEffect;
 import mage.abilities.effects.OneShotEffect;
+import mage.abilities.effects.common.asthought.MayLookAtTargetCardEffect;
 import mage.abilities.keyword.FlyingAbility;
 import mage.cards.Card;
 import mage.cards.CardImpl;
@@ -14,17 +16,19 @@ import mage.constants.CardType;
 import mage.constants.Outcome;
 import mage.constants.SubType;
 import mage.constants.SuperType;
+import mage.constants.Zone;
 import mage.filter.FilterCard;
 import mage.filter.predicate.Predicates;
 import mage.game.ExileZone;
 import mage.game.Game;
 import mage.players.Player;
+import mage.target.targetpointer.FixedTarget;
 import mage.util.CardUtil;
 
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author DarioBarrabinoDev
  */
 public final class ScarletWitchChaoticAvenger extends CardImpl {
 
@@ -42,7 +46,7 @@ public final class ScarletWitchChaoticAvenger extends CardImpl {
         this.addAbility(FlyingAbility.getInstance());
 
         // Whenever Scarlet Witch deals combat damage to a player, look at the top two cards of your library, then exile them face down. Then you may cast a Hero or noncreature spell from among cards exiled with Scarlet Witch without paying its mana cost.
-        this.addAbility(new DealsCombatDamageToAPlayerTriggeredAbility(new ScarletWitchChaoticAvengerEffect()));
+        this.addAbility(new DealsCombatDamageToAPlayerTriggeredAbility(new ScarletWitchChaoticAvengerEffect(), false));
     }
 
     private ScarletWitchChaoticAvenger(final ScarletWitchChaoticAvenger card) {
@@ -61,15 +65,15 @@ class ScarletWitchChaoticAvengerEffect extends OneShotEffect {
 
     static {
         filter.add(Predicates.or(
-                SubType.HERO.getPredicate(),
-                Predicates.not(CardType.CREATURE.getPredicate())
+                Predicates.not(CardType.CREATURE.getPredicate()),
+                SubType.HERO.getPredicate()
         ));
     }
 
     ScarletWitchChaoticAvengerEffect() {
         super(Outcome.PlayForFree);
-        staticText = "look at the top two cards of your library, then exile them face down. Then you may cast "
-                + "a Hero or noncreature spell from among cards exiled with {this} without paying its mana cost";
+        staticText = "look at the top two cards of your library, then exile them face down. "
+                + "Then you may cast a Hero or noncreature spell from among cards exiled with {this} without paying its mana cost";
     }
 
     private ScarletWitchChaoticAvengerEffect(final ScarletWitchChaoticAvengerEffect effect) {
@@ -83,27 +87,32 @@ class ScarletWitchChaoticAvengerEffect extends OneShotEffect {
 
     @Override
     public boolean apply(Game game, Ability source) {
-        Player player = game.getPlayer(source.getControllerId());
-        if (player == null) {
+        Player controller = game.getPlayer(source.getControllerId());
+        if (controller == null) {
             return false;
         }
-        // "cards exiled with Scarlet Witch": this object's own exile zone
+
         UUID exileId = CardUtil.getExileZoneId(game, source);
-        Cards cards = new CardsImpl(player.getLibrary().getTopCards(game, 2));
-        if (!cards.isEmpty()) {
-            player.lookAtCards(source, null, cards, game);
-            player.moveCardsToExile(cards.getCards(game), source, game, false, exileId, CardUtil.getSourceName(game, source));
-            for (Card card : cards.getCards(game)) {
-                if (game.getExile().getCard(card.getId(), game) != null) {
-                    card.setFaceDown(true, game);
-                }
+        Cards topCards = new CardsImpl(controller.getLibrary().getTopCards(game, 2));
+        if (!topCards.isEmpty()) {
+            controller.lookAtCards(source, null, topCards, game);
+            controller.moveCardsToExile(
+                    topCards.getCards(game), source, game, false,
+                    exileId, CardUtil.getSourceName(game, source)
+            );
+            topCards.retainZone(Zone.EXILED, game);
+            for (Card card : topCards.getCards(game)) {
+                card.setFaceDown(true, game);
+                ContinuousEffect effect = new MayLookAtTargetCardEffect(controller.getId());
+                effect.setTargetPointer(new FixedTarget(card, game));
+                game.addEffect(effect, source);
             }
         }
+
         ExileZone exileZone = game.getExile().getExileZone(exileId);
         if (exileZone == null || exileZone.isEmpty()) {
             return true;
         }
-        CardUtil.castSpellWithAttributesForFree(player, source, game, new CardsImpl(exileZone.getCards(game)), filter);
-        return true;
+        return CardUtil.castSpellWithAttributesForFree(controller, source, game, new CardsImpl(exileZone), filter);
     }
 }

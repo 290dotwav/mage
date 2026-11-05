@@ -19,22 +19,23 @@ import mage.filter.predicate.Predicates;
 import mage.filter.predicate.mageobject.AnotherPredicate;
 import mage.target.TargetPermanent;
 import mage.target.common.TargetCreaturePermanentAmount;
-import mage.target.targetpointer.FirstTargetPointer;
 import mage.target.targetpointer.SecondTargetPointer;
 
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author DarioBarrabinoDev
  */
 public final class RhinoTerribleTrampler extends CardImpl {
 
-    private static final FilterCreaturePermanent filter = new FilterCreaturePermanent("other target creatures");
-    private static final FilterPermanent filter2 = new FilterPermanent("artifact or land");
+    private static final FilterPermanent filter = new FilterPermanent("artifact or land");
+    private static final FilterCreaturePermanent filter2 = new FilterCreaturePermanent("other target creatures");
 
     static {
-        filter.add(AnotherPredicate.instance);
-        filter2.add(Predicates.or(CardType.ARTIFACT.getPredicate(), CardType.LAND.getPredicate()));
+        filter.add(Predicates.or(
+                CardType.ARTIFACT.getPredicate(),
+                CardType.LAND.getPredicate()));
+        filter2.add(AnotherPredicate.instance);
     }
 
     public RhinoTerribleTrampler(UUID ownerId, CardSetInfo setInfo) {
@@ -50,19 +51,15 @@ public final class RhinoTerribleTrampler extends CardImpl {
         this.addAbility(TrampleAbility.getInstance());
 
         // When Rhino enters, destroy target artifact or land. Distribute three +1/+1 counters among up to three other target creatures. They gain trample until end of turn.
-        // (the counters target must be the first target: DistributeCountersEffect reads the first target's amounts)
-        Ability ability = new EntersBattlefieldTriggeredAbility(
-                new DestroyTargetEffect().setTargetPointer(new SecondTargetPointer())
-                        .setText("destroy target artifact or land")
-        );
+        Ability ability = new EntersBattlefieldTriggeredAbility(new DestroyTargetEffect().setTargetPointer(new SecondTargetPointer()));
         ability.addEffect(new DistributeCountersEffect()
-                .setTargetPointer(new FirstTargetPointer())
-                .setText("Distribute three +1/+1 counters among up to three other target creatures"));
-        ability.addEffect(new GainAbilityTargetEffect(TrampleAbility.getInstance(), Duration.EndOfTurn)
-                .setTargetPointer(new FirstTargetPointer())
-                .setText("They gain trample until end of turn"));
-        ability.addTarget(new TargetCreaturePermanentAmount(3, 0, 3, filter));
-        ability.addTarget(new TargetPermanent(filter2));
+                .setText("distribute three +1/+1 counters among up to three other target creatures"));
+        ability.addEffect(new GainAbilityTargetEffect(
+                TrampleAbility.getInstance(), Duration.EndOfTurn,
+                "They gain trample until end of turn"
+        ));
+        ability.addTarget(new TargetCreaturePermanentAmount(3, 0, 3, filter2));
+        ability.addTarget(new TargetPermanent(filter));
         this.addAbility(ability);
     }
 

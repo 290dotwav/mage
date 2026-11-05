@@ -13,22 +13,22 @@ import mage.constants.CardType;
 import mage.constants.Outcome;
 import mage.constants.SubType;
 import mage.constants.SuperType;
+import mage.filter.FilterPermanent;
 import mage.filter.common.FilterControlledPermanent;
 import mage.filter.common.FilterCreaturePermanent;
 import mage.filter.predicate.mageobject.AnotherPredicate;
 import mage.game.Game;
-import mage.game.permanent.Permanent;
 import mage.target.TargetPermanent;
-import mage.target.targetpointer.FixedTarget;
 
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author DarioBarrabinoDev
  */
 public final class LokiTheDeceiver extends CardImpl {
 
-    private static final FilterControlledPermanent filter = new FilterControlledPermanent(SubType.VILLAIN, "another target Villain you control");
+    private static final FilterPermanent filter
+            = new FilterControlledPermanent(SubType.VILLAIN, "another target Villain you control");
     private static final FilterCreaturePermanent filter2 = new FilterCreaturePermanent(SubType.VILLAIN, "Villains");
 
     static {
@@ -67,7 +67,7 @@ public final class LokiTheDeceiver extends CardImpl {
 class LokiTheDeceiverEffect extends OneShotEffect {
 
     LokiTheDeceiverEffect() {
-        super(Outcome.PutCreatureInPlay);
+        super(Outcome.Benefit);
         staticText = "create a tapped and attacking token that's a copy of another target Villain you control, " +
                 "except it isn't legendary and it's an Illusion in addition to its other types. " +
                 "Sacrifice that token at the beginning of the next end step";
@@ -84,16 +84,11 @@ class LokiTheDeceiverEffect extends OneShotEffect {
 
     @Override
     public boolean apply(Game game, Ability source) {
-        Permanent permanent = game.getPermanent(getTargetPointer().getFirst(game, source));
-        if (permanent == null) {
-            return false;
-        }
         CreateTokenCopyTargetEffect effect = new CreateTokenCopyTargetEffect(
                 null, null, false, 1, true, true
         );
         effect.setIsntLegendary(true);
         effect.withAdditionalSubType(SubType.ILLUSION);
-        effect.setTargetPointer(new FixedTarget(permanent, game));
         effect.apply(game, source);
         effect.sacrificeTokensCreatedAtNextEndStep(game, source);
         return true;

@@ -18,13 +18,17 @@ import mage.game.Game;
 import mage.game.events.GameEvent;
 import mage.game.stack.Spell;
 import mage.players.Player;
+import mage.target.targetpointer.FixedTarget;
 import mage.util.CardUtil;
 import mage.watchers.common.SpellsCastWatcher;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
- * @author Claude
+ * @author DarioBarrabinoDev
  */
 public final class LadyLokiAgentOfChaos extends CardImpl {
 
@@ -54,7 +58,7 @@ public final class LadyLokiAgentOfChaos extends CardImpl {
 
 class LadyLokiAgentOfChaosTriggeredAbility extends TriggeredAbilityImpl {
 
-    static final FilterSpell filter = new FilterSpell("instant, sorcery, or Villain spell");
+    private static final FilterSpell filter = new FilterSpell("an instant, sorcery, or Villain spell");
 
     static {
         filter.add(Predicates.or(
@@ -85,24 +89,23 @@ class LadyLokiAgentOfChaosTriggeredAbility extends TriggeredAbilityImpl {
 
     @Override
     public boolean checkTrigger(GameEvent event, Game game) {
-        if (!isControlledBy(event.getPlayerId())) {
+        if (!event.getPlayerId().equals(this.getControllerId())) {
             return false;
         }
-        Spell spell = game.getSpell(event.getTargetId());
         SpellsCastWatcher watcher = game.getState().getWatcher(SpellsCastWatcher.class);
-        if (spell == null || watcher == null || !filter.match(spell, getControllerId(), this, game)) {
+        if (watcher == null) {
             return false;
         }
-        // the watcher already holds this spell: it is the first if it is the only matching one
-        long matching = watcher
-                .getSpellsCastThisTurn(getControllerId())
+        List<Spell> spells = watcher
+                .getSpellsCastThisTurn(this.getControllerId())
                 .stream()
-                .filter(s -> filter.match(s, getControllerId(), this, game))
-                .count();
-        if (matching != 1) {
+                .filter(Objects::nonNull)
+                .filter(s -> filter.match(s, game))
+                .collect(Collectors.toList());
+        if (spells.size() != 1 || !spells.get(0).getId().equals(event.getTargetId())) {
             return false;
         }
-        getEffects().setValue("spellCast", spell);
+        this.getEffects().setTargetPointer(new FixedTarget(event.getTargetId()));
         return true;
     }
 }
@@ -110,7 +113,7 @@ class LadyLokiAgentOfChaosTriggeredAbility extends TriggeredAbilityImpl {
 class LadyLokiAgentOfChaosEffect extends OneShotEffect {
 
     LadyLokiAgentOfChaosEffect() {
-        super(Outcome.Benefit);
+        super(Outcome.PlayForFree);
         staticText = "exile it, then exile cards from the top of your library until you exile a nonland card. "
                 + "{this} deals damage to each opponent equal to the difference between that spell's mana value "
                 + "and that nonland card's mana value. You may cast that card without paying its mana cost";
@@ -127,39 +130,47 @@ class LadyLokiAgentOfChaosEffect extends OneShotEffect {
 
     @Override
     public boolean apply(Game game, Ability source) {
-        Player controller = game.getPlayer(source.getControllerId());
-        Spell spellLKI = (Spell) getValue("spellCast");
-        if (controller == null || spellLKI == null) {
+        Player player = game.getPlayer(source.getControllerId());
+        if (player == null) {
             return false;
         }
-        int spellManaValue = spellLKI.getManaValue();
-        // exile it: only if it is still that spell on the stack
-        Spell spell = game.getSpell(spellLKI.getId());
-        if (spell != null && spell.getZoneChangeCounter(game) == spellLKI.getZoneChangeCounter(game)) {
-            spellManaValue = spell.getManaValue();
-            controller.moveCards(spell, Zone.EXILED, source, game);
+        Spell spell = game.getStack().getSpell(getTargetPointer().getFirst(game, source));
+        boolean noLongerOnStack = false; // spell was countered or exiled already by another effect
+        if (spell == null) {
+            spell = ((Spell) game.getLastKnownInformation(getTargetPointer().getFirst(game, source), Zone.STACK));
+            noLongerOnStack = true;
         }
-        Card nonland = null;
-        for (Card card : controller.getLibrary().getCards(game)) {
-            controller.moveCards(card, Zone.EXILED, source, game);
-            if (!card.isLand(game)) {
-                nonland = card;
-                break;
-            }
+        if (spell == null) {
+            return false;
         }
-        if (nonland == null) {
+        int manaValue = spell.getManaValue();
+        if (!noLongerOnStack) {
+            player.moveCards(spell, Zone.EXILED, source, game);
+        }
+        Card card = getCard(player, game, source);
+        if (card == null) {
             return true;
         }
-        int damage = Math.abs(spellManaValue - nonland.getManaValue());
-        if (damage > 0) {
-            for (UUID opponentId : game.getOpponents(controller.getId())) {
-                Player opponent = game.getPlayer(opponentId);
-                if (opponent != null) {
-                    opponent.damage(damage, source.getSourceId(), source, game);
-                }
+        int diff = Math.abs(manaValue - card.getManaValue());
+        for (UUID playerId : game.getOpponents(source.getControllerId())) {
+            Player opponent = game.getPlayer(playerId);
+            if (opponent == null) {
+                continue;
+            }
+            opponent.damage(diff, source.getSourceId(), source, game);
+        }
+        CardUtil.castSpellWithAttributesForFree(player, source, game, card);
+        return true;
+    }
+
+    private static Card getCard(Player player, Game game, Ability source) {
+        for (Card card : player.getLibrary().getCards(game)) {
+            player.moveCards(card, Zone.EXILED, source, game);
+            game.processAction();
+            if (!card.isLand(game)) {
+                return card;
             }
         }
-        CardUtil.castSpellWithAttributesForFree(controller, source, game, nonland);
-        return true;
+        return null;
     }
 }

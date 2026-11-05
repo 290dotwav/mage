@@ -5,9 +5,10 @@ import mage.abilities.Ability;
 import mage.abilities.DelayedTriggeredAbility;
 import mage.abilities.common.SagaAbility;
 import mage.abilities.dynamicvalue.common.CardsInControllerHandCount;
-import mage.abilities.effects.ContinuousEffect;
+import mage.abilities.effects.Effects;
 import mage.abilities.effects.OneShotEffect;
 import mage.abilities.effects.common.DrawCardSourceControllerEffect;
+import mage.abilities.effects.common.TapTargetEffect;
 import mage.abilities.effects.common.combat.CantBeBlockedTargetEffect;
 import mage.abilities.effects.common.combat.GoadTargetEffect;
 import mage.abilities.effects.common.continuous.BoostTargetEffect;
@@ -19,21 +20,20 @@ import mage.constants.Outcome;
 import mage.constants.SagaChapter;
 import mage.constants.SubType;
 import mage.game.Game;
-import mage.game.events.DamagedEvent;
+import mage.game.events.DamagedPlayerEvent;
 import mage.game.events.GameEvent;
 import mage.game.permanent.Permanent;
 import mage.target.common.TargetControlledCreaturePermanent;
 import mage.target.common.TargetCreaturePermanent;
 import mage.target.targetadjustment.ForEachPlayerTargetsAdjuster;
 import mage.target.targetpointer.EachTargetPointer;
-import mage.target.targetpointer.FixedTarget;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author DarioBarrabinoDev
  */
 public final class KangDynasty extends CardImpl {
 
@@ -48,23 +48,29 @@ public final class KangDynasty extends CardImpl {
         // I, II -- For each opponent, tap up to one target creature that player controls. Goad those creatures. Until your next turn, whenever any of those creatures deals combat damage to a player, draw a card.
         sagaAbility.addChapterEffect(
                 this, SagaChapter.CHAPTER_I, SagaChapter.CHAPTER_II,
-                (ability) -> {
+                ability -> {
+                    ability.addEffect(new TapTargetEffect()
+                            .setText("For each opponent, tap up to one target creature that player controls"));
+                    ability.addEffect(new GoadTargetEffect()
+                            .withTargetDescription("those creatures"));
                     ability.addEffect(new KangDynastyEffect());
+
+                    ability.getEffects().setTargetPointer(new EachTargetPointer());
                     ability.addTarget(new TargetCreaturePermanent(0, 1));
                     ability.setTargetAdjuster(new ForEachPlayerTargetsAdjuster(false, true));
-                });
+                }
+        );
 
         // III -- Target creature you control gets +1/+1 until end of turn for each card in your hand and can't be blocked this turn.
+        Effects effects = new Effects();
+        effects.add(new BoostTargetEffect(CardsInControllerHandCount.ANY_SINGULAR, CardsInControllerHandCount.ANY_SINGULAR, Duration.EndOfTurn));
+        effects.add(new CantBeBlockedTargetEffect()
+                .setText("and can't be blocked this turn"));
         sagaAbility.addChapterEffect(
-                this, SagaChapter.CHAPTER_III,
-                (ability) -> {
-                    ability.addEffect(new BoostTargetEffect(
-                            CardsInControllerHandCount.ANY, CardsInControllerHandCount.ANY, Duration.EndOfTurn
-                    ).setText("target creature you control gets +1/+1 until end of turn for each card in your hand"));
-                    ability.addEffect(new CantBeBlockedTargetEffect(Duration.EndOfTurn)
-                            .setText("and can't be blocked this turn"));
-                    ability.addTarget(new TargetControlledCreaturePermanent());
-                });
+                this, SagaChapter.CHAPTER_III, SagaChapter.CHAPTER_III,
+                effects,
+                new TargetControlledCreaturePermanent()
+        );
 
         this.addAbility(sagaAbility);
     }
@@ -82,10 +88,8 @@ public final class KangDynasty extends CardImpl {
 class KangDynastyEffect extends OneShotEffect {
 
     KangDynastyEffect() {
-        super(Outcome.Detriment);
-        this.setTargetPointer(new EachTargetPointer());
-        staticText = "for each opponent, tap up to one target creature that player controls. Goad those creatures. " +
-                "Until your next turn, whenever any of those creatures deals combat damage to a player, draw a card";
+        super(Outcome.DrawCard);
+        this.staticText = "Until your next turn, whenever any of those creatures deals combat damage to a player, draw a card";
     }
 
     private KangDynastyEffect(final KangDynastyEffect effect) {
@@ -99,17 +103,9 @@ class KangDynastyEffect extends OneShotEffect {
 
     @Override
     public boolean apply(Game game, Ability source) {
-        Set<MageObjectReference> creatures = new HashSet<>();
-        for (UUID targetId : getTargetPointer().getTargets(game, source)) {
-            Permanent permanent = game.getPermanent(targetId);
-            if (permanent == null) {
-                continue;
-            }
-            permanent.tap(source, game);
-            ContinuousEffect goad = new GoadTargetEffect();
-            goad.setTargetPointer(new FixedTarget(permanent, game));
-            game.addEffect(goad, source);
-            creatures.add(new MageObjectReference(permanent, game));
+        List<MageObjectReference> creatures = new ArrayList<>();
+        for (UUID uuid : getTargetPointer().getTargets(game, source)) {
+            creatures.add(new MageObjectReference(uuid, game));
         }
         if (!creatures.isEmpty()) {
             game.addDelayedTriggeredAbility(new KangDynastyDelayedTriggeredAbility(creatures), source);
@@ -120,22 +116,17 @@ class KangDynastyEffect extends OneShotEffect {
 
 class KangDynastyDelayedTriggeredAbility extends DelayedTriggeredAbility {
 
-    private final Set<MageObjectReference> creatures = new HashSet<>();
+    private final List<MageObjectReference> creatures;
 
-    KangDynastyDelayedTriggeredAbility(Set<MageObjectReference> creatures) {
+    KangDynastyDelayedTriggeredAbility(List<MageObjectReference> creatures) {
         super(new DrawCardSourceControllerEffect(1), Duration.UntilYourNextTurn, false, false);
-        this.creatures.addAll(creatures);
+        this.creatures = creatures;
         setTriggerPhrase("Until your next turn, whenever any of those creatures deals combat damage to a player, ");
     }
 
     private KangDynastyDelayedTriggeredAbility(final KangDynastyDelayedTriggeredAbility ability) {
         super(ability);
-        this.creatures.addAll(ability.creatures);
-    }
-
-    @Override
-    public KangDynastyDelayedTriggeredAbility copy() {
-        return new KangDynastyDelayedTriggeredAbility(this);
+        this.creatures = new ArrayList<>(ability.creatures);
     }
 
     @Override
@@ -145,10 +136,18 @@ class KangDynastyDelayedTriggeredAbility extends DelayedTriggeredAbility {
 
     @Override
     public boolean checkTrigger(GameEvent event, Game game) {
-        if (!((DamagedEvent) event).isCombatDamage()) {
+        if (!((DamagedPlayerEvent) event).isCombatDamage()) {
             return false;
         }
         Permanent permanent = game.getPermanentOrLKIBattlefield(event.getSourceId());
-        return permanent != null && creatures.stream().anyMatch(mor -> mor.refersTo(permanent, game));
+        if (permanent == null) {
+            return false;
+        }
+        return creatures.contains(new MageObjectReference(permanent.getId(), game));
+    }
+
+    @Override
+    public KangDynastyDelayedTriggeredAbility copy() {
+        return new KangDynastyDelayedTriggeredAbility(this);
     }
 }

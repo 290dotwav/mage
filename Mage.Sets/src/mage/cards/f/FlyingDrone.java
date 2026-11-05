@@ -20,11 +20,13 @@ import mage.constants.CardType;
 import mage.constants.SubType;
 import mage.constants.WatcherScope;
 import mage.game.Game;
+import mage.game.events.EntersTheBattlefieldEvent;
 import mage.game.events.GameEvent;
 import mage.game.permanent.Permanent;
 import mage.util.CardUtil;
 import mage.watchers.Watcher;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -32,7 +34,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author DarioBarrabinoDev
  */
 public final class FlyingDrone extends CardImpl {
 
@@ -53,10 +55,10 @@ public final class FlyingDrone extends CardImpl {
         // {1}{U}, {T}: Draw a card, then discard a card. This ability costs {1}{U} less to activate if another creature with flying entered the battlefield under your control this turn.
         Ability ability = new SimpleActivatedAbility(new DrawDiscardControllerEffect(1, 1), new ManaCostsImpl<>("{1}{U}"));
         ability.addCost(new TapSourceCost());
-        ability.addEffect(new InfoEffect("This ability costs {1}{U} less to activate if another creature " +
-                "with flying entered the battlefield under your control this turn"));
-        ability.setCostAdjuster(FlyingDroneAdjuster.instance);
-        this.addAbility(ability.addHint(FlyingDroneCondition.getHint()), new FlyingDroneWatcher());
+        ability.addEffect(new InfoEffect("This ability costs {1}{U} less to activate if another creature with flying entered the battlefield under your control this turn"));
+        this.addAbility(ability
+                .setCostAdjuster(FlyingDroneAdjuster.instance)
+                .addHint(FlyingDroneCondition.getHint()), new FlyingDroneWatcher());
     }
 
     private FlyingDrone(final FlyingDrone card) {
@@ -79,7 +81,7 @@ enum FlyingDroneCondition implements Condition {
 
     @Override
     public boolean apply(Game game, Ability source) {
-        return FlyingDroneWatcher.check(source, game);
+        return FlyingDroneWatcher.checkPermanent(game, source);
     }
 
     @Override
@@ -101,7 +103,8 @@ enum FlyingDroneAdjuster implements CostAdjuster {
 
 class FlyingDroneWatcher extends Watcher {
 
-    // player -> creatures with flying that entered under that player's control this turn
+    // Key: Player id
+    // Value: set of all creatures with flying that entered under that player's control this turn
     private final Map<UUID, Set<MageObjectReference>> map = new HashMap<>();
 
     FlyingDroneWatcher() {
@@ -113,10 +116,9 @@ class FlyingDroneWatcher extends Watcher {
         if (event.getType() != GameEvent.EventType.ENTERS_THE_BATTLEFIELD) {
             return;
         }
-        Permanent permanent = game.getPermanent(event.getTargetId());
-        if (permanent != null
-                && permanent.isCreature(game)
-                && permanent.hasAbility(FlyingAbility.getInstance(), game)) {
+        Permanent permanent = ((EntersTheBattlefieldEvent) event).getTarget();
+        if (permanent != null && permanent.isCreature(game)
+                && permanent.getAbilities(game).containsClass(FlyingAbility.class)) {
             map.computeIfAbsent(permanent.getControllerId(), x -> new HashSet<>())
                     .add(new MageObjectReference(permanent, game));
         }
@@ -128,14 +130,13 @@ class FlyingDroneWatcher extends Watcher {
         map.clear();
     }
 
-    static boolean check(Ability source, Game game) {
-        FlyingDroneWatcher watcher = game.getState().getWatcher(FlyingDroneWatcher.class);
-        if (watcher == null) {
-            return false;
-        }
-        return watcher.map
-                .getOrDefault(source.getControllerId(), new HashSet<>())
+    static boolean checkPermanent(Game game, Ability source) {
+        return game
+                .getState()
+                .getWatcher(FlyingDroneWatcher.class)
+                .map
+                .getOrDefault(source.getControllerId(), Collections.emptySet())
                 .stream()
-                .anyMatch(mor -> !mor.refersTo(source.getSourceObject(game), game));
+                .anyMatch(mor -> !mor.refersTo(source, game));
     }
 }
