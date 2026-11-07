@@ -123,6 +123,9 @@ public final class StarTrek extends ExpansionSet {
         cards.add(new SetCardInfo("Deanna Troi, Psychic Counsel", 11, Rarity.RARE, mage.cards.d.DeannaTroiPsychicCounsel.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Deanna Troi, Psychic Counsel", 365, Rarity.RARE, mage.cards.d.DeannaTroiPsychicCounsel.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Deanna Troi, Psychic Counsel", 499, Rarity.RARE, mage.cards.d.DeannaTroiPsychicCounsel.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Deep Space 9", 263, Rarity.MYTHIC, mage.cards.d.DeepSpace9.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Deep Space 9", 479, Rarity.MYTHIC, mage.cards.d.DeepSpace9.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Deep Space 9", 556, Rarity.MYTHIC, mage.cards.d.DeepSpace9.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Deep Space Scan", 370, Rarity.RARE, mage.cards.d.DeepSpaceScan.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Deep Space Scan", 504, Rarity.RARE, mage.cards.d.DeepSpaceScan.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Deep Space Scan", 53, Rarity.RARE, mage.cards.d.DeepSpaceScan.class, NON_FULL_USE_VARIOUS));
@@ -173,6 +176,8 @@ public final class StarTrek extends ExpansionSet {
         cards.add(new SetCardInfo("General Chang, Cold Warrior", 437, Rarity.RARE, mage.cards.g.GeneralChangColdWarrior.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("General Chang, Cold Warrior", 539, Rarity.RARE, mage.cards.g.GeneralChangColdWarrior.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Genesis Effect", 151, Rarity.COMMON, mage.cards.g.GenesisEffect.class));
+        cards.add(new SetCardInfo("Georgiou, Terran Emperor", 110, Rarity.MYTHIC, mage.cards.g.GeorgiouTerranEmperor.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Georgiou, Terran Emperor", 457, Rarity.MYTHIC, mage.cards.g.GeorgiouTerranEmperor.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Ghost of Illyria", 20, Rarity.UNCOMMON, mage.cards.g.GhostOfIllyria.class));
         cards.add(new SetCardInfo("Godless Shrine", 285, Rarity.RARE, mage.cards.g.GodlessShrine.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Godless Shrine", 397, Rarity.RARE, mage.cards.g.GodlessShrine.class, NON_FULL_USE_VARIOUS));
@@ -227,6 +232,9 @@ public final class StarTrek extends ExpansionSet {
         cards.add(new SetCardInfo("Lieutenant Commander Data", 371, Rarity.MYTHIC, mage.cards.l.LieutenantCommanderData.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Lieutenant Commander Data", 505, Rarity.MYTHIC, mage.cards.l.LieutenantCommanderData.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Lieutenant Commander Data", 69, Rarity.MYTHIC, mage.cards.l.LieutenantCommanderData.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Live Long and Prosper", 244, Rarity.RARE, mage.cards.l.LiveLongAndProsper.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Live Long and Prosper", 423, Rarity.RARE, mage.cards.l.LiveLongAndProsper.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Live Long and Prosper", 547, Rarity.RARE, mage.cards.l.LiveLongAndProsper.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Locutus, the One Who Speaks", 245, Rarity.UNCOMMON, mage.cards.l.LocutusTheOneWhoSpeaks.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Locutus, the One Who Speaks", 360, Rarity.UNCOMMON, mage.cards.l.LocutusTheOneWhoSpeaks.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Locutus, the One Who Speaks", 389, Rarity.UNCOMMON, mage.cards.l.LocutusTheOneWhoSpeaks.class, NON_FULL_USE_VARIOUS));
@@ -318,7 +326,12 @@ public final class StarTrek extends ExpansionSet {
         cards.add(new SetCardInfo("Sacred Foundry", 295, Rarity.RARE, mage.cards.s.SacredFoundry.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Sacred Foundry", 400, Rarity.RARE, mage.cards.s.SacredFoundry.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Sacred Foundry", 495, Rarity.RARE, mage.cards.s.SacredFoundry.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Salt Vampire", 127, Rarity.RARE, mage.cards.s.SaltVampire.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Salt Vampire", 417, Rarity.RARE, mage.cards.s.SaltVampire.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Salt Vampire", 541, Rarity.RARE, mage.cards.s.SaltVampire.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Sarcophagus, Ship of the Dead", 170, Rarity.UNCOMMON, mage.cards.s.SarcophagusShipOfTheDead.class));
+        cards.add(new SetCardInfo("Sarek, Federation Ambassador", 251, Rarity.RARE, mage.cards.s.SarekFederationAmbassador.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Sarek, Federation Ambassador", 425, Rarity.RARE, mage.cards.s.SarekFederationAmbassador.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Saru, Unthreatened", 212, Rarity.UNCOMMON, mage.cards.s.SaruUnthreatened.class));
         cards.add(new SetCardInfo("Saurian Explorer", 213, Rarity.COMMON, mage.cards.s.SaurianExplorer.class));
         cards.add(new SetCardInfo("Savvy Profiteer", 171, Rarity.COMMON, mage.cards.s.SavvyProfiteer.class));
