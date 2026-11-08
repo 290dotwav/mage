@@ -3102,6 +3102,9 @@ public class VerifyCardDataTest {
         // remove unnecessary reminder text
         refText = refText.replaceAll("^\\(.+(can be paid with|ransforms from|represents).+\\)\n", "");
 
+        // vengeance fix: mtgjson keeps the reminder text of a vengeance spell as a separate line
+        refText = refText.replaceAll("^\\(Cast only from your graveyard\\. Then exile it\\.\\)\n", "");
+
         // mana ability fix
         // Current implementation makes one Activated Ability per kind of color.
         // We split such abilities in the reference text.
@@ -3139,6 +3142,15 @@ public class VerifyCardDataTest {
         if (ref.subtypes.contains("Omen")) {
             for (int i = 0; i < refRules.length; i++) {
                 refRules[i] = "Omen " +
+                        ref.types.get(0) + " - " +
+                        ref.faceName + ' ' +
+                        ref.manaCost + " - " +
+                        refRules[i];
+            }
+        }
+        if (ref.subtypes.contains("Vengeance")) {
+            for (int i = 0; i < refRules.length; i++) {
+                refRules[i] = "Vengeance " +
                         ref.types.get(0) + " - " +
                         ref.faceName + ' ' +
                         ref.manaCost + " - " +

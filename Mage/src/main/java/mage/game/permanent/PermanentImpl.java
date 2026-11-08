@@ -1975,6 +1975,11 @@ public abstract class PermanentImpl extends CardImpl implements Permanent {
     }
 
     @Override
+    public UUID getPreparedSpellCopyId() {
+        return preparedSpellCopyId;
+    }
+
+    @Override
     public void setPrepared(boolean prepared, Game game) {
         // Rule 722.3a requires the permanent's current copiable values to include a prepare spell.
         if (prepared && getPrepareCharacteristicsSource() == null) {
@@ -2006,8 +2011,7 @@ public abstract class PermanentImpl extends CardImpl implements Permanent {
                 this, prepareCard.getSpellCard(), copy, getControllerId()
         );
         preparedSpellCopyId = copy.getId();
-        game.getState().keepCardCopyWhileSourceExists(copy.getId(), getId());
-        PrepareCastFromExileEffect effect = new PrepareCastFromExileEffect(copy.getId(), getId());
+        PrepareCastFromExileEffect effect = new PrepareCastFromExileEffect(copy.getId());
         // The permanent can have lost all abilities (for example to Darksteel Mutation).
         // The permission is linked by IDs above, so use the persistent copy's spell
         // ability as the continuous-effect source instead of an ability on the permanent.
@@ -2032,7 +2036,6 @@ public abstract class PermanentImpl extends CardImpl implements Permanent {
         if (copyId == null) {
             return;
         }
-        game.getState().stopKeepingCardCopy(copyId);
         Card card = game.getCard(copyId);
         // Once cast, the copy is already on the stack and normal copied-spell cleanup owns it.
         if (card != null && game.getState().getZone(copyId) == Zone.EXILED) {
