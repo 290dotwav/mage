@@ -240,15 +240,40 @@ public class GoadTest extends CardTestMultiPlayerBase {
         addTarget(playerA, playerD); // Goad all of playerD's creatures
 
         castSpell(2, PhaseStep.PRECOMBAT_MAIN, playerD, "Goblin Champion");
-        addTarget(playerD, playerC); // Goblin Balloon Brigade attack player C
-        // Should not have to specify a target for Goblin Champion since they aren't goaded
+        // Goblin Balloon Brigade is declared at player C without a question (the first player after D in
+        // turn order, ClaudeMTG: Combat.goadedDefault); Goblin Champion isn't goaded and isn't declared at all
 
         setStopAt(2, PhaseStep.DECLARE_BLOCKERS);
 
         execute();
 
         assertGoaded("Goblin Balloon Brigade", playerA);
+        assertAttacking("Goblin Balloon Brigade", playerC);
         assertNotGoaded("Goblin Champion", playerA);
+    }
+
+    /**
+     * ClaudeMTG: a goaded creature with several players it may attack is declared without a question
+     * (strict mode: no defender is prepared for it), at the first player after its controller in turn
+     * order other than the one who goaded it: the owner, "je veux pas de question".
+     */
+    @Test
+    public void testGoadedDeclaredWithoutQuestion() {
+        addCard(Zone.HAND, playerA, homunculus);
+        addCard(Zone.BATTLEFIELD, playerA, "Island", 2);
+        addCard(Zone.BATTLEFIELD, playerD, lion);
+
+        setStrictChooseMode(true);
+
+        addTarget(playerA, lion);
+        setChoice(playerA, "Yes");
+        castSpell(1, PhaseStep.PRECOMBAT_MAIN, playerA, homunculus);
+
+        setStopAt(2, PhaseStep.DECLARE_BLOCKERS);
+        execute();
+
+        assertGoaded(lion, playerA);
+        assertAttacking(lion, playerC);
     }
 
 }

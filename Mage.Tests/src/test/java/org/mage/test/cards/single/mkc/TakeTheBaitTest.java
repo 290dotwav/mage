@@ -71,8 +71,8 @@ public class TakeTheBaitTest extends CardTestPlayerBase {
         attack(1, playerA, "Grizzly Bears", "Jace, Arcane Strategist");
         castSpell(1, PhaseStep.DECLARE_BLOCKERS, playerB, "Take the Bait");
 
-        addTarget(playerA, playerB); // for Balduvian Bears
-        addTarget(playerA, "Jace, Arcane Strategist"); // for Grizzly Bears
+        // ClaudeMTG: the goaded Bears are declared without a question in the additional combat, both at
+        // player B (Combat.goadedDefault: a player before a planeswalker)
         setStopAt(1, PhaseStep.POSTCOMBAT_MAIN);
         execute();
 

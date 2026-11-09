@@ -677,6 +677,16 @@ public class Combat implements Serializable, Copyable<Combat> {
                 player.declareAttacker(creature.getId(), defendersToChooseFrom.iterator().next(), game, false);
                 continue;
             }
+            // ClaudeMTG: a goaded creature of a player who answers by hand is declared without a question,
+            // at the first player after him in turn order it may attack (a player other than one who goaded
+            // it when able, as above), exactly as if he had declared it himself. He keeps the choice: the
+            // declaration that follows lets him take it back and send it at another defender, and
+            // HumanPlayer.checkIfAttackersValid still holds the goad. The owner: "Quand une creature est
+            // incitee, faut pas me demander pour chaque crea qui elle attaque", then "je veux pas de question".
+            if (!creature.getGoadingPlayers().isEmpty() && !player.isComputer()) {
+                player.declareAttacker(creature.getId(), goadedDefault(player, defendersToChooseFrom, game), game, false);
+                continue;
+            }
             TargetDefender target = new TargetDefender(defendersToChooseFrom);
             target.setRequired(true);
             target.withTargetName("permanent or player for " + creature.getLogName() + " to attack (must attack effect)");
@@ -684,6 +694,23 @@ public class Combat implements Serializable, Copyable<Combat> {
                 player.declareAttacker(creature.getId(), target.getFirstTarget(), game, false);
             }
         }
+    }
+
+    /**
+     * ClaudeMTG: where a goaded creature is declared without a question: the first player after the
+     * attacking one in turn order among the defenders it may attack; with no player among them, one of
+     * the others (a planeswalker or a battle).
+     */
+    private static UUID goadedDefault(Player player, Set<UUID> choices, Game game) {
+        PlayerList order = game.getState().getPlayerList();
+        int at = order.indexOf(player.getId());
+        for (int i = 1; i <= order.size(); i++) {
+            UUID id = order.get(Math.floorMod(at + i, order.size()));
+            if (choices.contains(id)) {
+                return id;
+            }
+        }
+        return choices.stream().sorted().findFirst().orElse(null);
     }
 
     /**

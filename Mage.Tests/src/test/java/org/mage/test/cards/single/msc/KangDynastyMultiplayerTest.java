@@ -53,9 +53,8 @@ public class KangDynastyMultiplayerTest extends CardTestMultiPlayerBase {
         checkPermanentTapped("tapped B", 1, PhaseStep.POSTCOMBAT_MAIN, playerB, "Grizzly Bears", true, 1);
 
         // turns 2-4: goaded creatures must attack a player other than playerA, the damage still draws for playerA
-        addTarget(playerD, playerC); // turn 2, defender for the goaded bear
-        addTarget(playerC, playerB); // turn 3, defender for the goaded lion
-        addTarget(playerB, playerD); // turn 4, defender for the goaded bear
+        // the goaded creatures are declared without a question (ClaudeMTG: Combat.goadedDefault), at the
+        // first player after their controller but A: turn 2 the bear at C, turn 3 the lion at B, turn 4 the bear at D
 
         setStrictChooseMode(true);
         setStopAt(4, PhaseStep.END_TURN);
