@@ -3,23 +3,25 @@ package mage.cards.h;
 import mage.MageInt;
 import mage.abilities.Ability;
 import mage.abilities.common.SimpleStaticAbility;
+import mage.abilities.costs.mana.VariableManaCost;
 import mage.abilities.effects.ContinuousEffectImpl;
 import mage.abilities.effects.common.cost.CostModificationEffectImpl;
 import mage.abilities.keyword.BlitzAbility;
 import mage.cards.Card;
 import mage.cards.CardImpl;
 import mage.cards.CardSetInfo;
-import mage.cards.DoubleFacedCard;
 import mage.constants.*;
 import mage.filter.common.FilterCreatureCard;
+import mage.filter.common.FilterCreatureSpell;
+import mage.filter.predicate.Predicates;
 import mage.filter.predicate.mageobject.ManaValuePredicate;
+import mage.filter.predicate.mageobject.VariableManaCostPredicate;
 import mage.game.Game;
-import mage.game.stack.Spell;
 import mage.players.Player;
 import mage.util.CardUtil;
 import mage.watchers.common.CommanderPlaysCountWatcher;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -58,9 +60,16 @@ public final class HenzieToolboxTorre extends CardImpl {
 
 class HenzieToolboxTorreGainBlitzEffect extends ContinuousEffectImpl {
 
-    private static final FilterCreatureCard filter = new FilterCreatureCard("creature spell you cast with mana value 4 or greater");
+    private static final FilterCreatureCard filterCard = new FilterCreatureCard("creature spell you cast with mana value 4 or greater");
+    private static final FilterCreatureSpell filterSpell = new FilterCreatureSpell("creature spell you cast with mana value 4 or greater");
+
     static {
-        filter.add(new ManaValuePredicate(ComparisonType.OR_GREATER, 4));
+        // a card with {X} can be cast with mana value 4 or greater (X is 0 only while the card is not on the stack)
+        filterCard.add(Predicates.or(
+                new ManaValuePredicate(ComparisonType.OR_GREATER, 4),
+                VariableManaCostPredicate.instance
+        ));
+        filterSpell.add(new ManaValuePredicate(ComparisonType.OR_GREATER, 4));
     }
 
     HenzieToolboxTorreGainBlitzEffect() {
@@ -82,18 +91,20 @@ class HenzieToolboxTorreGainBlitzEffect extends ContinuousEffectImpl {
         if (controller == null) {
             return false;
         }
-        Set<Card> cardsToGainBlitz = new HashSet<>();
-        controller.getHand().getCards(game).forEach(c -> addCastableFaces(c, game, cardsToGainBlitz));
-        controller.getGraveyard().getCards(game).forEach(c -> addCastableFaces(c, game, cardsToGainBlitz));
-        controller.getLibrary().getCards(game).forEach(c -> addCastableFaces(c, game, cardsToGainBlitz));
-        game.getExile().getCardsInRange(game, controller.getId())
-                .forEach(c -> addCastableFaces(c, game, cardsToGainBlitz));
-        game.getCommanderCardsFromCommandZone(controller, CommanderCardType.ANY)
-                .forEach(c -> addCastableFaces(c, game, cardsToGainBlitz));
+        Set<Card> cards = new LinkedHashSet<>();
+        cards.addAll(controller.getHand().getCards(game));
+        cards.addAll(controller.getGraveyard().getCards(game));
+        cards.addAll(controller.getLibrary().getCards(game));
+        cards.addAll(game.getExile().getCardsInRange(game, controller.getId()));
+        cards.addAll(game.getCommanderCardsFromCommandZone(controller, CommanderCardType.ANY));
+        Set<Card> cardsToGainBlitz = new LinkedHashSet<>();
+        for (Card card : cards) {
+            // double-faced cards are cast by their faces, so the castable faces must have the blitz ability
+            cardsToGainBlitz.addAll(CardUtil.getCastableComponents(card, filterCard, source, controller, game, null, false));
+        }
         game.getStack().stream()
-                .filter(Spell.class::isInstance)
                 .filter(s -> s.isControlledBy(controller.getId()))
-                .filter(s -> filter.match((Spell) s, game))
+                .filter(s -> filterSpell.match(s, controller.getId(), source, game))
                 .map(s -> game.getCard(s.getSourceId()))
                 .filter(Objects::nonNull)
                 .forEach(cardsToGainBlitz::add);
@@ -102,29 +113,23 @@ class HenzieToolboxTorreGainBlitzEffect extends ContinuousEffectImpl {
                 continue; // card must have a mana cost
             }
             Ability ability = new BlitzAbility(card, card.getManaCost().getText());
+            // 202.3e ... X is treated as the number chosen for it while the object is on the stack.
+            // so a spell with {X} has blitz only with X big enough for mana value 4 or greater
+            VariableManaCost xCost = card.getManaCost().stream()
+                    .filter(VariableManaCost.class::isInstance)
+                    .map(VariableManaCost.class::cast)
+                    .findFirst()
+                    .orElse(null);
+            int needManaValue = 4 - card.getManaValue();
+            if (xCost != null && needManaValue > 0) {
+                int minX = (needManaValue + xCost.getXInstancesCount() - 1) / xCost.getXInstancesCount();
+                ability.setVariableCostsMinMax(minX, Integer.MAX_VALUE);
+            }
             ability.setSourceId(card.getId());
             ability.setControllerId(card.getControllerOrOwnerId());
             game.getState().addOtherAbility(card, ability);
         }
         return true;
-    }
-
-    /**
-     * A double-faced card is cast by one of its faces, and the permanent it becomes is that face,
-     * with an id of its own: blitz given to the whole card would be cast, but its "gains haste and
-     * 'When this creature dies, draw a card'" would wait for an object that never enters
-     * (Ojer Kaslem, Deepest Growth). So it is given to each face that is itself such a creature spell.
-     */
-    private static void addCastableFaces(Card card, Game game, Set<Card> cardsToGainBlitz) {
-        if (card instanceof DoubleFacedCard) {
-            for (Card face : new Card[]{((DoubleFacedCard) card).getLeftHalfCard(), ((DoubleFacedCard) card).getRightHalfCard()}) {
-                if (face != null && filter.match(face, game)) {
-                    cardsToGainBlitz.add(face);
-                }
-            }
-        } else if (filter.match(card, game)) {
-            cardsToGainBlitz.add(card);
-        }
     }
 
     @Override
