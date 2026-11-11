@@ -1,9 +1,9 @@
 package mage.cards.i;
 
 import mage.MageInt;
-import mage.abilities.Ability;
 import mage.abilities.common.SimpleStaticAbility;
-import mage.abilities.condition.Condition;
+import mage.abilities.condition.InvertCondition;
+import mage.abilities.condition.common.SourceMatchesFilterCondition;
 import mage.abilities.decorator.ConditionalContinuousEffect;
 import mage.abilities.effects.common.continuous.BoostSourceEffect;
 import mage.cards.CardImpl;
@@ -11,13 +11,12 @@ import mage.cards.CardSetInfo;
 import mage.constants.CardType;
 import mage.constants.Duration;
 import mage.constants.SubType;
-import mage.game.Game;
-import mage.game.permanent.Permanent;
+import mage.filter.common.FilterAttackingOrBlockingCreature;
 
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author ChristianKleineidam
  */
 public final class IntrepidAce extends CardImpl {
 
@@ -32,8 +31,8 @@ public final class IntrepidAce extends CardImpl {
         // This creature gets +2/+0 as long as it isn't attacking or blocking.
         this.addAbility(new SimpleStaticAbility(new ConditionalContinuousEffect(
                 new BoostSourceEffect(2, 0, Duration.WhileOnBattlefield),
-                IntrepidAceCondition.instance,
-                "this creature gets +2/+0 as long as it isn't attacking or blocking"
+                new InvertCondition(new SourceMatchesFilterCondition(new FilterAttackingOrBlockingCreature())),
+                "{this} gets +2/+0 as long as it isn't attacking or blocking"
         )));
     }
 
@@ -44,20 +43,5 @@ public final class IntrepidAce extends CardImpl {
     @Override
     public IntrepidAce copy() {
         return new IntrepidAce(this);
-    }
-}
-
-enum IntrepidAceCondition implements Condition {
-    instance;
-
-    @Override
-    public boolean apply(Game game, Ability source) {
-        Permanent permanent = source.getSourcePermanentIfItStillExists(game);
-        return permanent != null && !permanent.isAttacking() && permanent.getBlocking() == 0;
-    }
-
-    @Override
-    public String toString() {
-        return "it isn't attacking or blocking";
     }
 }

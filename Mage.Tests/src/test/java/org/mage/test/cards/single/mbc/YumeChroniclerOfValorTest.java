@@ -26,8 +26,7 @@ public class YumeChroniclerOfValorTest extends CardTestPlayerBase {
         setChoice(playerA, "Green", 4); // normal pay x4
         setChoice(playerA, "Assist"); // activate assist
         addTarget(playerA, playerB); // player to assist
-        setChoice(playerB, "X=2");
-        setChoice(playerA, "Colorless", 2 - 1);
+        setChoice(playerB, "X=2"); // B pays {2} of A's cost
 
         setStrictChooseMode(true);
         setStopAt(1, PhaseStep.END_TURN);

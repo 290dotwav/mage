@@ -2318,6 +2318,10 @@ public abstract class GameImpl implements Game {
 
         // if it was no copy of copy take the target itself
         if (newBluePrint == null) {
+            if (copyFromPermanent.isCopy() && copyFromPermanent.getCopyFrom() instanceof Permanent) {
+                // copy effect is no longer active (e.g. source is LKI), use the original copy link
+                copyFromPermanent = (Permanent) copyFromPermanent.getCopyFrom();
+            }
             newBluePrint = copyFromPermanent.copy();
 
             // reset to original characteristics
