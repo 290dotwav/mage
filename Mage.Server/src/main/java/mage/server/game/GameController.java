@@ -142,7 +142,8 @@ public class GameController implements GameCallback {
         getGameSessions().forEach(GameSessionPlayer::cleanUp);
         getGameSessionWatchers().forEach(GameSessionWatcher::cleanUp);
 
-        managerFactory.chatManager().destroyChatSession(chatId);
+        // not at once: the Claude chairs say their traits in it the moment the game is over
+        managerFactory.chatManager().closeGameChatSession(chatId);
     }
 
     private void init() {

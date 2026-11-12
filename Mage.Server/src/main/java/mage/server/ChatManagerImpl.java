@@ -19,6 +19,7 @@ import org.apache.log4j.Logger;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -37,6 +38,22 @@ public class ChatManagerImpl implements ChatManager {
     private final ManagerFactory managerFactory;
     private final ConcurrentHashMap<UUID, ChatSession> chatSessions = new ConcurrentHashMap<>();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
+
+    /**
+     * How long a game's chat stays open once the game is over. Each Claude chair of the site says its traits in
+     * one line of the game's chat the moment the game is over (the "🎭 ... instincts: ..." marker), and every
+     * screen draws them on its end of the game. The chat used to go the instant the game ended, so the lines
+     * that came after it were dropped and the owner saw one chair of three: « Je peux voir qu'un seul Claude la.. ».
+     */
+    public static final int GAME_CHAT_OPEN_AFTER_END_SECS = 30;
+
+    /** The games' chats that are closing (the game is over): only the chairs' traits line is still heard there. */
+    private final Set<UUID> closingChats = ConcurrentHashMap.newKeySet();
+
+    /** What a closing game chat still carries: a chair's traits line, and nothing else, as before. */
+    static boolean heardAfterTheGame(String message, MessageType messageType) {
+        return messageType == MessageType.TALK && message != null && message.startsWith("\uD83C\uDFAD");
+    }
 
     public ChatManagerImpl(ManagerFactory managerFactory) {
         this.managerFactory = managerFactory;
@@ -96,8 +113,19 @@ public class ChatManagerImpl implements ChatManager {
     }
 
     @Override
+    public void closeGameChatSession(UUID chatId) {
+        if (chatId == null || !chatSessions.containsKey(chatId)) {
+            return;
+        }
+        closingChats.add(chatId);
+        managerFactory.threadExecutor().getTimeoutExecutor()
+                .schedule(() -> destroyChatSession(chatId), GAME_CHAT_OPEN_AFTER_END_SECS, TimeUnit.SECONDS);
+    }
+
+    @Override
     public void destroyChatSession(UUID chatId) {
         if (chatId != null) {
+            closingChats.remove(chatId);
             ChatSession chatSession = chatSessions.get(chatId);
             if (chatSession != null) {
                 if (chatSessions.containsKey(chatId)) {
@@ -127,6 +155,10 @@ public class ChatManagerImpl implements ChatManager {
     public void broadcast(UUID chatId, String userName, String message, MessageColor color, boolean withTime, Game game, MessageType messageType, SoundToPlay soundToPlay, int gameLine) {
         String finalMessage = message;
         ChatSession chatSession = chatSessions.get(chatId);
+        if (chatSession != null && closingChats.contains(chatId) && !heardAfterTheGame(message, messageType)) {
+            // the game is over: dropped, as when its chat was gone at once
+            return;
+        }
         Optional<User> user = managerFactory.userManager().getUserByName(userName);
         if (chatSession != null) {
             // special commands

@@ -26,6 +26,11 @@ public interface ChatManager {
 
     void destroyChatSession(UUID chatId);
 
+    /** A game is over: its chat goes, at once or a moment later (ChatManagerImpl.GAME_CHAT_OPEN_AFTER_END_SECS). */
+    default void closeGameChatSession(UUID chatId) {
+        destroyChatSession(chatId);
+    }
+
     void broadcast(UUID chatId, String userName, String message, ChatMessage.MessageColor color, boolean withTime, Game game, ChatMessage.MessageType messageType, ChatMessage.SoundToPlay soundToPlay);
 
     /** A line of a game's log, with its number (Game.getLogLinesSaid; 0 for none). */
