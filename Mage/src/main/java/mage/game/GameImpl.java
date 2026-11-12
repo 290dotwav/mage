@@ -183,6 +183,8 @@ public abstract class GameImpl implements Game {
     private transient int lastNumberOfAbilitiesOnTheStack; // used to check how long no new ability was put to stack
     private transient List<Integer> lastPlayersLifes = null; // if life is going down, it's no infinite loop
     private transient final LinkedList<UUID> stackObjectsCheck = new LinkedList<>(); // used to check if different sources used the stack
+    private transient int infiniteLoopRefusals; // ClaudeMTG fork: draws refused for the current loop, a forced draw at INFINITE_LOOP_MAX_REFUSALS
+    public static final int INFINITE_LOOP_MAX_REFUSALS = 3;
 
     // temporary store for income concede commands, don't copy
     private final LinkedList<UUID> concedingPlayers = new LinkedList<>();
@@ -1880,6 +1882,7 @@ public abstract class GameImpl implements Game {
 
         int priorityErrorsCount = 0;
         infiniteLoopCounter = 0;
+        infiniteLoopRefusals = 0;
         int rollbackBookmarkOnPriorityStart = 0;
         clearAllBookmarks();
         try {
@@ -2130,14 +2133,27 @@ public abstract class GameImpl implements Game {
             if (infiniteLoopCounter > 15) {
                 Player controller = getPlayer(getControllerId(removedStackObjectSourceId));
                 if (controller != null) {
+                    boolean refused = false;
                     for (UUID playerId : getState().getPlayersInRange(controller.getId(), this)) {
                         Player player = getPlayer(playerId);
                         if (!player.chooseUse(Outcome.Detriment, "Draw game because of infinite looping?", null, this)) {
-                            informPlayers(controller.getLogName() + " has NOT confirmed that the game is a draw because of infinite looping.");
-                            infiniteLoopCounter = 0;
-                            return;
+                            // ClaudeMTG fork: the refusing player's name (upstream wrote the loop controller's), and a
+                            // mandatory loop can no longer last forever: at the 3rd refusal the game is a draw anyway
+                            infiniteLoopRefusals++;
+                            informPlayers(player.getLogName() + " has NOT confirmed that the game is a draw because of infinite looping"
+                                    + " (refusal " + infiniteLoopRefusals + " of " + INFINITE_LOOP_MAX_REFUSALS + ").");
+                            if (infiniteLoopRefusals < INFINITE_LOOP_MAX_REFUSALS) {
+                                infiniteLoopCounter = 0;
+                                return;
+                            }
+                            refused = true;
+                            break;
                         }
-                        informPlayers(controller.getLogName() + " has confirmed that the game is a draw because of infinite looping.");
+                        informPlayers(player.getLogName() + " has confirmed that the game is a draw because of infinite looping.");
+                    }
+                    if (refused) {
+                        informPlayers("The infinite loop cannot end: the draw was refused " + INFINITE_LOOP_MAX_REFUSALS
+                                + " times, so the game is a draw.");
                     }
                     for (UUID playerId : getState().getPlayersInRange(controller.getId(), this)) {
                         Player player = getPlayer(playerId);
@@ -3987,6 +4003,7 @@ public abstract class GameImpl implements Game {
         lkiExtended.clear();
         lkiCardState.clear();
         infiniteLoopCounter = 0;
+        infiniteLoopRefusals = 0; // the stack emptied: the loop is over
         stackObjectsCheck.clear();
     }
 
