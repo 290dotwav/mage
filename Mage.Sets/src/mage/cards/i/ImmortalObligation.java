@@ -1,21 +1,17 @@
 package mage.cards.i;
 
 import mage.abilities.Ability;
-import mage.abilities.effects.ContinuousEffectImpl;
+import mage.abilities.effects.ContinuousEffect;
 import mage.abilities.effects.OneShotEffect;
 import mage.abilities.effects.RestrictionEffect;
+import mage.abilities.effects.common.combat.GoadTargetEffect;
 import mage.cards.Card;
 import mage.cards.CardImpl;
 import mage.cards.CardSetInfo;
-import mage.constants.CardType;
-import mage.constants.Duration;
-import mage.constants.Layer;
-import mage.constants.Outcome;
-import mage.constants.SubLayer;
-import mage.constants.Zone;
+import mage.constants.*;
 import mage.counters.CounterType;
 import mage.counters.Counters;
-import mage.filter.StaticFilters;
+import mage.filter.common.FilterCreatureCard;
 import mage.game.Game;
 import mage.game.permanent.Permanent;
 import mage.players.Player;
@@ -26,16 +22,19 @@ import mage.util.CardUtil;
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author brahle
  */
 public final class ImmortalObligation extends CardImpl {
+
+    private static final FilterCreatureCard filter = new FilterCreatureCard("creature card from an opponent's graveyard");
 
     public ImmortalObligation(UUID ownerId, CardSetInfo setInfo) {
         super(ownerId, setInfo, new CardType[]{CardType.INSTANT}, "{1}{W}");
 
-        // Return target creature card from an opponent's graveyard to the battlefield under their control with a duty counter on it. For as long as that creature has a duty counter on it, it is goaded, can't attack you or a permanent you control, and can't block creatures you control.
+        // Return target creature card from an opponent's graveyard to the battlefield under their control with a duty counter on it.
+        // For as long as that creature has a duty counter on it, it is goaded, can't attack you or a permanent you control, and can't block creatures you control.
         this.getSpellAbility().addEffect(new ImmortalObligationEffect());
-        this.getSpellAbility().addTarget(new TargetCardInOpponentsGraveyard(StaticFilters.FILTER_CARD_CREATURE));
+        this.getSpellAbility().addTarget(new TargetCardInOpponentsGraveyard(filter));
     }
 
     private ImmortalObligation(final ImmortalObligation card) {
@@ -51,10 +50,9 @@ public final class ImmortalObligation extends CardImpl {
 class ImmortalObligationEffect extends OneShotEffect {
 
     ImmortalObligationEffect() {
-        super(Outcome.Benefit);
-        staticText = "return target creature card from an opponent's graveyard to the battlefield under their control " +
-                "with a duty counter on it. For as long as that creature has a duty counter on it, it is goaded, " +
-                "can't attack you or a permanent you control, and can't block creatures you control";
+        super(Outcome.PutCreatureInPlay);
+        staticText = "return target creature card from an opponent's graveyard to the battlefield under their control with a duty counter on it. " +
+                "For as long as that creature has a duty counter on it, it is goaded, can't attack you or a permanent you control, and can't block creatures you control";
     }
 
     private ImmortalObligationEffect(final ImmortalObligationEffect effect) {
@@ -68,34 +66,35 @@ class ImmortalObligationEffect extends OneShotEffect {
 
     @Override
     public boolean apply(Game game, Ability source) {
-        Card card = game.getCard(getTargetPointer().getFirst(game, source));
-        if (card == null) {
+        Player controller = game.getPlayer(source.getControllerId());
+        Card card = game.getCard(source.getFirstTarget());
+        if (controller == null || card == null || game.getState().getZone(card.getId()) != Zone.GRAVEYARD) {
             return false;
         }
-        Player owner = game.getPlayer(card.getOwnerId());
-        if (owner == null) {
+
+        game.setEnterWithCounters(card.getId(), new Counters(CounterType.DUTY.createInstance()));
+        if (!controller.moveCards(card, Zone.BATTLEFIELD, source, game, false, false, true, null)) {
             return false;
         }
-        Counters counters = new Counters();
-        counters.addCounter(CounterType.DUTY.createInstance());
-        game.setEnterWithCounters(card.getId(), counters);
-        owner.moveCards(card, Zone.BATTLEFIELD, source, game);
+
         Permanent permanent = CardUtil.getPermanentFromCardPutToBattlefield(card, game);
-        if (permanent == null) {
-            return true;
+        if (permanent != null) {
+            ContinuousEffect goadEffect = new ImmortalObligationGoadEffect();
+            goadEffect.setTargetPointer(new FixedTarget(permanent, game));
+            game.addEffect(goadEffect, source);
+
+            ContinuousEffect restrictEffect = new ImmortalObligationRestrictionEffect();
+            restrictEffect.setTargetPointer(new FixedTarget(permanent, game));
+            game.addEffect(restrictEffect, source);
         }
-        game.addEffect(new ImmortalObligationGoadEffect()
-                .setTargetPointer(new FixedTarget(permanent, game)), source);
-        game.addEffect(new ImmortalObligationRestrictionEffect()
-                .setTargetPointer(new FixedTarget(permanent, game)), source);
         return true;
     }
 }
 
-class ImmortalObligationGoadEffect extends ContinuousEffectImpl {
+class ImmortalObligationGoadEffect extends GoadTargetEffect {
 
     ImmortalObligationGoadEffect() {
-        super(Duration.Custom, Layer.RulesEffects, SubLayer.NA, Outcome.Detriment);
+        super(Duration.Custom);
     }
 
     private ImmortalObligationGoadEffect(final ImmortalObligationGoadEffect effect) {
@@ -110,21 +109,19 @@ class ImmortalObligationGoadEffect extends ContinuousEffectImpl {
     @Override
     public boolean apply(Game game, Ability source) {
         Permanent permanent = game.getPermanent(getTargetPointer().getFirst(game, source));
-        if (permanent == null) {
+        if (permanent == null || permanent.getCounters(game).getCount(CounterType.DUTY) < 1) {
             discard();
             return false;
         }
-        if (permanent.getCounters(game).getCount(CounterType.DUTY) > 0) {
-            permanent.addGoadingPlayer(source.getControllerId());
-        }
-        return true;
+        return super.apply(game, source);
     }
 }
 
 class ImmortalObligationRestrictionEffect extends RestrictionEffect {
 
     ImmortalObligationRestrictionEffect() {
-        super(Duration.Custom, Outcome.Detriment);
+        super(Duration.Custom);
+        staticText = "can't attack you or a permanent you control, and can't block creatures you control";
     }
 
     private ImmortalObligationRestrictionEffect(final ImmortalObligationRestrictionEffect effect) {
@@ -138,17 +135,19 @@ class ImmortalObligationRestrictionEffect extends RestrictionEffect {
 
     @Override
     public boolean applies(Permanent permanent, Ability source, Game game) {
-        Permanent creature = game.getPermanent(getTargetPointer().getFirst(game, source));
-        if (creature == null) {
+        Permanent p = game.getPermanent(getTargetPointer().getFirst(game, source));
+        if (p == null || p.getCounters(game).getCount(CounterType.DUTY) < 1) {
             discard();
             return false;
         }
-        return creature.getId().equals(permanent.getId())
-                && permanent.getCounters(game).getCount(CounterType.DUTY) > 0;
+        return permanent.getId().equals(p.getId());
     }
 
     @Override
     public boolean canAttack(Permanent attacker, UUID defenderId, Ability source, Game game, boolean canUseChooseDialogs) {
+        if (defenderId == null) {
+            return true;
+        }
         if (source.isControlledBy(defenderId)) {
             return false;
         }
@@ -158,6 +157,9 @@ class ImmortalObligationRestrictionEffect extends RestrictionEffect {
 
     @Override
     public boolean canBlock(Permanent attacker, Permanent blocker, Ability source, Game game, boolean canUseChooseDialogs) {
-        return attacker == null || !attacker.isControlledBy(source.getControllerId());
+        if (attacker == null) {
+            return true;
+        }
+        return !attacker.isControlledBy(source.getControllerId());
     }
 }
