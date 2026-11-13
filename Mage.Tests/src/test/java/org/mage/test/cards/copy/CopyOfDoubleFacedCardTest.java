@@ -42,6 +42,32 @@ public class CopyOfDoubleFacedCardTest extends CardTestPlayerBase {
     }
 
     @Test
+    public void test_EntersAsCopyOfCardPutIntoGraveyard_ActivatedSleeper() {
+        // You may have this creature enter as a copy of any creature card in a graveyard that was put there from the
+        // battlefield this turn, except it's a Phyrexian in addition to its other types.
+        addCard(Zone.HAND, playerA, "Activated Sleeper"); // {2}{B}
+        addCard(Zone.BATTLEFIELD, playerA, "Swamp", 3);
+        addCard(Zone.HAND, playerA, "Lightning Bolt"); // {R}
+        addCard(Zone.BATTLEFIELD, playerA, "Mountain", 1);
+        //
+        addCard(Zone.BATTLEFIELD, playerB, "Delver of Secrets"); // double-faced, front 1/1 Human Wizard
+
+        castSpell(1, PhaseStep.PRECOMBAT_MAIN, playerA, "Lightning Bolt", "Delver of Secrets");
+        waitStackResolved(1, PhaseStep.PRECOMBAT_MAIN);
+        castSpell(1, PhaseStep.PRECOMBAT_MAIN, playerA, "Activated Sleeper");
+        setChoice(playerA, true); // use copy
+        setChoice(playerA, "Delver of Secrets");
+
+        setStrictChooseMode(true);
+        setStopAt(1, PhaseStep.END_TURN);
+        execute();
+
+        assertPowerToughness(playerA, "Delver of Secrets", 1, 1);
+        assertSubtype("Delver of Secrets", SubType.WIZARD);
+        assertSubtype("Delver of Secrets", SubType.PHYREXIAN);
+    }
+
+    @Test
     public void test_BecomesCopyOfCardInGraveyard_DimirDoppelganger() {
         // {1}{U}{B}: Exile target creature card from a graveyard. This creature becomes a copy of that card, except
         // it has this ability.
@@ -153,6 +179,30 @@ public class CopyOfDoubleFacedCardTest extends CardTestPlayerBase {
         assertPermanentCount(playerA, "Soldier Token", 1);
         assertPowerToughness(playerA, "Delver of Secrets", 1, 1);
         assertSubtype("Delver of Secrets", SubType.WIZARD);
+    }
+
+    @Test
+    public void test_TransformsIntoCopyOfExiledCard_LudevicNecrogenius() {
+        // As this creature transforms into Olag, Ludevic's Hubris, it becomes a copy of a creature card exiled with
+        // it, except its name is Olag, Ludevic's Hubris, it's 4/4, and it's a legendary blue and black Zombie in
+        // addition to its other colors and types. Put a number of +1/+1 counters on Olag equal to the number of
+        // creature cards exiled with it.
+        addCard(Zone.BATTLEFIELD, playerA, "Ludevic, Necrogenius"); // {X}{U}{U}{B}{B}, exile X creature cards: transform
+        addCard(Zone.BATTLEFIELD, playerA, "Underground Sea", 1 + 4);
+        //
+        addCard(Zone.GRAVEYARD, playerA, "Delver of Secrets"); // double-faced, front 1/1 Human Wizard
+
+        activateAbility(1, PhaseStep.PRECOMBAT_MAIN, playerA, "{X}{U}{U}{B}{B}");
+        setChoice(playerA, "X=1"); // mana
+        setChoice(playerA, "X=1"); // creature cards to exile
+        setChoice(playerA, "Delver of Secrets"); // exile for the cost
+
+        setStrictChooseMode(true);
+        setStopAt(1, PhaseStep.END_TURN);
+        execute();
+
+        assertPowerToughness(playerA, "Olag, Ludevic's Hubris", 4 + 1, 4 + 1);
+        assertSubtype("Olag, Ludevic's Hubris", SubType.WIZARD);
     }
 
     @Test

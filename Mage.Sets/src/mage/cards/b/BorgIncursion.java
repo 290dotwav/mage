@@ -12,14 +12,14 @@ import mage.game.permanent.token.BorgToken;
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author muz
  */
 public final class BorgIncursion extends CardImpl {
 
     private static final FilterControlledCreaturePermanent filter = new FilterControlledCreaturePermanent("artifact creatures you control");
 
     static {
-        filter.add(mage.constants.CardType.ARTIFACT.getPredicate());
+        filter.add(CardType.ARTIFACT.getPredicate());
     }
 
     public BorgIncursion(UUID ownerId, CardSetInfo setInfo) {
@@ -28,7 +28,7 @@ public final class BorgIncursion extends CardImpl {
         // Create two 1/1 colorless Borg artifact creature tokens, then artifact creatures you control gain protection from the color of your choice until end of turn.
         this.getSpellAbility().addEffect(new CreateTokenEffect(new BorgToken(), 2));
         this.getSpellAbility().addEffect(new GainProtectionFromColorAllEffect(Duration.EndOfTurn, filter)
-                .setText(", then artifact creatures you control gain protection from the color of your choice until end of turn"));
+            .setText("then artifact creatures you control gain protection from the color of your choice until end of turn"));
     }
 
     private BorgIncursion(final BorgIncursion card) {
