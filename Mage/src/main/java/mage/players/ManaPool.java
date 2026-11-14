@@ -140,7 +140,7 @@ public class ManaPool implements Serializable {
             return true;
         }
 
-        for (ManaPoolItem mana : manaItems) {
+        for (ManaPoolItem mana : itemsInPayOrder()) {
             if (filter != null && !filter.match(mana.getSourceObject(), game)) {
                 continue;
             }
@@ -169,6 +169,21 @@ public class ManaPool implements Serializable {
             }
         }
         return false;
+    }
+
+    /**
+     * ClaudeMTG fork: the pool's plain mana in the order it pays. Mana with an effect for the spell it pays
+     * (its flag: Boseiju, Who Shelters All's "that spell can't be countered", Wookiee Mystic's counter) first,
+     * then mana added during this payment (beyond the stock), then the rest, each in the order it was added.
+     * Upstream paid in the order added only: with a {C} floating already, Boseiju's {C} stayed in the pool and
+     * the spell could be countered. Conditional mana is still tried before all of it (getConditional).
+     */
+    private List<ManaPoolItem> itemsInPayOrder() {
+        List<ManaPoolItem> ordered = new ArrayList<>(manaItems);
+        ordered.sort(Comparator
+                .comparing((ManaPoolItem item) -> !item.getFlag())
+                .thenComparing(item -> item.count() <= item.getStock()));
+        return ordered;
     }
 
     public int get(ManaType manaType) {
