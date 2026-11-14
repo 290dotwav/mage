@@ -1,8 +1,11 @@
 package mage.cards.h;
 
+import java.util.UUID;
+
 import mage.MageInt;
+import mage.constants.SubType;
+import mage.constants.SuperType;
 import mage.abilities.Ability;
-import mage.abilities.triggers.BeginningOfCombatTriggeredAbility;
 import mage.abilities.condition.common.CastNoncreatureSpellThisTurnCondition;
 import mage.abilities.costs.common.TapSourceCost;
 import mage.abilities.costs.mana.GenericManaCost;
@@ -10,16 +13,13 @@ import mage.abilities.effects.keyword.SurveilEffect;
 import mage.abilities.keyword.FlyingAbility;
 import mage.abilities.mana.AnyColorManaAbility;
 import mage.abilities.mana.ColorlessManaAbility;
+import mage.abilities.triggers.BeginningOfCombatTriggeredAbility;
 import mage.cards.CardImpl;
 import mage.cards.CardSetInfo;
 import mage.constants.CardType;
-import mage.constants.SubType;
-import mage.constants.SuperType;
-
-import java.util.UUID;
 
 /**
- * @author Claude
+ * @author muz
  */
 public final class HERBIELovableRobot extends CardImpl {
 
@@ -36,9 +36,11 @@ public final class HERBIELovableRobot extends CardImpl {
         this.addAbility(FlyingAbility.getInstance());
 
         // At the beginning of combat on your turn, if you've cast a noncreature spell this turn, surveil 1.
-        this.addAbility(new BeginningOfCombatTriggeredAbility(new SurveilEffect(1))
-                .withInterveningIf(CastNoncreatureSpellThisTurnCondition.instance)
-                .addHint(CastNoncreatureSpellThisTurnCondition.getHint()));
+        this.addAbility(
+                new BeginningOfCombatTriggeredAbility(new SurveilEffect(1))
+                        .withInterveningIf(CastNoncreatureSpellThisTurnCondition.instance)
+                        .addHint(CastNoncreatureSpellThisTurnCondition.getHint())
+        );
 
         // {T}: Add {C}.
         this.addAbility(new ColorlessManaAbility());

@@ -2,25 +2,25 @@ package mage.cards.j;
 
 import mage.abilities.Ability;
 import mage.abilities.LoyaltyAbility;
-import mage.abilities.common.CanBeYourCommanderAbility;
 import mage.abilities.costs.Cost;
-import mage.abilities.costs.mana.GenericManaCost;
 import mage.abilities.effects.OneShotEffect;
 import mage.abilities.effects.RestrictionEffect;
+import mage.abilities.effects.common.ExileTargetEffect;
+import mage.abilities.effects.common.RevealCardsFromLibraryUntilEffect;
+import mage.abilities.common.CanBeYourCommanderAbility;
 import mage.abilities.triggers.BeginningOfCombatTriggeredAbility;
 import mage.cards.Card;
 import mage.cards.CardImpl;
 import mage.cards.CardSetInfo;
-import mage.cards.Cards;
-import mage.cards.CardsImpl;
 import mage.constants.CardType;
 import mage.constants.Duration;
 import mage.constants.Outcome;
+import mage.constants.PutCards;
 import mage.constants.SubType;
 import mage.constants.SuperType;
 import mage.constants.TargetController;
-import mage.constants.Zone;
-import mage.filter.common.FilterControlledPermanent;
+import mage.filter.FilterCard;
+import mage.filter.FilterPermanent;
 import mage.filter.predicate.Predicates;
 import mage.filter.predicate.mageobject.AnotherPredicate;
 import mage.game.Game;
@@ -28,23 +28,23 @@ import mage.game.permanent.Permanent;
 import mage.players.Player;
 import mage.target.TargetPermanent;
 import mage.target.common.TargetCardInHand;
+import mage.util.ManaUtil;
 
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author Riley Jones
  */
 public final class JaceMultiverseArchitect extends CardImpl {
 
-    private static final FilterControlledPermanent filter
-            = new FilterControlledPermanent("another target planeswalker or creature you control");
+    private static final FilterPermanent filter = new FilterPermanent("another target planeswalker or creature you control");
+    private static final FilterCard filterCard = new FilterCard("creature or planeswalker card");
 
     static {
         filter.add(AnotherPredicate.instance);
-        filter.add(Predicates.or(
-                CardType.PLANESWALKER.getPredicate(),
-                CardType.CREATURE.getPredicate()
-        ));
+        filter.add(TargetController.YOU.getControllerPredicate());
+        filter.add(Predicates.or(CardType.PLANESWALKER.getPredicate(), CardType.CREATURE.getPredicate()));
+        filterCard.add(Predicates.or(CardType.CREATURE.getPredicate(), CardType.PLANESWALKER.getPredicate()));
     }
 
     public JaceMultiverseArchitect(UUID ownerId, CardSetInfo setInfo) {
@@ -56,14 +56,18 @@ public final class JaceMultiverseArchitect extends CardImpl {
 
         // At the beginning of combat on each opponent's turn, they may pay {2}. If they don't, creatures they control can't attack Jaces you control this turn.
         this.addAbility(new BeginningOfCombatTriggeredAbility(
-                TargetController.OPPONENT, new JaceMultiverseArchitectPayEffect(), false
+                TargetController.OPPONENT,
+                new JaceMultiverseArchitectAttackRestrictionEffect(),
+                false
         ));
 
         // +1: Draw two cards, then put a card from your hand on the bottom of your library.
         this.addAbility(new LoyaltyAbility(new JaceMultiverseArchitectDrawEffect(), 1));
 
         // -3: Exile another target planeswalker or creature you control. Reveal cards from the top of your library until you reveal a creature or planeswalker card. Put that card onto the battlefield and the rest on the bottom of your library in a random order.
-        Ability ability = new LoyaltyAbility(new JaceMultiverseArchitectExileEffect(), -3);
+        Ability ability = new LoyaltyAbility(new ExileTargetEffect(), -3);
+        ability.addEffect(new RevealCardsFromLibraryUntilEffect(filterCard, PutCards.BATTLEFIELD, PutCards.BOTTOM_RANDOM)
+                .concatBy("."));
         ability.addTarget(new TargetPermanent(filter));
         this.addAbility(ability);
 
@@ -81,59 +85,59 @@ public final class JaceMultiverseArchitect extends CardImpl {
     }
 }
 
-class JaceMultiverseArchitectPayEffect extends OneShotEffect {
+class JaceMultiverseArchitectAttackRestrictionEffect extends OneShotEffect {
 
-    JaceMultiverseArchitectPayEffect() {
+    JaceMultiverseArchitectAttackRestrictionEffect() {
         super(Outcome.Detriment);
         staticText = "they may pay {2}. If they don't, creatures they control can't attack Jaces you control this turn";
     }
 
-    private JaceMultiverseArchitectPayEffect(final JaceMultiverseArchitectPayEffect effect) {
+    private JaceMultiverseArchitectAttackRestrictionEffect(final JaceMultiverseArchitectAttackRestrictionEffect effect) {
         super(effect);
     }
 
     @Override
-    public JaceMultiverseArchitectPayEffect copy() {
-        return new JaceMultiverseArchitectPayEffect(this);
+    public JaceMultiverseArchitectAttackRestrictionEffect copy() {
+        return new JaceMultiverseArchitectAttackRestrictionEffect(this);
     }
 
     @Override
     public boolean apply(Game game, Ability source) {
-        Player player = game.getPlayer(getTargetPointer().getFirst(game, source));
-        if (player == null) {
+        Player opponent = game.getPlayer(getTargetPointer().getFirst(game, source));
+        if (opponent == null) {
             return false;
         }
-        Cost cost = new GenericManaCost(2);
-        if (cost.canPay(source, source, player.getId(), game)
-                && player.chooseUse(Outcome.Benefit, "Pay {2}? If you don't, your creatures can't attack Jaces "
-                + "controlled by " + game.getPlayer(source.getControllerId()).getName() + " this turn.", source, game)
-                && cost.pay(source, game, source, player.getId(), false, null)) {
-            game.informPlayers(player.getLogName() + " pays {2}");
+        Cost cost = ManaUtil.createManaCost(2, false);
+        if (cost.canPay(source, source, opponent.getId(), game)
+                && opponent.chooseUse(Outcome.Benefit, "Pay {2} to allow creatures you control to attack Jaces?", source, game)
+                && cost.pay(source, game, source, opponent.getId(), false)) {
             return true;
         }
-        game.informPlayers(player.getLogName() + " doesn't pay {2}: their creatures can't attack Jaces this turn");
-        game.addEffect(new JaceMultiverseArchitectRestrictionEffect(player.getId()), source);
+        game.addEffect(new JaceMultiverseArchitectCantAttackEffect(opponent.getId(), source.getControllerId()), source);
         return true;
     }
 }
 
-class JaceMultiverseArchitectRestrictionEffect extends RestrictionEffect {
+class JaceMultiverseArchitectCantAttackEffect extends RestrictionEffect {
 
-    private final UUID attackingPlayerId;
+    private final UUID attackerPlayerId;
+    private final UUID defendingControllerId;
 
-    JaceMultiverseArchitectRestrictionEffect(UUID attackingPlayerId) {
+    JaceMultiverseArchitectCantAttackEffect(UUID attackerPlayerId, UUID defendingControllerId) {
         super(Duration.EndOfTurn);
-        this.attackingPlayerId = attackingPlayerId;
+        this.attackerPlayerId = attackerPlayerId;
+        this.defendingControllerId = defendingControllerId;
     }
 
-    private JaceMultiverseArchitectRestrictionEffect(final JaceMultiverseArchitectRestrictionEffect effect) {
+    private JaceMultiverseArchitectCantAttackEffect(final JaceMultiverseArchitectCantAttackEffect effect) {
         super(effect);
-        this.attackingPlayerId = effect.attackingPlayerId;
+        this.attackerPlayerId = effect.attackerPlayerId;
+        this.defendingControllerId = effect.defendingControllerId;
     }
 
     @Override
     public boolean applies(Permanent permanent, Ability source, Game game) {
-        return permanent.isControlledBy(attackingPlayerId);
+        return permanent.isControlledBy(attackerPlayerId);
     }
 
     @Override
@@ -141,16 +145,15 @@ class JaceMultiverseArchitectRestrictionEffect extends RestrictionEffect {
         if (defenderId == null) {
             return true;
         }
-        Permanent defender = game.getPermanent(defenderId);
-        return defender == null
-                || !defender.isControlledBy(source.getControllerId())
-                || !defender.isPlaneswalker(game)
-                || !defender.hasSubtype(SubType.JACE, game);
+        Permanent planeswalker = game.getPermanent(defenderId);
+        return planeswalker == null
+                || !planeswalker.hasSubtype(SubType.JACE, game)
+                || !planeswalker.isControlledBy(defendingControllerId);
     }
 
     @Override
-    public JaceMultiverseArchitectRestrictionEffect copy() {
-        return new JaceMultiverseArchitectRestrictionEffect(this);
+    public JaceMultiverseArchitectCantAttackEffect copy() {
+        return new JaceMultiverseArchitectCantAttackEffect(this);
     }
 }
 
@@ -177,66 +180,14 @@ class JaceMultiverseArchitectDrawEffect extends OneShotEffect {
             return false;
         }
         controller.drawCards(2, source, game);
-        if (controller.getHand().isEmpty()) {
-            return true;
-        }
         TargetCardInHand target = new TargetCardInHand();
-        target.withChooseHint("to put on the bottom of your library");
-        controller.choose(Outcome.Discard, controller.getHand(), target, source, game);
-        Card card = game.getCard(target.getFirstTarget());
-        if (card != null) {
-            controller.putCardsOnBottomOfLibrary(card, game, source);
-        }
-        return true;
-    }
-}
-
-class JaceMultiverseArchitectExileEffect extends OneShotEffect {
-
-    JaceMultiverseArchitectExileEffect() {
-        super(Outcome.PutCardInPlay);
-        staticText = "exile another target planeswalker or creature you control. Reveal cards from the top of your "
-                + "library until you reveal a creature or planeswalker card. Put that card onto the battlefield "
-                + "and the rest on the bottom of your library in a random order";
-    }
-
-    private JaceMultiverseArchitectExileEffect(final JaceMultiverseArchitectExileEffect effect) {
-        super(effect);
-    }
-
-    @Override
-    public JaceMultiverseArchitectExileEffect copy() {
-        return new JaceMultiverseArchitectExileEffect(this);
-    }
-
-    @Override
-    public boolean apply(Game game, Ability source) {
-        Player controller = game.getPlayer(source.getControllerId());
-        if (controller == null) {
-            return false;
-        }
-        Permanent permanent = game.getPermanent(getTargetPointer().getFirst(game, source));
-        if (permanent != null) {
-            controller.moveCards(permanent, Zone.EXILED, source, game);
-        }
-        Cards revealed = new CardsImpl();
-        Card found = null;
-        for (Card card : controller.getLibrary().getCards(game)) {
-            revealed.add(card);
-            if (card.isCreature(game) || card.isPlaneswalker(game)) {
-                found = card;
-                break;
+        if (target.canChoose(controller.getId(), source, game)) {
+            controller.chooseTarget(Outcome.Detriment, target, source, game);
+            Card card = game.getCard(target.getFirstTarget());
+            if (card != null) {
+                controller.putCardsOnBottomOfLibrary(card, game, source);
             }
         }
-        if (revealed.isEmpty()) {
-            return true;
-        }
-        controller.revealCards(source, revealed, game);
-        if (found != null) {
-            controller.moveCards(found, Zone.BATTLEFIELD, source, game);
-        }
-        revealed.retainZone(Zone.LIBRARY, game);
-        controller.putCardsOnBottomOfLibrary(revealed, game, source, false);
         return true;
     }
 }

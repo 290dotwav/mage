@@ -6,14 +6,18 @@ import mage.abilities.common.EntersBattlefieldTriggeredAbility;
 import mage.abilities.common.SimpleStaticAbility;
 import mage.abilities.condition.Condition;
 import mage.abilities.condition.common.PermanentsOnTheBattlefieldCondition;
+import mage.abilities.decorator.ConditionalRequirementEffect;
 import mage.abilities.effects.RequirementEffect;
 import mage.abilities.effects.common.ExileTargetEffect;
+import mage.abilities.hint.ConditionHint;
+import mage.abilities.hint.Hint;
 import mage.abilities.keyword.FlyingAbility;
 import mage.abilities.keyword.IndestructibleAbility;
 import mage.abilities.keyword.TrampleAbility;
 import mage.cards.CardImpl;
 import mage.cards.CardSetInfo;
 import mage.constants.CardType;
+import mage.constants.ComparisonType;
 import mage.constants.Duration;
 import mage.constants.SubType;
 import mage.constants.SuperType;
@@ -24,14 +28,29 @@ import mage.game.permanent.Permanent;
 import mage.players.Player;
 import mage.target.TargetPermanent;
 
-import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
- * @author Claude
+ * @author DarioBarrabinoDev
  */
 public final class GalactusDevourerOfWorlds extends CardImpl {
+
+    private static final FilterControlledCreaturePermanent filter
+            = new FilterControlledCreaturePermanent("a creature named Silver Surfer, Galactus's Herald");
+
+    static {
+        filter.add(new NamePredicate("Silver Surfer, Galactus's Herald"));
+    }
+
+    private static final Condition condition
+            = new PermanentsOnTheBattlefieldCondition(filter, ComparisonType.FEWER_THAN, 1);
+    private static final Hint hint = new ConditionHint(
+            new PermanentsOnTheBattlefieldCondition(filter), "You control a creature named Silver Surfer, Galactus's Herald"
+    );
 
     public GalactusDevourerOfWorlds(UUID ownerId, CardSetInfo setInfo) {
         super(ownerId, setInfo, new CardType[]{CardType.CREATURE}, "{10}");
@@ -42,9 +61,13 @@ public final class GalactusDevourerOfWorlds extends CardImpl {
         this.power = new MageInt(12);
         this.toughness = new MageInt(12);
 
-        // Flying, trample, indestructible
+        // Flying
         this.addAbility(FlyingAbility.getInstance());
+
+        // Trample
         this.addAbility(TrampleAbility.getInstance());
+
+        // Indestructible
         this.addAbility(IndestructibleAbility.getInstance());
 
         // When Galactus enters, exile target permanent.
@@ -53,7 +76,11 @@ public final class GalactusDevourerOfWorlds extends CardImpl {
         this.addAbility(ability);
 
         // Insatiable Hunger -- Galactus attacks an opponent with the most life among your opponents each combat if able unless you control a creature named Silver Surfer, Galactus's Herald.
-        this.addAbility(new SimpleStaticAbility(new GalactusDevourerOfWorldsEffect()).withFlavorWord("Insatiable Hunger"));
+        this.addAbility(new SimpleStaticAbility(new ConditionalRequirementEffect(
+                new GalactusDevourerOfWorldsEffect(), condition,
+                "{this} attacks an opponent with the most life among your opponents each combat if able "
+                        + "unless you control a creature named Silver Surfer, Galactus's Herald"
+        )).withFlavorWord("Insatiable Hunger").addHint(hint));
     }
 
     private GalactusDevourerOfWorlds(final GalactusDevourerOfWorlds card) {
@@ -68,19 +95,8 @@ public final class GalactusDevourerOfWorlds extends CardImpl {
 
 class GalactusDevourerOfWorldsEffect extends RequirementEffect {
 
-    private static final FilterControlledCreaturePermanent filter
-            = new FilterControlledCreaturePermanent("a creature named Silver Surfer, Galactus's Herald");
-
-    static {
-        filter.add(new NamePredicate("Silver Surfer, Galactus's Herald"));
-    }
-
-    private static final Condition condition = new PermanentsOnTheBattlefieldCondition(filter);
-
     GalactusDevourerOfWorldsEffect() {
         super(Duration.WhileOnBattlefield);
-        staticText = "{this} attacks an opponent with the most life among your opponents each combat if able " +
-                "unless you control a creature named Silver Surfer, Galactus's Herald";
     }
 
     private GalactusDevourerOfWorldsEffect(final GalactusDevourerOfWorldsEffect effect) {
@@ -94,8 +110,7 @@ class GalactusDevourerOfWorldsEffect extends RequirementEffect {
 
     @Override
     public boolean applies(Permanent permanent, Ability source, Game game) {
-        return permanent.getId().equals(source.getSourceId())
-                && !condition.apply(game, source);
+        return permanent.getId().equals(source.getSourceId());
     }
 
     @Override
@@ -110,21 +125,21 @@ class GalactusDevourerOfWorldsEffect extends RequirementEffect {
 
     @Override
     public Set<UUID> mustAttackDefenders(Ability source, Game game) {
-        Set<UUID> mostLife = new HashSet<>();
-        int highest = Integer.MIN_VALUE;
-        for (UUID opponentId : game.getOpponents(source.getControllerId())) {
-            Player opponent = game.getPlayer(opponentId);
-            if (opponent == null || !opponent.isInGame()) {
-                continue;
-            }
-            if (opponent.getLife() > highest) {
-                highest = opponent.getLife();
-                mostLife.clear();
-            }
-            if (opponent.getLife() == highest) {
-                mostLife.add(opponentId);
-            }
-        }
-        return mostLife;
+        List<Player> opponents = game
+                .getOpponents(source.getControllerId(), true)
+                .stream()
+                .map(game::getPlayer)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        int mostLife = opponents
+                .stream()
+                .mapToInt(Player::getLife)
+                .max()
+                .orElse(Integer.MIN_VALUE);
+        return opponents
+                .stream()
+                .filter(opponent -> opponent.getLife() == mostLife)
+                .map(Player::getId)
+                .collect(Collectors.toSet());
     }
 }

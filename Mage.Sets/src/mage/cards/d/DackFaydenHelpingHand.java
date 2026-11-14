@@ -3,38 +3,38 @@ package mage.cards.d;
 import mage.MageInt;
 import mage.abilities.Ability;
 import mage.abilities.common.EntersBattlefieldTriggeredAbility;
+import mage.abilities.dynamicvalue.common.OpponentsCount;
 import mage.abilities.effects.ContinuousEffect;
 import mage.abilities.effects.OneShotEffect;
 import mage.abilities.effects.common.combat.GoadTargetEffect;
 import mage.abilities.effects.common.continuous.GainControlTargetEffect;
+import mage.abilities.hint.Hint;
+import mage.abilities.hint.ValueHint;
 import mage.cards.Card;
 import mage.cards.CardImpl;
 import mage.cards.CardSetInfo;
 import mage.cards.Cards;
 import mage.cards.CardsImpl;
-import mage.choices.Choice;
-import mage.choices.ChoiceImpl;
-import mage.constants.CardType;
-import mage.constants.Duration;
-import mage.constants.Outcome;
-import mage.constants.SubType;
-import mage.constants.SuperType;
-import mage.constants.Zone;
+import mage.constants.*;
+import mage.filter.FilterPlayer;
+import mage.filter.FilterOpponent;
+import mage.filter.predicate.Predicates;
+import mage.filter.predicate.other.PlayerIdPredicate;
 import mage.game.Game;
 import mage.game.permanent.Permanent;
 import mage.players.Player;
+import mage.target.TargetPlayer;
 import mage.target.targetpointer.FixedTarget;
+import mage.util.CardUtil;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
- * @author Claude
+ * @author Riley Jones
  */
 public final class DackFaydenHelpingHand extends CardImpl {
+
+    private static final Hint hint = new ValueHint("Number of opponents", OpponentsCount.instance);
 
     public DackFaydenHelpingHand(UUID ownerId, CardSetInfo setInfo) {
         super(ownerId, setInfo, new CardType[]{CardType.CREATURE}, "{4}{W}{W}");
@@ -46,7 +46,7 @@ public final class DackFaydenHelpingHand extends CardImpl {
         this.toughness = new MageInt(6);
 
         // When Dack Fayden enters, reveal cards from the top of your library until you reveal X creature cards, where X is the number of opponents you have. Put those creature cards onto the battlefield, then shuffle. They're goaded for the rest of the game. For each of those permanents, choose a different opponent. Each opponent gains control of the permanent for which they were chosen.
-        this.addAbility(new EntersBattlefieldTriggeredAbility(new DackFaydenHelpingHandEffect()));
+        this.addAbility(new EntersBattlefieldTriggeredAbility(new DackFaydenHelpingHandEffect()).addHint(hint));
     }
 
     private DackFaydenHelpingHand(final DackFaydenHelpingHand card) {
@@ -62,11 +62,10 @@ public final class DackFaydenHelpingHand extends CardImpl {
 class DackFaydenHelpingHandEffect extends OneShotEffect {
 
     DackFaydenHelpingHandEffect() {
-        super(Outcome.Benefit);
-        staticText = "reveal cards from the top of your library until you reveal X creature cards, where X is the "
-                + "number of opponents you have. Put those creature cards onto the battlefield, then shuffle. "
-                + "They're goaded for the rest of the game. For each of those permanents, choose a different opponent. "
-                + "Each opponent gains control of the permanent for which they were chosen";
+        super(Outcome.PutCreatureInPlay);
+        staticText = "reveal cards from the top of your library until you reveal X creature cards, where X is the number of opponents you have. " +
+                "Put those creature cards onto the battlefield, then shuffle. They're goaded for the rest of the game. " +
+                "For each of those permanents, choose a different opponent. Each opponent gains control of the permanent for which they were chosen";
     }
 
     private DackFaydenHelpingHandEffect(final DackFaydenHelpingHandEffect effect) {
@@ -84,78 +83,77 @@ class DackFaydenHelpingHandEffect extends OneShotEffect {
         if (controller == null) {
             return false;
         }
-        List<UUID> opponents = new ArrayList<>(game.getOpponents(controller.getId()));
-        int x = opponents.size();
-        if (x < 1) {
-            return true;
-        }
+
+        int x = game.getOpponents(controller.getId()).size();
         Cards revealed = new CardsImpl();
-        Cards creatures = new CardsImpl();
-        for (Card card : controller.getLibrary().getCards(game)) {
-            revealed.add(card);
-            if (card.isCreature(game)) {
-                creatures.add(card);
-                if (creatures.size() >= x) {
-                    break;
+        Set<Card> creatureCards = new LinkedHashSet<>();
+
+        if (x > 0) {
+            for (Card card : controller.getLibrary().getCards(game)) {
+                revealed.add(card);
+                if (card.isCreature(game)) {
+                    creatureCards.add(card);
+                    if (creatureCards.size() >= x) {
+                        break;
+                    }
                 }
             }
+            controller.revealCards(source, revealed, game);
+            controller.moveCards(creatureCards, Zone.BATTLEFIELD, source, game);
         }
-        if (revealed.isEmpty()) {
-            return true;
-        }
-        controller.revealCards(source, revealed, game);
-        controller.moveCards(creatures.getCards(game), Zone.BATTLEFIELD, source, game);
         controller.shuffleLibrary(source, game);
 
         List<Permanent> permanents = new ArrayList<>();
-        for (UUID cardId : creatures) {
-            Permanent permanent = game.getPermanent(cardId);
+        for (Card card : creatureCards) {
+            Permanent permanent = CardUtil.getPermanentFromCardPutToBattlefield(card, game);
             if (permanent != null) {
                 permanents.add(permanent);
             }
         }
-        if (permanents.isEmpty()) {
-            return true;
-        }
+
         for (Permanent permanent : permanents) {
-            ContinuousEffect goad = new GoadTargetEffect(Duration.EndOfGame);
-            goad.setTargetPointer(new FixedTarget(permanent, game));
-            game.addEffect(goad, source);
+            game.addEffect(new GoadTargetEffect(Duration.EndOfGame)
+                    .setTargetPointer(new FixedTarget(permanent, game)), source);
         }
-        // for each of those permanents, a different opponent
-        List<UUID> remaining = new ArrayList<>();
-        for (UUID opponentId : opponents) {
-            Player opponent = game.getPlayer(opponentId);
-            if (opponent != null && opponent.isInGame()) {
-                remaining.add(opponentId);
+
+        Set<UUID> chosenOpponents = new HashSet<>();
+        Map<Permanent, UUID> assignments = new LinkedHashMap<>();
+
+        for (Permanent permanent : permanents) {
+            FilterPlayer filter = new FilterOpponent("a different opponent to gain control of " + permanent.getName());
+            for (UUID chosenOpponentId : chosenOpponents) {
+                filter.add(Predicates.not(new PlayerIdPredicate(chosenOpponentId)));
             }
-        }
-        for (Permanent permanent : permanents) {
-            if (remaining.isEmpty()) {
+            TargetPlayer target = new TargetPlayer(1, 1, true, filter);
+            target.withNotTarget(true);
+            target.withTargetName("different opponent to gain control of " + permanent.getLogName());
+            if (!target.canChoose(controller.getId(), source, game)) {
                 break;
             }
-            UUID chosenId;
-            if (remaining.size() == 1) {
-                chosenId = remaining.get(0);
-            } else {
-                Map<String, UUID> byName = new LinkedHashMap<>();
-                for (UUID opponentId : remaining) {
-                    byName.put(game.getPlayer(opponentId).getName(), opponentId);
+            controller.choose(Outcome.Neutral, target, source, game);
+            UUID chosenOpponentId = target.getFirstTarget();
+            if (chosenOpponentId == null) {
+                Set<UUID> possible = target.possibleTargets(controller.getId(), source, game);
+                if (!possible.isEmpty()) {
+                    chosenOpponentId = possible.iterator().next();
                 }
-                Choice choice = new ChoiceImpl(true);
-                choice.setMessage("Choose the opponent who gains control of " + permanent.getLogName());
-                choice.setChoices(new java.util.LinkedHashSet<>(byName.keySet()));
-                controller.choose(Outcome.Neutral, choice, game);
-                chosenId = byName.getOrDefault(choice.getChoice(), remaining.get(0));
             }
-            remaining.remove(chosenId);
-            Player chosen = game.getPlayer(chosenId);
-            game.informPlayers(controller.getLogName() + " chooses " + chosen.getLogName()
-                    + " for " + permanent.getLogName());
-            ContinuousEffect control = new GainControlTargetEffect(Duration.Custom, true, chosenId);
-            control.setTargetPointer(new FixedTarget(permanent, game));
-            game.addEffect(control, source);
+            if (chosenOpponentId != null) {
+                chosenOpponents.add(chosenOpponentId);
+                assignments.put(permanent, chosenOpponentId);
+                Player chosenPlayer = game.getPlayer(chosenOpponentId);
+                if (chosenPlayer != null) {
+                    game.informPlayers(controller.getLogName() + " chose " + chosenPlayer.getLogName() + " for " + permanent.getLogName());
+                }
+            }
         }
+
+        for (Map.Entry<Permanent, UUID> entry : assignments.entrySet()) {
+            ContinuousEffect effect = new GainControlTargetEffect(Duration.EndOfGame, entry.getValue());
+            effect.setTargetPointer(new FixedTarget(entry.getKey(), game));
+            game.addEffect(effect, source);
+        }
+
         return true;
     }
 }

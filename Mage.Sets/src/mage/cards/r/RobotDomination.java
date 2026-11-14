@@ -1,5 +1,6 @@
 package mage.cards.r;
 
+import java.util.UUID;
 import mage.abilities.Ability;
 import mage.abilities.BatchTriggeredAbility;
 import mage.abilities.TriggeredAbilityImpl;
@@ -7,7 +8,6 @@ import mage.abilities.common.PlanCounterThresholdTriggeredAbility;
 import mage.abilities.effects.common.CreateTokenEffect;
 import mage.abilities.effects.common.DrawCardSourceControllerEffect;
 import mage.abilities.effects.common.LoseLifeSourceControllerEffect;
-import mage.abilities.effects.common.SacrificeSourceEffect;
 import mage.abilities.effects.common.counter.AddCountersSourceEffect;
 import mage.cards.Card;
 import mage.cards.CardImpl;
@@ -22,10 +22,9 @@ import mage.game.events.ZoneChangeBatchEvent;
 import mage.game.events.ZoneChangeEvent;
 import mage.game.permanent.token.RobotVillainToken;
 
-import java.util.UUID;
-
 /**
- * @author Claude
+ *
+ * @author muz
  */
 public final class RobotDomination extends CardImpl {
 
@@ -38,11 +37,9 @@ public final class RobotDomination extends CardImpl {
         this.addAbility(new RobotDominationTriggeredAbility());
 
         // When the third plan counter is put on this enchantment, sacrifice it and create three 2/2 colorless Robot Villain artifact creature tokens.
-        Ability planAbility = new PlanCounterThresholdTriggeredAbility(
-                3, new SacrificeSourceEffect().setText("sacrifice it")
-        );
-        planAbility.addEffect(new CreateTokenEffect(new RobotVillainToken(), 3).concatBy("and"));
-        this.addAbility(planAbility);
+        Ability thresholdAbility = new PlanCounterThresholdTriggeredAbility(3);
+        thresholdAbility.addEffect(new CreateTokenEffect(new RobotVillainToken(), 3).concatBy("and"));
+        this.addAbility(thresholdAbility);
     }
 
     private RobotDomination(final RobotDomination card) {
@@ -59,9 +56,8 @@ class RobotDominationTriggeredAbility extends TriggeredAbilityImpl implements Ba
 
     RobotDominationTriggeredAbility() {
         super(Zone.BATTLEFIELD, new DrawCardSourceControllerEffect(1, true));
-        this.addEffect(new LoseLifeSourceControllerEffect(1).setText(", lose 1 life"));
-        this.addEffect(new AddCountersSourceEffect(CounterType.PLAN.createInstance())
-                .setText(", and put a plan counter on this enchantment"));
+        this.addEffect(new LoseLifeSourceControllerEffect(1, false).concatBy(","));
+        this.addEffect(new AddCountersSourceEffect(CounterType.PLAN.createInstance()).concatBy(", and"));
         setTriggerPhrase("Whenever one or more creature cards are put into your graveyard from anywhere, ");
     }
 
@@ -81,13 +77,11 @@ class RobotDominationTriggeredAbility extends TriggeredAbilityImpl implements Ba
 
     @Override
     public boolean checkEvent(ZoneChangeEvent event, Game game) {
-        if (!Zone.GRAVEYARD.match(event.getToZone())) {
+        if (event.getToZone() != Zone.GRAVEYARD) {
             return false;
         }
         Card card = game.getCard(event.getTargetId());
-        return card != null
-                && isControlledBy(card.getOwnerId())
-                && card.isCreature(game);
+        return card != null && card.isOwnedBy(getControllerId()) && card.isCreature(game);
     }
 
     @Override

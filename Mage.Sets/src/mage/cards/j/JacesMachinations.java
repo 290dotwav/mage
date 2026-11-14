@@ -17,7 +17,7 @@ import mage.game.permanent.Permanent;
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author DarioBarrabinoDev
  */
 public final class JacesMachinations extends CardImpl {
 
@@ -45,8 +45,8 @@ class JacesMachinationsEffect extends AsThoughEffectImpl {
 
     JacesMachinationsEffect() {
         super(AsThoughEffectType.ACTIVATE_AS_INSTANT, Duration.EndOfTurn, Outcome.Benefit);
-        staticText = "until end of turn, you may activate loyalty abilities of Jace planeswalkers you control "
-                + "on any player's turn any time you could cast an instant";
+        staticText = "Until end of turn, you may activate loyalty abilities of Jace planeswalkers you control " +
+                "on any player's turn any time you could cast an instant";
     }
 
     private JacesMachinationsEffect(final JacesMachinationsEffect effect) {
@@ -65,18 +65,16 @@ class JacesMachinationsEffect extends AsThoughEffectImpl {
 
     @Override
     public boolean applies(UUID objectId, Ability affectedAbility, Ability source, Game game, UUID playerId) {
-        if (!(affectedAbility instanceof LoyaltyAbility)
-                || !affectedAbility.isControlledBy(source.getControllerId())) {
+        if (!affectedAbility.isControlledBy(source.getControllerId())
+                || !(affectedAbility instanceof LoyaltyAbility)) {
             return false;
         }
         Permanent permanent = game.getPermanent(affectedAbility.getSourceId());
-        return permanent != null
-                && permanent.isPlaneswalker(game)
-                && permanent.hasSubtype(SubType.JACE, game);
+        return permanent != null && permanent.hasSubtype(SubType.JACE, game);
     }
 
     @Override
     public boolean applies(UUID objectId, Ability source, UUID affectedControllerId, Game game) {
-        return false; // Not used
+        return false;
     }
 }

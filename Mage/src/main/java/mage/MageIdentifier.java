@@ -97,7 +97,8 @@ public enum MageIdentifier {
     UndeadSprinterAlternateCast,
     GwenomRemorselessAlternateCast,
     AlienSymbiosisAlternateCast,
-    InsideInformationAlternateCast;
+    InsideInformationAlternateCast,
+    EyeOfDuskmantleAlternateCast;
 
     /**
      * Additional text if there is need to differentiate two very similar effects

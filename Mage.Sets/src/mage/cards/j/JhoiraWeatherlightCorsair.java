@@ -1,5 +1,6 @@
 package mage.cards.j;
 
+import java.util.UUID;
 import mage.MageInt;
 import mage.abilities.Ability;
 import mage.abilities.common.EntersBattlefieldOrAttacksSourceTriggeredAbility;
@@ -14,18 +15,15 @@ import mage.constants.Outcome;
 import mage.constants.SubType;
 import mage.constants.SuperType;
 import mage.constants.Zone;
-import mage.filter.FilterCard;
-import mage.filter.common.FilterPermanentCard;
-import mage.filter.predicate.mageobject.HistoricPredicate;
 import mage.game.Game;
 import mage.game.permanent.Permanent;
 import mage.players.Player;
 import mage.target.common.TargetOpponent;
-
-import java.util.UUID;
+import mage.util.CardUtil;
 
 /**
- * @author Claude
+ *
+ * @author Riley Jones
  */
 public final class JhoiraWeatherlightCorsair extends CardImpl {
 
@@ -38,7 +36,10 @@ public final class JhoiraWeatherlightCorsair extends CardImpl {
         this.power = new MageInt(4);
         this.toughness = new MageInt(5);
 
-        // Whenever Jhoira enters or attacks, target opponent reveals cards from the top of their library until they reveal a historic permanent card. You put that card onto the battlefield under your control and lose life equal to that permanent's mana value. That player puts the rest of the revealed cards on the bottom of their library in a random order.
+        // Whenever Jhoira enters or attacks, target opponent reveals cards from the top of their library
+        // until they reveal a historic permanent card. You put that card onto the battlefield under your control
+        // and lose life equal to that permanent's mana value. That player puts the rest of the revealed cards
+        // on the bottom of their library in a random order. (Artifacts, legendaries, and Sagas are historic.)
         Ability ability = new EntersBattlefieldOrAttacksSourceTriggeredAbility(new JhoiraWeatherlightCorsairEffect());
         ability.addTarget(new TargetOpponent());
         this.addAbility(ability);
@@ -56,18 +57,12 @@ public final class JhoiraWeatherlightCorsair extends CardImpl {
 
 class JhoiraWeatherlightCorsairEffect extends OneShotEffect {
 
-    private static final FilterCard filter = new FilterPermanentCard("historic permanent card");
-
-    static {
-        filter.add(HistoricPredicate.instance);
-    }
-
     JhoiraWeatherlightCorsairEffect() {
         super(Outcome.PutCardInPlay);
-        staticText = "target opponent reveals cards from the top of their library until they reveal a historic "
-                + "permanent card. You put that card onto the battlefield under your control and lose life equal "
-                + "to that permanent's mana value. That player puts the rest of the revealed cards on the bottom "
-                + "of their library in a random order. <i>(Artifacts, legendaries, and Sagas are historic.)</i>";
+        staticText = "target opponent reveals cards from the top of their library until they reveal a historic permanent card. "
+                + "You put that card onto the battlefield under your control and lose life equal to that permanent's mana value. "
+                + "That player puts the rest of the revealed cards on the bottom of their library in a random order. "
+                + "<i>(Artifacts, legendaries, and Sagas are historic.)</i>";
     }
 
     private JhoiraWeatherlightCorsairEffect(final JhoiraWeatherlightCorsairEffect effect) {
@@ -86,28 +81,32 @@ class JhoiraWeatherlightCorsairEffect extends OneShotEffect {
         if (controller == null || opponent == null) {
             return false;
         }
-        Cards revealed = new CardsImpl();
-        Card found = null;
+
+        Cards cards = new CardsImpl();
+        Card historicCard = null;
         for (Card card : opponent.getLibrary().getCards(game)) {
-            revealed.add(card);
-            if (filter.match(card, opponent.getId(), source, game)) {
-                found = card;
+            cards.add(card);
+            if (card.isPermanent(game) && card.isHistoric(game)) {
+                historicCard = card;
                 break;
             }
         }
-        if (revealed.isEmpty()) {
-            return true;
-        }
-        opponent.revealCards(source, revealed, game);
-        if (found != null) {
-            controller.moveCards(found, Zone.BATTLEFIELD, source, game);
-            Permanent permanent = game.getPermanent(found.getId());
+
+        opponent.revealCards(source, cards, game);
+
+        if (historicCard != null) {
+            cards.remove(historicCard);
+            controller.moveCards(historicCard, Zone.BATTLEFIELD, source, game);
+            // If the card does not enter the battlefield (e.g. an Aura with no legal target,
+            // see rule 303.4g), there is no permanent, so no life is lost.
+            Permanent permanent = CardUtil.getPermanentFromCardPutToBattlefield(historicCard, game);
             if (permanent != null) {
                 controller.loseLife(permanent.getManaValue(), game, source, false);
             }
         }
-        revealed.retainZone(Zone.LIBRARY, game);
-        opponent.putCardsOnBottomOfLibrary(revealed, game, source, false);
+
+        cards.retainZone(Zone.LIBRARY, game);
+        opponent.putCardsOnBottomOfLibrary(cards, game, source, false);
         return true;
     }
 }

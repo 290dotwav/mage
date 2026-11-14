@@ -213,6 +213,8 @@ public final class RealityFracture extends ExpansionSet {
         cards.add(new SetCardInfo("Jace's Machinations", 337, Rarity.RARE, mage.cards.j.JacesMachinations.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Jace, Reality Sculptor", 216, Rarity.RARE, mage.cards.j.JaceRealitySculptor.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Jace, Reality Sculptor", 300, Rarity.RARE, mage.cards.j.JaceRealitySculptor.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Jace's Machinations", 32, Rarity.RARE, mage.cards.j.JacesMachinations.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Jace's Machinations", 337, Rarity.RARE, mage.cards.j.JacesMachinations.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Jiang Yanggu, Alone", 246, Rarity.UNCOMMON, mage.cards.j.JiangYangguAlone.class));
         cards.add(new SetCardInfo("Jiang Yanggu, Never Alone", 261, Rarity.UNCOMMON, mage.cards.j.JiangYangguNeverAlone.class));
         cards.add(new SetCardInfo("Karn, Argent Defender", 279, Rarity.RARE, mage.cards.k.KarnArgentDefender.class, NON_FULL_USE_VARIOUS));

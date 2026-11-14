@@ -19,13 +19,10 @@ import mage.game.permanent.Permanent;
 import mage.players.Player;
 import mage.target.common.TargetOpponent;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
-/**
- * @author Claude
- */
 public final class TeferisReproach extends CardImpl {
 
     public TeferisReproach(UUID ownerId, CardSetInfo setInfo) {
@@ -33,10 +30,11 @@ public final class TeferisReproach extends CardImpl {
 
         // Choose target opponent. Until that player's next turn, they gain protection from everything and their life total can't change. All nonland permanents they control phase out.
         this.getSpellAbility().addEffect(new TeferisReproachEffect());
+        this.getSpellAbility().addEffect(new TeferisReproachPhaseOutEffect());
         this.getSpellAbility().addTarget(new TargetOpponent());
 
         // Exile Teferi's Reproach.
-        this.getSpellAbility().addEffect(new ExileSpellEffect().concatBy("<br>"));
+        this.getSpellAbility().addEffect(new ExileSpellEffect());
     }
 
     private TeferisReproach(final TeferisReproach card) {
@@ -49,14 +47,12 @@ public final class TeferisReproach extends CardImpl {
     }
 }
 
-class TeferisReproachEffect extends OneShotEffect {
+class TeferisReproachEffect extends ContinuousEffectImpl {
 
     TeferisReproachEffect() {
-        super(Outcome.Detriment);
-        staticText = "choose target opponent. Until that player's next turn, they gain protection from everything "
-                + "and their life total can't change. All nonland permanents they control phase out. "
-                + "<i>(While they're phased out, they're treated as though they don't exist. "
-                + "They phase in before that player untaps during their next untap step.)</i>";
+        super(Duration.UntilYourNextTurn, Layer.PlayerEffects, SubLayer.NA, Outcome.Detriment);
+        staticText = "choose target opponent. Until that player's next turn, "
+                + "they gain protection from everything and their life total can't change";
     }
 
     private TeferisReproachEffect(final TeferisReproachEffect effect) {
@@ -69,67 +65,60 @@ class TeferisReproachEffect extends OneShotEffect {
     }
 
     @Override
-    public boolean apply(Game game, Ability source) {
-        Player opponent = game.getPlayer(getTargetPointer().getFirst(game, source));
-        if (opponent == null) {
-            return false;
+    public void init(Ability source, Game game) {
+        super.init(source, game);
+        UUID playerId = getTargetPointer().getFirst(game, source);
+        if (playerId == null) {
+            discard();
+            return;
         }
-        game.addEffect(new TeferisReproachPlayerEffect(opponent.getId()), source);
-        List<UUID> permIds = new ArrayList<>();
-        for (Permanent permanent : game.getBattlefield().getActivePermanents(
-                StaticFilters.FILTER_PERMANENTS_NON_LAND, opponent.getId(), source, game)) {
-            if (permanent.isControlledBy(opponent.getId())) {
-                permIds.add(permanent.getId());
-            }
-        }
-        if (!permIds.isEmpty()) {
-            new PhaseOutAllEffect(permIds).apply(game, source);
-        }
-        return true;
-    }
-}
-
-/**
- * Protection from everything and a life total that can't change, until the chosen player's next turn
- */
-class TeferisReproachPlayerEffect extends ContinuousEffectImpl {
-
-    private final UUID playerId;
-    private final Ability protection;
-
-    TeferisReproachPlayerEffect(UUID playerId) {
-        super(Duration.UntilYourNextTurn, Layer.PlayerEffects, SubLayer.NA, Outcome.Detriment);
-        this.playerId = playerId;
-        this.protection = new ProtectionFromEverythingAbility();
-    }
-
-    private TeferisReproachPlayerEffect(final TeferisReproachPlayerEffect effect) {
-        super(effect);
-        this.playerId = effect.playerId;
-        this.protection = effect.protection.copy();
-    }
-
-    @Override
-    public TeferisReproachPlayerEffect copy() {
-        return new TeferisReproachPlayerEffect(this);
-    }
-
-    @Override
-    public void init(Ability source, Game game, UUID activePlayerId) {
-        super.init(source, game, activePlayerId);
-        // the duration is "until that player's next turn", not the caster's
-        setStartingControllerAndTurnNum(game, playerId, activePlayerId);
+        // duration ends on the target player's next turn, not the caster's
+        setStartingControllerAndTurnNum(game, playerId, game.getActivePlayerId());
     }
 
     @Override
     public boolean apply(Game game, Ability source) {
-        Player player = game.getPlayer(playerId);
+        Player player = game.getPlayer(getStartingController());
         if (player == null) {
             discard();
             return false;
         }
-        player.addAbility(protection);
+        player.addAbility(new ProtectionFromEverythingAbility());
         player.setLifeTotalCanChange(false);
         return true;
+    }
+}
+
+class TeferisReproachPhaseOutEffect extends OneShotEffect {
+
+    TeferisReproachPhaseOutEffect() {
+        super(Outcome.Detriment);
+        staticText = "All nonland permanents they control phase out. <i>(While they're phased out, "
+                + "they're treated as though they don't exist. They phase in before that player "
+                + "untaps during their next untap step.)</i><br>";
+    }
+
+    private TeferisReproachPhaseOutEffect(final TeferisReproachPhaseOutEffect effect) {
+        super(effect);
+    }
+
+    @Override
+    public TeferisReproachPhaseOutEffect copy() {
+        return new TeferisReproachPhaseOutEffect(this);
+    }
+
+    @Override
+    public boolean apply(Game game, Ability source) {
+        Player player = game.getPlayer(getTargetPointer().getFirst(game, source));
+        if (player == null) {
+            return false;
+        }
+        List<UUID> permIds = game
+                .getBattlefield()
+                .getActivePermanents(StaticFilters.FILTER_CONTROLLED_PERMANENT_NON_LAND, player.getId(), source, game)
+                .stream()
+                .map(Permanent::getId)
+                .collect(Collectors.toList());
+        return new PhaseOutAllEffect(permIds).apply(game, source);
     }
 }

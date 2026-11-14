@@ -1,9 +1,9 @@
 package mage.cards.e;
 
+import mage.MageIdentifier;
 import mage.MageInt;
 import mage.abilities.Ability;
 import mage.abilities.common.SimpleStaticAbility;
-import mage.abilities.costs.Cost;
 import mage.abilities.costs.Costs;
 import mage.abilities.costs.CostsImpl;
 import mage.abilities.costs.common.PayLifeCost;
@@ -15,20 +15,13 @@ import mage.cards.CardImpl;
 import mage.cards.CardSetInfo;
 import mage.constants.*;
 import mage.game.Game;
-import mage.game.events.GameEvent;
-import mage.game.events.ZoneChangeEvent;
 import mage.players.Player;
-import mage.watchers.Watcher;
+import mage.watchers.common.SurveilWatcher;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 /**
- * @author ClaudeMTG
+ * @author brahle
  */
 public final class EyeOfDuskmantle extends CardImpl {
 
@@ -47,7 +40,10 @@ public final class EyeOfDuskmantle extends CardImpl {
 
         // You may play lands and cast spells from among cards in your graveyard you've surveilled this turn.
         // If you cast a spell this way, you pay life equal to its mana value rather than paying its mana cost.
-        this.addAbility(new SimpleStaticAbility(new EyeOfDuskmantleEffect()), new EyeOfDuskmantleWatcher());
+        Ability ability = new SimpleStaticAbility(new EyeOfDuskmantlePlayEffect());
+        ability.setIdentifier(MageIdentifier.EyeOfDuskmantleAlternateCast);
+        ability.addWatcher(new SurveilWatcher());
+        this.addAbility(ability);
     }
 
     private EyeOfDuskmantle(final EyeOfDuskmantle card) {
@@ -60,17 +56,15 @@ public final class EyeOfDuskmantle extends CardImpl {
     }
 }
 
-class EyeOfDuskmantleEffect extends AsThoughEffectImpl {
+class EyeOfDuskmantlePlayEffect extends AsThoughEffectImpl {
 
-    EyeOfDuskmantleEffect() {
-        super(AsThoughEffectType.PLAY_FROM_NOT_OWN_HAND_ZONE,
-                Duration.WhileOnBattlefield, Outcome.AIDontUseIt); // AI will need help with this
-        staticText = "You may play lands and cast spells from among cards in your graveyard "
-                + "you've surveilled this turn. If you cast a spell this way, you pay life equal "
-                + "to its mana value rather than paying its mana cost.";
+    EyeOfDuskmantlePlayEffect() {
+        super(AsThoughEffectType.PLAY_FROM_NOT_OWN_HAND_ZONE, Duration.WhileOnBattlefield, Outcome.Benefit);
+        staticText = "you may play lands and cast spells from among cards in your graveyard you've surveilled this turn. "
+                + "If you cast a spell this way, you pay life equal to its mana value rather than paying its mana cost";
     }
 
-    private EyeOfDuskmantleEffect(final EyeOfDuskmantleEffect effect) {
+    private EyeOfDuskmantlePlayEffect(final EyeOfDuskmantlePlayEffect effect) {
         super(effect);
     }
 
@@ -80,107 +74,36 @@ class EyeOfDuskmantleEffect extends AsThoughEffectImpl {
     }
 
     @Override
-    public EyeOfDuskmantleEffect copy() {
-        return new EyeOfDuskmantleEffect(this);
+    public EyeOfDuskmantlePlayEffect copy() {
+        return new EyeOfDuskmantlePlayEffect(this);
     }
 
     @Override
     public boolean applies(UUID objectId, Ability source, UUID affectedControllerId, Game game) {
-        throw new IllegalArgumentException("Wrong code usage: can't call applies method on empty affectedAbility");
-    }
-
-    @Override
-    public boolean applies(UUID objectId, Ability affectedAbility, Ability source, Game game, UUID playerId) {
-        Card cardToCheck = game.getCard(objectId);
-        if (cardToCheck == null) {
+        if (!source.isControlledBy(affectedControllerId)) {
             return false;
         }
-
-        // must be you
-        if (!playerId.equals(source.getControllerId())) {
+        Card card = game.getCard(objectId);
+        if (card == null || !card.isOwnedBy(affectedControllerId)) {
             return false;
         }
-
-        // must be a card in your graveyard
-        Card mainCard = cardToCheck.getMainCard();
-        Player player = game.getPlayer(mainCard.getOwnerId());
-        if (player == null || !player.getId().equals(playerId)
-                || player.getGraveyard().getCards(game).stream().noneMatch(c -> c.getId().equals(mainCard.getId()))) {
+        if (!Zone.GRAVEYARD.equals(game.getState().getZone(card.getMainCard().getId()))) {
             return false;
         }
-
-        // must have been surveilled into the graveyard this turn
-        EyeOfDuskmantleWatcher watcher = game.getState().getWatcher(EyeOfDuskmantleWatcher.class);
-        if (watcher == null || !watcher.wasSurveilledThisTurn(playerId, mainCard.getId())) {
+        SurveilWatcher watcher = game.getState().getWatcher(SurveilWatcher.class);
+        if (watcher == null || !watcher.isPutIntoGraveyardBySurveil(affectedControllerId, card, game)) {
             return false;
         }
-
-        // allows to cast with the alternative life cost
-        if (!cardToCheck.isLand(game)) {
-            if (cardToCheck.getManaCost().isEmpty()) {
-                return false;
+        if (!card.isLand(game)) {
+            PayLifeCost lifeCost = new PayLifeCost(card.getSpellAbility().getManaCosts().manaValue());
+            Costs newCosts = new CostsImpl();
+            newCosts.add(lifeCost);
+            newCosts.addAll(card.getSpellAbility().getCosts());
+            Player player = game.getPlayer(affectedControllerId);
+            if (player != null) {
+                player.setCastSourceIdWithAlternateMana(card.getId(), null, newCosts, MageIdentifier.EyeOfDuskmantleAlternateCast);
             }
-            Costs<Cost> newCosts = new CostsImpl<>();
-            newCosts.add(new PayLifeCost(cardToCheck.getSpellAbility().getManaCosts().manaValue()));
-            newCosts.addAll(cardToCheck.getSpellAbility().getCosts());
-            player.setCastSourceIdWithAlternateMana(cardToCheck.getId(), null, newCosts);
         }
         return true;
-    }
-}
-
-/**
- * Remembers which cards were put into a graveyard by surveil this turn. The SURVEILED event does not
- * carry the moved cards and is handled before the zone changes it made are handed to the watchers, so
- * a surveil opens a budget of moves for its source ability and the library to graveyard moves of that
- * ability are counted against it.
- */
-class EyeOfDuskmantleWatcher extends Watcher {
-
-    private final Map<UUID, Set<UUID>> surveilledCards = new HashMap<>();
-    private final Map<String, Integer> openSurveils = new HashMap<>();
-
-    EyeOfDuskmantleWatcher() {
-        super(WatcherScope.GAME);
-    }
-
-    @Override
-    public void watch(GameEvent event, Game game) {
-        switch (event.getType()) {
-            case SURVEILED:
-                openSurveils.merge(makeKey(event.getPlayerId(), event.getSourceId()), event.getAmount(), Integer::sum);
-                return;
-            case ZONE_CHANGE:
-                ZoneChangeEvent zEvent = (ZoneChangeEvent) event;
-                if (zEvent.getFromZone() != Zone.LIBRARY || zEvent.getToZone() != Zone.GRAVEYARD) {
-                    return;
-                }
-                String key = makeKey(event.getPlayerId(), event.getSourceId());
-                int left = openSurveils.getOrDefault(key, 0);
-                if (left < 1) {
-                    return;
-                }
-                openSurveils.put(key, left - 1);
-                surveilledCards
-                        .computeIfAbsent(event.getPlayerId(), k -> new HashSet<>())
-                        .add(zEvent.getTargetId());
-                return;
-            default:
-        }
-    }
-
-    boolean wasSurveilledThisTurn(UUID playerId, UUID cardId) {
-        return surveilledCards.getOrDefault(playerId, Collections.emptySet()).contains(cardId);
-    }
-
-    private static String makeKey(UUID playerId, UUID sourceId) {
-        return playerId + "_" + sourceId;
-    }
-
-    @Override
-    public void reset() {
-        super.reset();
-        surveilledCards.clear();
-        openSurveils.clear();
     }
 }

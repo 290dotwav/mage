@@ -5,6 +5,7 @@ import mage.abilities.common.delayed.ReflexiveTriggeredAbility;
 import mage.abilities.costs.common.SacrificeSourceCost;
 import mage.abilities.effects.Effect;
 import mage.abilities.effects.common.DoWhenCostPaid;
+import mage.abilities.effects.common.SacrificeSourceEffect;
 import mage.constants.Zone;
 import mage.counters.CounterType;
 import mage.game.Game;
@@ -15,12 +16,12 @@ import mage.util.CardUtil;
 import java.util.Optional;
 
 /**
- * "When the Nth plan counter is put on {this}, sacrifice it. When you do, [effect]."
- * triggered ability used by Plan-subtype enchantments.
- * <p>
- * Also "When the Nth plan counter is put on {this}, [effect]" with {@link #PlanCounterThresholdTriggeredAbility(int, Effect)},
- * where the card supplies the whole effect, sacrifice included (e.g. "sacrifice it, draw a card, and ...",
- * or "sacrifice it. If you do, ..." with DoIfCostPaid).
+ * Triggered ability used by Plan-subtype enchantments:
+ * <ul>
+ *     <li>"When the Nth plan counter is put on {this}, sacrifice it, [effects]." - add the other effects to the ability,
+ *     they apply even if the sacrifice is impossible;</li>
+ *     <li>"When the Nth plan counter is put on {this}, sacrifice it. When you do, [effect]." - reflexive ability.</li>
+ * </ul>
  *
  * @author muz
  */
@@ -30,20 +31,25 @@ public class PlanCounterThresholdTriggeredAbility extends TriggeredAbilityImpl {
 
     /**
      * @param threshold the plan counter count at which this ability fires
-     * @param reflexive the reflexive triggered ability to fire after sacrificing
      */
-    public PlanCounterThresholdTriggeredAbility(int threshold, ReflexiveTriggeredAbility reflexive) {
-        super(Zone.ALL, new DoWhenCostPaid(reflexive, new SacrificeSourceCost().setText("sacrifice it"), "Sacrifice {this}?", false), false);
-        this.threshold = threshold;
-        setTriggerPhrase("When the " + CardUtil.numberToOrdinalText(threshold) + " plan counter is put on {this}, ");
+    public PlanCounterThresholdTriggeredAbility(int threshold) {
+        this(threshold, new SacrificeSourceEffect().setText("sacrifice it"));
     }
 
     /**
-     * "When the Nth plan counter is put on {this}, [effect]." -- the effect includes the sacrifice;
-     * add further effects with addEffect.
+     * @param threshold the plan counter count at which this ability fires
+     * @param reflexive the reflexive triggered ability to fire after sacrificing
+     */
+    public PlanCounterThresholdTriggeredAbility(int threshold, ReflexiveTriggeredAbility reflexive) {
+        this(threshold, new DoWhenCostPaid(reflexive, new SacrificeSourceCost().setText("sacrifice it"), "Sacrifice {this}?", false));
+    }
+
+    /**
+     * ClaudeMTG: public, for the plan enchantments whose whole effect is the card's own
+     * (e.g. "sacrifice it. If you do, ..." with DoIfCostPaid, Glorious Purpose).
      *
      * @param threshold the plan counter count at which this ability fires
-     * @param effect    the first effect, e.g. new SacrificeSourceEffect().setText("sacrifice it")
+     * @param effect    the effect, sacrifice included
      */
     public PlanCounterThresholdTriggeredAbility(int threshold, Effect effect) {
         super(Zone.ALL, effect, false);

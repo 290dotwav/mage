@@ -10,6 +10,7 @@ import mage.constants.EffectType;
 import mage.game.Game;
 import mage.game.permanent.Permanent;
 
+import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 
@@ -153,7 +154,7 @@ public class ConditionalRequirementEffect extends RequirementEffect {
         } else if (otherwiseEffect != null) {
             return otherwiseEffect.mustAttackDefenders(source, game);
         }
-        return null;
+        return Collections.emptySet();
     }
 
     @Override
