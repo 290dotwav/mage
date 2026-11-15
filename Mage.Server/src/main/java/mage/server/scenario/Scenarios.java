@@ -29,6 +29,7 @@ import java.util.UUID;
 public final class Scenarios {
 
     public static final String DUEL = "Two Player Duel";
+    public static final String COMMANDER_DUEL = "Commander Two Player Duel";
 
     private static final Map<String, Scenario> LIST = new LinkedHashMap<>();
 
@@ -90,6 +91,20 @@ public final class Scenarios {
                 .opponent(o -> o.life(10)
                         .battlefield("Craw Wurm", "Forest", "Forest", "Forest", "Forest", "Forest", "Forest")
                         .library("Forest", "Forest", "Forest", "Forest", "Forest")));
+        // 6. « Ton commandant »: a short game of Commander, you at 40, Claude at 9 with a
+        // Juggernaut that attacked last turn. Arni comes out of the command zone with haste;
+        // three hits of 3 win, through Fling and a second cast from the command zone (the tax)
+        // or by attacking twice. Arni dead goes back to the command zone if you say so.
+        add(new Scenario("m6", COMMANDER_DUEL)
+                .student(s -> s.life(40)
+                        .command("Arni Brokenbrow")
+                        .battlefield("Mountain", "Mountain", "Mountain", "Mountain", "Mountain", "Mountain", "Mountain")
+                        .hand("Fling")
+                        .library("Mountain", "Mountain", "Mountain", "Mountain", "Mountain"))
+                .opponent(o -> o.life(9)
+                        .tapped("Juggernaut")
+                        .battlefield("Mountain", "Mountain", "Mountain", "Mountain")
+                        .library("Mountain", "Mountain", "Mountain", "Mountain", "Mountain")));
     }
 
     private Scenarios() {
