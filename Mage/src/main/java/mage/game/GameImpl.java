@@ -1438,10 +1438,10 @@ public abstract class GameImpl implements Game {
         for (UUID playerId : state.getPlayerList(startingPlayerId)) {
             Player player = getPlayer(playerId);
             player.initStartingDeckSize();
-            if (!gameOptions.testMode || player.getLife() == 0) {
+            if (!gameOptions.scenario && (!gameOptions.testMode || player.getLife() == 0)) {
                 player.initLife(this.getStartingLife());
             }
-            if (!gameOptions.testMode) {
+            if (!gameOptions.testMode && !gameOptions.scenario) {
                 mulligan.drawHand(startingHandSize, player, this);
             }
         }
@@ -1453,7 +1453,9 @@ public abstract class GameImpl implements Game {
         // falls back on the active player, which a game started over by Karn
         // Liberated no longer keeps either (`GameState.clearOnGameRestart`).
         state.setPriorityPlayerId(null);
-        mulligan.executeMulliganPhase(this, startingHandSize);
+        if (!gameOptions.scenario) {
+            mulligan.executeMulliganPhase(this, startingHandSize);
+        }
         getState().setChoosingPlayerId(null);
         state.resetWatchers(); // watcher objects from cards are reused during match so reset all card watchers already added
 

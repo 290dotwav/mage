@@ -907,6 +907,14 @@ public abstract class PermanentImpl extends CardImpl implements Permanent {
         this.controlledFromStartOfControllerTurn = true;
     }
 
+    /**
+     * The table's scenarios (mage.server.scenario): a creature set up as having just
+     * arrived, so it has not been controlled since its controller's turn began (302.6).
+     */
+    public void giveSummoningSickness() {
+        this.controlledFromStartOfControllerTurn = false;
+    }
+
     @Override
     public boolean wasControlledFromStartOfControllerTurn() {
         return this.controlledFromStartOfControllerTurn;

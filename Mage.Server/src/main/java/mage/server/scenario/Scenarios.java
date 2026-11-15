@@ -1,0 +1,184 @@
+package mage.server.scenario;
+
+import mage.cards.Card;
+import mage.cards.repository.CardInfo;
+import mage.cards.repository.CardRepository;
+import mage.constants.Zone;
+import mage.game.Game;
+import mage.game.GameOptions;
+import mage.game.PutToBattlefieldInfo;
+import mage.players.Player;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
+/**
+ * The site's lessons, the only positions a table can be set up with: a browser sends an id of
+ * this list (the door's {@code scenario} on {@code table create}), never a position of its own.
+ * Nothing here goes through their cheat commands or the server's test mode: the cards are made
+ * from the repository and put in place before the game starts, as their own tests do
+ * ({@code GameImpl.cheat}), and the game is told it starts from a position
+ * ({@link GameOptions#scenario}: no hand drawn, no life set, no mulligan).
+ */
+public final class Scenarios {
+
+    public static final String DUEL = "Two Player Duel";
+
+    private static final Map<String, Scenario> LIST = new LinkedHashMap<>();
+
+    static {
+        // 1. « Coup de grâce »: Claude at 3, one red mana. Shock spends it for 2;
+        // Raging Goblin with it, then Giant Growth on the Forest, is 4 this turn.
+        add(new Scenario("m1", DUEL)
+                .student(s -> s.life(20)
+                        .battlefield("Mountain", "Forest")
+                        .hand("Shock", "Raging Goblin", "Giant Growth")
+                        .library("Mountain", "Forest", "Mountain", "Forest", "Mountain"))
+                .opponent(o -> o.life(3)
+                        .library("Plains", "Plains", "Plains", "Plains", "Plains")));
+        // 2. « À l'assaut »: Claude at 4 behind one 2/2. The Craw Wurm came this turn (the
+        // lands that paid for it are tapped); the Drake flies over; Drake, Giant and Lions
+        // are 4 whatever the Bears block, the Elves are not needed.
+        add(new Scenario("m2", DUEL)
+                .student(s -> s.life(20)
+                        .battlefield("Wind Drake", "Hill Giant", "Savannah Lions", "Llanowar Elves")
+                        .arrived("Craw Wurm")
+                        .tapped("Forest", "Forest", "Forest", "Forest", "Forest", "Island")
+                        .library("Forest", "Island", "Forest", "Island", "Forest"))
+                .opponent(o -> o.life(4)
+                        .battlefield("Grizzly Bears", "Forest", "Forest")
+                        .library("Forest", "Forest", "Forest", "Forest", "Forest")));
+        // 3. « Tiens bon »: Claude's three attack each combat if able (10 in all, he is at 5,
+        // you at 6). Walls can't block Juggernaut: the Wall takes the Cyclops, the Giant the
+        // Brigand, Juggernaut's 5 leave you at 1, and Bears and Giant are 5 next turn
+        // while his attackers are still tapped.
+        add(new Scenario("m3", DUEL)
+                .student(s -> s.life(6)
+                        .battlefield("Wall of Wood", "Hill Giant", "Grizzly Bears", "Forest", "Forest", "Forest")
+                        .library("Forest", "Forest", "Forest", "Forest", "Forest"))
+                .opponent(o -> o.life(5)
+                        .battlefield("Juggernaut", "Bloodrock Cyclops", "Goblin Brigand", "Mountain", "Mountain", "Mountain", "Mountain")
+                        .library("Mountain", "Mountain", "Mountain", "Mountain", "Mountain"))
+                .opponentStarts());
+        // 4. « Coup fourré »: Juggernaut and the Cyclops attack each combat (8, you are at 3).
+        // Gideon's Reproach only hits an attacking or blocking creature: the Mastodon blocks
+        // the Cyclops, the Reproach kills Juggernaut, nothing gets through, and the Mastodon
+        // is 3 next turn against his 3.
+        add(new Scenario("m4", DUEL)
+                .student(s -> s.life(3)
+                        .battlefield("Siege Mastodon", "Plains", "Plains")
+                        .hand("Gideon's Reproach")
+                        .library("Plains", "Plains", "Plains", "Plains", "Plains"))
+                .opponent(o -> o.life(3)
+                        .battlefield("Juggernaut", "Bloodrock Cyclops", "Mountain", "Mountain", "Mountain", "Mountain")
+                        .library("Mountain", "Mountain", "Mountain", "Mountain", "Mountain"))
+                .opponentStarts());
+        // 5. « La machine »: Claude at 10 behind a Craw Wurm. Siege-Gang Commander brings three
+        // Goblins; each creature sacrificed to the Bombardment is 1 damage and Blood Artist's
+        // 1 more, 2 each while the Artist lives: five creatures, the Artist last, are 10.
+        add(new Scenario("m5", DUEL)
+                .student(s -> s.life(20)
+                        .battlefield("Goblin Bombardment", "Blood Artist", "Mountain", "Mountain", "Mountain", "Mountain", "Mountain")
+                        .hand("Siege-Gang Commander")
+                        .library("Mountain", "Mountain", "Mountain", "Mountain", "Mountain"))
+                .opponent(o -> o.life(10)
+                        .battlefield("Craw Wurm", "Forest", "Forest", "Forest", "Forest", "Forest", "Forest")
+                        .library("Forest", "Forest", "Forest", "Forest", "Forest")));
+    }
+
+    private Scenarios() {
+    }
+
+    private static void add(Scenario scenario) {
+        LIST.put(scenario.getId(), scenario);
+    }
+
+    /** The scenario of that id, or null when the server has none by that id. */
+    public static Scenario get(String id) {
+        return id == null ? null : LIST.get(id);
+    }
+
+    public static List<String> ids() {
+        return Collections.unmodifiableList(new ArrayList<>(LIST.keySet()));
+    }
+
+    /**
+     * Sets the game up as the scenario says, before it starts: both players' zones emptied of
+     * the decks they joined with and filled with the scenario's cards, their life, who starts,
+     * and the options that make the start keep it (no shuffle, no hand drawn, no mulligan).
+     * The student is {@code studentId}; the opponent is the game's other player.
+     */
+    public static void apply(Scenario scenario, Game game, GameOptions options, UUID studentId) {
+        Player student = game.getPlayer(studentId);
+        Player opponent = null;
+        for (Player player : game.getPlayers().values()) {
+            if (!player.getId().equals(studentId)) {
+                opponent = player;
+            }
+        }
+        if (student == null || opponent == null || game.getPlayers().size() != 2) {
+            throw new IllegalStateException("scenario " + scenario.getId() + " needs two players, the student " + studentId + " one of them");
+        }
+        Set<UUID> arrived = new HashSet<>();
+        Set<UUID> tapped = new HashSet<>();
+        setUp(scenario.getStudent(), student, game, arrived, tapped);
+        setUp(scenario.getOpponent(), opponent, game, arrived, tapped);
+        if (!arrived.isEmpty() || !tapped.isEmpty()) {
+            game.getState().addWatcher(new ScenarioArrivalsWatcher(arrived, tapped));
+        }
+        game.setStartingPlayerId(scenario.studentStarts() ? student.getId() : opponent.getId());
+        options.scenario = true;
+        options.skipInitShuffling = true;
+    }
+
+    private static void setUp(Scenario.Side side, Player player, Game game, Set<UUID> arrived, Set<UUID> tapped) {
+        // The cards the deck brought stay known to the game but in no zone
+        for (UUID id : player.getLibrary().getCardList()) {
+            game.getState().setZone(id, Zone.OUTSIDE);
+        }
+        player.getLibrary().clear();
+        player.getHand().clear();
+        for (UUID id : player.getSideboard()) {
+            game.getState().setZone(id, Zone.OUTSIDE);
+        }
+        player.getSideboard().clear();
+        player.initLife(side.getLife() < 0 ? game.getStartingLife() : side.getLife());
+        player.updateRange(game);
+
+        // cheat puts each library card on top in turn: the last one put is the top
+        List<Card> library = cards(side.getLibrary());
+        Collections.reverse(library);
+        List<PutToBattlefieldInfo> battlefield = new ArrayList<>();
+        for (Card card : cards(side.getBattlefield())) {
+            battlefield.add(new PutToBattlefieldInfo(card, false));
+        }
+        for (Card card : cards(side.getTapped())) {
+            battlefield.add(new PutToBattlefieldInfo(card, true));
+            tapped.add(card.getId());
+        }
+        for (Card card : cards(side.getArrived())) {
+            battlefield.add(new PutToBattlefieldInfo(card, false));
+            arrived.add(card.getId());
+        }
+        game.cheat(player.getId(), library, cards(side.getHand()), battlefield,
+                cards(side.getGraveyard()), cards(side.getCommand()), new ArrayList<>());
+    }
+
+    private static List<Card> cards(List<String> names) {
+        List<Card> cards = new ArrayList<>();
+        for (String name : names) {
+            CardInfo info = CardRepository.instance.findCard(name, true);
+            if (info == null) {
+                throw new IllegalStateException("scenario card not in the repository: " + name);
+            }
+            cards.add(info.createCard());
+        }
+        return cards;
+    }
+}

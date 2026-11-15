@@ -24,6 +24,8 @@ import mage.server.game.GameFactory;
 import mage.server.game.PlayerFactory;
 import mage.server.managers.ManagerFactory;
 import mage.server.record.TableRecorderImpl;
+import mage.server.scenario.Scenario;
+import mage.server.scenario.Scenarios;
 import mage.server.tournament.TournamentFactory;
 import mage.server.util.ServerMessagesUtil;
 import mage.util.ThreadUtils;
@@ -694,6 +696,15 @@ public class TableController {
             gameOptions.planeChase = match.getOptions().isPlaneChase();
             gameOptions.perPlayerEmblemCards = match.getOptions().getPerPlayerEmblemCards();
             gameOptions.globalEmblemCards = match.getOptions().getGlobalEmblemCards();
+            // A lesson of the site's: the position of the server's list, for the table's creator
+            Scenario scenario = Scenarios.get(match.getOptions().getScenario());
+            if (match.getOptions().getScenario() != null) {
+                if (scenario == null || userId == null || userPlayerMap.get(userId) == null) {
+                    throw new GameException("no scenario '" + match.getOptions().getScenario() + "' on this server, or no creator seated");
+                }
+                Scenarios.apply(scenario, match.getGame(), gameOptions, userPlayerMap.get(userId));
+                logger.info("Table " + table.getId() + " starts from scenario " + scenario.getId());
+            }
             match.getGame().setGameOptions(gameOptions);
             managerFactory.gameManager().createGameSession(match.getGame(), userPlayerMap, table.getId(), choosingPlayerId, gameOptions);
             String creator = null;

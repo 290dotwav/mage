@@ -46,6 +46,13 @@ public class GameOptions implements Serializable, Copyable<GameOptions> {
     public boolean skipInitShuffling = false;
 
     /**
+     * A position set up before the start (the table's scenarios, mage.server.scenario):
+     * the hands, the libraries and the life totals are already what they must be,
+     * so the start draws no hand, sets no life and holds no mulligan.
+     */
+    public boolean scenario = false;
+
+    /**
      * If true, players can rollback turn if all players agree
      */
     public boolean rollbackTurnsAllowed = true;
@@ -82,6 +89,7 @@ public class GameOptions implements Serializable, Copyable<GameOptions> {
         this.stopOnTurn = options.stopOnTurn;
         this.stopAtStep = options.stopAtStep;
         this.skipInitShuffling = options.skipInitShuffling;
+        this.scenario = options.scenario;
         this.rollbackTurnsAllowed = options.rollbackTurnsAllowed;
         this.bannedUsers.addAll(options.bannedUsers);
         this.planeChase = options.planeChase;

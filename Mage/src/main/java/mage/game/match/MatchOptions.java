@@ -37,6 +37,8 @@ public class MatchOptions implements Serializable {
     protected boolean rollbackTurnsAllowed;
     protected boolean spectatorsAllowed;
     protected boolean planeChase;
+    /** The table's scenario (mage.server.scenario.Scenarios), an id of the server's own list; null for a plain game. */
+    protected String scenario;
     protected int quitRatio;
     protected int minimumRating;
     protected int edhPowerLevel;
@@ -211,6 +213,14 @@ public class MatchOptions implements Serializable {
 
     public void setPlaneChase(boolean planeChase) {
         this.planeChase = planeChase;
+    }
+
+    public String getScenario() {
+        return scenario;
+    }
+
+    public void setScenario(String scenario) {
+        this.scenario = scenario;
     }
 
     public int getQuitRatio() {

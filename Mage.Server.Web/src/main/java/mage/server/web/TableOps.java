@@ -22,6 +22,8 @@ import mage.server.Main;
 import mage.server.Session;
 import mage.server.User;
 import mage.server.managers.ManagerFactory;
+import mage.server.scenario.Scenario;
+import mage.server.scenario.Scenarios;
 import mage.view.TableView;
 import org.apache.log4j.Logger;
 
@@ -37,7 +39,10 @@ import java.util.UUID;
  * { kind: "table", op: "create", gameType: "Commander Free For All", seats: 4, deck: "&lt;.dck text&gt;", name: "Alice",
  *   seatTypes?: ["Human","Computer - mad","Computer - mad","Computer - mad"], tableName?: "FG", deckType?: "Variant Magic - Commander",
  *   mulliganType?: "LONDON" | "TEN" | ... (a MulliganType name; default LONDON),
- *   planechase?: true (901: a plane in the command zone and the planar die; default off) }
+ *   planechase?: true (901: a plane in the command zone and the planar die; default off),
+ *   scenario?: "m1" (an id of the server's lessons, mage.server.scenario.Scenarios: the game
+ *     starts from that position, the creator the student; it sets the game type, two seats,
+ *     any deck accepted since the position replaces it; an id the server does not have is refused) }
  * { kind: "table", op: "join",   tableId, deck, name, playerType?: "Human" | "Computer - mad", skill?: 2, thinkSeconds?: 3, password?: "" }
  *   - a name already seated at tableId re-seats (reconnection): no new seat, deck not needed
  *   - thinkSeconds caps an AI seat's simulation time per decision (ComputerPlayer6: skill * 3 s
@@ -215,6 +220,8 @@ final class TableOps {
         user.removeUserFromAllTables(DisconnectReason.DisconnectedByUserButKeepTables);
     }
 
+    static final String SCENARIO_DECK_TYPE = "Constructed - Freeform Unlimited";
+
     static String defaultDeckType(String gameType) {
         if (gameType.startsWith("Freeform Unlimited Commander")) {
             return "Variant Magic - Freeform Unlimited Commander";
@@ -262,12 +269,24 @@ final class TableOps {
     }
 
     private void create(WebSession web, JsonObject frame, JsonElement id) throws Exception {
-        String gameType = Frames.optString(frame, "gameType", "Commander Free For All");
+        String scenarioId = Frames.optString(frame, "scenario", null);
+        Scenario scenario = null;
+        if (scenarioId != null) {
+            scenario = Scenarios.get(scenarioId);
+            if (scenario == null) {
+                throw new IllegalArgumentException("unknown scenario '" + scenarioId + "' (one of " + Scenarios.ids() + ")");
+            }
+        }
+        String gameType = scenario != null ? scenario.getGameType() : Frames.optString(frame, "gameType", "Commander Free For All");
         int seats = Frames.optInt(frame, "seats", 4);
+        if (scenario != null && seats != 2) {
+            throw new IllegalArgumentException("scenario " + scenarioId + " is played by two seats, not " + seats);
+        }
         String name = Frames.requireString(frame, "name");
         web.identity.check(name, "table create");
         String tableName = Frames.optString(frame, "tableName", name);
-        String deckType = Frames.optString(frame, "deckType", defaultDeckType(gameType));
+        // A scenario's position replaces the decks: whatever the seats bring is accepted
+        String deckType = scenario != null ? SCENARIO_DECK_TYPE : Frames.optString(frame, "deckType", defaultDeckType(gameType));
         MulliganType mulliganType = mulliganType(Frames.optString(frame, "mulliganType", MulliganType.LONDON.name()));
         // 901 Planechase: their engine deals the first plane to the starting player and rolls
         // the die as an ability of the plane (GameImpl, TableController: MatchOptions.planeChase
@@ -318,6 +337,7 @@ final class TableOps {
         options.setMinimumRating(0);
         options.setEdhPowerLevel(0);
         options.setPlaneChase(planechase);
+        options.setScenario(scenario == null ? null : scenario.getId());
 
         UUID roomId = roomId();
         // Checked again with the creation, under the gate's lock (ServerLimits)
@@ -330,7 +350,7 @@ final class TableOps {
             server.tableRemove(web.sessionId, roomId, table.getTableId());
             throw new MageException("creator could not take a seat at the new table (see callbacks); table removed");
         }
-        logger.info("Web door: " + name + " created table " + table.getTableId() + " (" + gameType + ", " + seats + " seats, mulligan " + mulliganType.name() + (planechase ? ", Planechase" : "") + ")");
+        logger.info("Web door: " + name + " created table " + table.getTableId() + " (" + gameType + ", " + seats + " seats, mulligan " + mulliganType.name() + (planechase ? ", Planechase" : "") + (scenario != null ? ", scenario " + scenario.getId() : "") + ")");
         web.send(Frames.joined(table.getTableId(), playerId(table.getTableId(), name), name, false, deck, id));
     }
 
