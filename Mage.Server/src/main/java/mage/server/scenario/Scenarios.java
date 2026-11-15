@@ -87,7 +87,7 @@ public final class Scenarios {
         // 1 more, 2 each while the Artist lives: five creatures, the Artist last, are 10.
         add(new Scenario("m5", DUEL)
                 .student(s -> s.life(20)
-                        .battlefield("TMP:Goblin Bombardment", "AVR:Blood Artist", "Mountain", "Mountain", "Mountain", "Mountain", "Mountain")
+                        .battlefield("C13:Goblin Bombardment", "AVR:Blood Artist", "Mountain", "Mountain", "Mountain", "Mountain", "Mountain")
                         .hand("10E:Siege-Gang Commander")
                         .library("Mountain", "Mountain", "Mountain", "Mountain", "Mountain"))
                 .opponent(o -> o.life(10)
@@ -190,7 +190,7 @@ public final class Scenarios {
     private static List<Card> cards(List<String> names) {
         List<Card> cards = new ArrayList<>();
         for (String written : names) {
-            // "TMP:Goblin Bombardment" or "KHM:Arni Brokenbrow#120": that printing (its picture on the site), else any
+            // "C13:Goblin Bombardment" or "KHM:Arni Brokenbrow#120": that printing (its picture on the site), else any
             String name = written;
             String set = null;
             String number = null;
