@@ -11,7 +11,8 @@ import java.util.List;
  * only names an id of it.
  * <p>
  * The student is the table's creator, the opponent the other seat. Cards are named in English,
- * as their repository knows them; a library is written from its top card down.
+ * as their repository knows them, and may name their printing ("TMP:Goblin Bombardment", "KHM:Arni
+ * Brokenbrow#120"); a library is written from its top card down.
  */
 public final class Scenario {
 

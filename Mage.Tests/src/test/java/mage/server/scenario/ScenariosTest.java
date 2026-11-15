@@ -87,16 +87,18 @@ public class ScenariosTest extends CardTestPlayerBase {
         Assert.assertFalse(getPermanent("Hill Giant", playerA).hasSummoningSickness());
         assertTappedCount("Forest", true, 5);
         assertTappedCount("Island", true, 1);
-        assertLife(playerB, 4);
+        assertHandCount(playerA, "Giant Growth", 1);
+        assertLife(playerB, 7);
     }
 
     @Test
-    public void alAssautDrakeGiantLionsWinWhateverTheBearsBlock() {
+    public void alAssautElvesHomeForTheGrowth() {
         lesson("m2");
         attack(1, playerA, "Wind Drake");
         attack(1, playerA, "Hill Giant");
         attack(1, playerA, "Savannah Lions");
         block(1, playerB, "Grizzly Bears", "Hill Giant");
+        castSpell(1, PhaseStep.DECLARE_BLOCKERS, playerA, "Giant Growth", "Wind Drake"); // the Elves' green
         setStopAt(1, PhaseStep.END_TURN);
         execute();
 
@@ -105,16 +107,18 @@ public class ScenariosTest extends CardTestPlayerBase {
     }
 
     @Test
-    public void alAssautWithoutTheLionsIsShort() {
+    public void alAssautEverythingThatCanAttackIsShort() {
         lesson("m2");
         attack(1, playerA, "Wind Drake");
         attack(1, playerA, "Hill Giant");
+        attack(1, playerA, "Savannah Lions");
         attack(1, playerA, "Llanowar Elves");
         block(1, playerB, "Grizzly Bears", "Hill Giant");
+        checkPlayableAbility("no green left", 1, PhaseStep.DECLARE_BLOCKERS, playerA, "Cast Giant Growth", false);
         setStopAt(1, PhaseStep.END_TURN);
         execute();
 
-        assertLife(playerB, 1);
+        assertLife(playerB, 2);
     }
 
     @Test

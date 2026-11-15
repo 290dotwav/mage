@@ -43,16 +43,18 @@ public final class Scenarios {
                         .library("Mountain", "Forest", "Mountain", "Forest", "Mountain"))
                 .opponent(o -> o.life(3)
                         .library("Plains", "Plains", "Plains", "Plains", "Plains")));
-        // 2. « À l'assaut »: Claude at 4 behind one 2/2. The Craw Wurm came this turn (the
-        // lands that paid for it are tapped); the Drake flies over; Drake, Giant and Lions
-        // are 4 whatever the Bears block, the Elves are not needed.
+        // 2. « À l'assaut »: Claude at 7 behind one 2/2. The Craw Wurm came this turn (the lands
+        // that paid for it are tapped); the Drake flies over; Drake, Giant and Lions are 7 with the
+        // Giant Growth that only the Elves' green can pay: the Elves stay home. Everything that can
+        // attack, the Elves too, is 5 when the Bears block the Giant.
         add(new Scenario("m2", DUEL)
                 .student(s -> s.life(20)
                         .battlefield("Wind Drake", "Hill Giant", "Savannah Lions", "Llanowar Elves")
                         .arrived("Craw Wurm")
                         .tapped("Forest", "Forest", "Forest", "Forest", "Forest", "Island")
+                        .hand("Giant Growth")
                         .library("Forest", "Island", "Forest", "Island", "Forest"))
-                .opponent(o -> o.life(4)
+                .opponent(o -> o.life(7)
                         .battlefield("Grizzly Bears", "Forest", "Forest")
                         .library("Forest", "Forest", "Forest", "Forest", "Forest")));
         // 3. « Tiens bon »: Claude's three attack each combat if able (10 in all, he is at 5,
@@ -85,8 +87,8 @@ public final class Scenarios {
         // 1 more, 2 each while the Artist lives: five creatures, the Artist last, are 10.
         add(new Scenario("m5", DUEL)
                 .student(s -> s.life(20)
-                        .battlefield("Goblin Bombardment", "Blood Artist", "Mountain", "Mountain", "Mountain", "Mountain", "Mountain")
-                        .hand("Siege-Gang Commander")
+                        .battlefield("TMP:Goblin Bombardment", "AVR:Blood Artist", "Mountain", "Mountain", "Mountain", "Mountain", "Mountain")
+                        .hand("SCG:Siege-Gang Commander")
                         .library("Mountain", "Mountain", "Mountain", "Mountain", "Mountain"))
                 .opponent(o -> o.life(10)
                         .battlefield("Craw Wurm", "Forest", "Forest", "Forest", "Forest", "Forest", "Forest")
@@ -97,7 +99,7 @@ public final class Scenarios {
         // or by attacking twice. Arni dead goes back to the command zone if you say so.
         add(new Scenario("m6", COMMANDER_DUEL)
                 .student(s -> s.life(40)
-                        .command("Arni Brokenbrow")
+                        .command("KHM:Arni Brokenbrow#120")
                         .battlefield("Mountain", "Mountain", "Mountain", "Mountain", "Mountain", "Mountain", "Mountain")
                         .hand("Fling")
                         .library("Mountain", "Mountain", "Mountain", "Mountain", "Mountain"))
@@ -187,8 +189,23 @@ public final class Scenarios {
 
     private static List<Card> cards(List<String> names) {
         List<Card> cards = new ArrayList<>();
-        for (String name : names) {
-            CardInfo info = CardRepository.instance.findCard(name, true);
+        for (String written : names) {
+            // "TMP:Goblin Bombardment" or "KHM:Arni Brokenbrow#120": that printing (its picture on the site), else any
+            String name = written;
+            String set = null;
+            String number = null;
+            int colon = written.indexOf(':');
+            if (colon > 0 && written.substring(0, colon).matches("[A-Z0-9]{2,5}")) {
+                set = written.substring(0, colon);
+                name = written.substring(colon + 1);
+            }
+            int hash = name.lastIndexOf('#');
+            if (hash > 0) {
+                number = name.substring(hash + 1);
+                name = name.substring(0, hash);
+            }
+            CardInfo info = set == null ? CardRepository.instance.findCard(name, true)
+                    : CardRepository.instance.findCardWithPreferredSetAndNumber(name, set, number);
             if (info == null) {
                 throw new IllegalStateException("scenario card not in the repository: " + name);
             }
