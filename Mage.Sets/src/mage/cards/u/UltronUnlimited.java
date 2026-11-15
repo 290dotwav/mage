@@ -2,7 +2,7 @@ package mage.cards.u;
 
 import mage.MageInt;
 import mage.abilities.common.AttacksTriggeredAbility;
-import mage.abilities.common.ConnivesTriggeredAbility;
+import mage.abilities.common.CreatureConnivesTriggeredAbility;
 import mage.abilities.costs.mana.GenericManaCost;
 import mage.abilities.effects.common.CreateTokenEffect;
 import mage.abilities.effects.common.DoIfCostPaid;
@@ -18,7 +18,7 @@ import mage.game.permanent.token.RobotVillainToken;
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author JayDi85
  */
 public final class UltronUnlimited extends CardImpl {
 
@@ -26,8 +26,7 @@ public final class UltronUnlimited extends CardImpl {
         super(ownerId, setInfo, new CardType[]{CardType.ARTIFACT, CardType.CREATURE}, "{1}{U}{B}");
 
         this.supertype.add(SuperType.LEGENDARY);
-        this.subtype.add(SubType.ROBOT);
-        this.subtype.add(SubType.VILLAIN);
+        this.subtype.add(SubType.ROBOT, SubType.VILLAIN);
         this.power = new MageInt(2);
         this.toughness = new MageInt(2);
 
@@ -38,8 +37,8 @@ public final class UltronUnlimited extends CardImpl {
         this.addAbility(new AttacksTriggeredAbility(new ConniveSourceEffect("he")));
 
         // Whenever a creature you control connives, you may pay {1}. If you do, create a 2/2 colorless Robot Villain artifact creature token.
-        this.addAbility(new ConnivesTriggeredAbility(
-                new DoIfCostPaid(new CreateTokenEffect(new RobotVillainToken()), new GenericManaCost(1)), false
+        this.addAbility(new CreatureConnivesTriggeredAbility(
+                new DoIfCostPaid(new CreateTokenEffect(new RobotVillainToken()), new GenericManaCost(1))
         ));
     }
 

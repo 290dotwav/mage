@@ -5,26 +5,26 @@ import mage.MageObject;
 import mage.abilities.Ability;
 import mage.abilities.effects.OneShotEffect;
 import mage.abilities.effects.common.CopyEffect;
+import mage.abilities.effects.common.CopyPermanentEffect;
 import mage.abilities.triggers.BeginningOfFirstMainTriggeredAbility;
 import mage.cards.Card;
 import mage.cards.CardImpl;
 import mage.cards.CardSetInfo;
-import mage.constants.CardType;
-import mage.constants.Duration;
-import mage.constants.Outcome;
-import mage.constants.SubType;
-import mage.constants.SuperType;
+import mage.constants.*;
 import mage.filter.StaticFilters;
+import mage.filter.common.FilterCreaturePermanent;
 import mage.game.Game;
 import mage.game.permanent.Permanent;
 import mage.game.permanent.PermanentCard;
+import mage.players.Player;
 import mage.target.common.TargetCardInGraveyardBattlefieldOrStack;
+import mage.util.CardUtil;
 import mage.util.functions.CopyApplier;
 
-import java.util.UUID;
+import java.util.*;
 
 /**
- * @author Claude
+ * @author miesma
  */
 public final class TaskmasterMercenaryMimic extends CardImpl {
 
@@ -39,12 +39,11 @@ public final class TaskmasterMercenaryMimic extends CardImpl {
         this.toughness = new MageInt(5);
 
         // Photographic Reflexes -- At the beginning of your first main phase, until your next turn, Taskmaster becomes a copy of up to one target creature on the battlefield or creature card in a graveyard, except his name is Taskmaster, Mercenary Mimic and he's a legendary Human Mercenary Villain creature.
-        Ability ability = new BeginningOfFirstMainTriggeredAbility(new TaskmasterMercenaryMimicEffect());
-        ability.addTarget(new TargetCardInGraveyardBattlefieldOrStack(
-                0, 1, StaticFilters.FILTER_CARD_CREATURE, StaticFilters.FILTER_PERMANENT_CREATURE,
-                "creature on the battlefield or creature card in a graveyard"
-        ));
-        this.addAbility(ability.withFlavorWord("Photographic Reflexes"));
+        Ability ability = new BeginningOfFirstMainTriggeredAbility(new TaskmasterMercenaryMimicCopyEffect(), false)
+                .withFlavorWord("Photographic Reflexes");
+        ability.addTarget(new TargetCardInGraveyardBattlefieldOrStack(0, 1,
+                StaticFilters.FILTER_CARD_CREATURE, StaticFilters.FILTER_PERMANENT_CREATURE));
+        this.addAbility(ability);
     }
 
     private TaskmasterMercenaryMimic(final TaskmasterMercenaryMimic card) {
@@ -57,67 +56,70 @@ public final class TaskmasterMercenaryMimic extends CardImpl {
     }
 }
 
-class TaskmasterMercenaryMimicEffect extends OneShotEffect {
+class TaskmasterMercenaryMimicCopyApplier extends CopyApplier {
 
-    /**
-     * "he's a legendary Human Mercenary Villain creature": the type line is set, not added to (205.1a)
-     */
-    private static final CopyApplier applier = new CopyApplier() {
-        @Override
-        public boolean apply(Game game, MageObject blueprint, Ability source, UUID copyToObjectId) {
-            blueprint.setName("Taskmaster, Mercenary Mimic");
-            blueprint.removeAllCardTypes();
-            blueprint.addCardType(CardType.CREATURE);
-            blueprint.getSubtype().clear();
-            blueprint.setIsAllCreatureTypes(false);
-            blueprint.addSubType(SubType.HUMAN, SubType.MERCENARY, SubType.VILLAIN);
-            blueprint.removeAllSuperTypes();
-            blueprint.addSuperType(SuperType.LEGENDARY);
-            return true;
-        }
-    };
+    @Override
+    public boolean apply(Game game, MageObject blueprint, Ability source, UUID copyToObjectId) {
+        blueprint.setName("Taskmaster, Mercenary Mimic");
+        // a legendary Human Mercenary Villain creature instead of its other card types and subtypes, other supertypes stay
+        // (subtypes of the removed card types go away with them)
+        blueprint.removeAllCardTypes();
+        blueprint.addCardType(CardType.CREATURE);
+        blueprint.removeAllCreatureTypes();
+        blueprint.addSuperType(SuperType.LEGENDARY);
+        blueprint.addSubType(SubType.HUMAN);
+        blueprint.addSubType(SubType.MERCENARY);
+        blueprint.addSubType(SubType.VILLAIN);
+        return true;
+    }
+}
 
-    TaskmasterMercenaryMimicEffect() {
+class TaskmasterMercenaryMimicCopyEffect extends OneShotEffect {
+
+    TaskmasterMercenaryMimicCopyEffect() {
         super(Outcome.Copy);
-        staticText = "until your next turn, {this} becomes a copy of up to one target creature on the battlefield "
-                + "or creature card in a graveyard, except his name is Taskmaster, Mercenary Mimic "
-                + "and he's a legendary Human Mercenary Villain creature";
+        this.staticText = "until your next turn, {this} becomes a copy of up to one target creature on the battlefield or creature card in a graveyard, "
+                + "except his name is Taskmaster, Mercenary Mimic and he's a legendary Human Mercenary Villain creature";
     }
 
-    private TaskmasterMercenaryMimicEffect(final TaskmasterMercenaryMimicEffect effect) {
+    private TaskmasterMercenaryMimicCopyEffect(final TaskmasterMercenaryMimicCopyEffect effect) {
         super(effect);
     }
 
     @Override
-    public TaskmasterMercenaryMimicEffect copy() {
-        return new TaskmasterMercenaryMimicEffect(this);
+    public boolean apply(Game game, Ability source) {
+        Player player = game.getPlayer(source.getControllerId());
+        // 400.7 a new object after a zone change, so the returned Taskmaster doesn't become a copy
+        Permanent permanent = source.getSourcePermanentIfItStillExists(game);
+        UUID targetID = source.getFirstTarget();
+        if (player != null && permanent != null && targetID != null) {
+            Zone zone = game.getState().getZone(targetID);
+            if (zone != null && zone.match(Zone.BATTLEFIELD)) {
+                // Copy from Permanent (not card)
+                CopyPermanentEffect copyPermanentEffect = new CopyPermanentEffect(
+                        new FilterCreaturePermanent(), new TaskmasterMercenaryMimicCopyApplier(), true
+                ).setDuration(Duration.UntilYourNextTurn);
+                copyPermanentEffect.apply(game, source);
+            } else if (zone != null && zone.match(Zone.GRAVEYARD)) {
+                // Copy from Card
+                Card copyFromCard = game.getCard(targetID);
+                if (copyFromCard != null) {
+                    Permanent newBluePrint = new PermanentCard(CardUtil.getDefaultCardSideForBattlefield(game, copyFromCard), source.getControllerId(), game);
+                    newBluePrint.assignNewId();
+                    TaskmasterMercenaryMimicCopyApplier applier = new TaskmasterMercenaryMimicCopyApplier();
+                    applier.apply(game, newBluePrint, source, permanent.getId());
+                    CopyEffect copyEffect = new CopyEffect(Duration.UntilYourNextTurn, newBluePrint, permanent.getId());
+                    game.addEffect(copyEffect, source);
+                }
+            } else {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
-    public boolean apply(Game game, Ability source) {
-        Permanent taskmaster = source.getSourcePermanentIfItStillExists(game);
-        if (taskmaster == null) {
-            return false;
-        }
-        UUID targetId = getTargetPointer().getFirst(game, source);
-        Permanent permanent = game.getPermanent(targetId);
-        if (permanent != null) {
-            game.copyPermanent(Duration.UntilYourNextTurn, permanent, taskmaster.getId(), source, applier);
-            return true;
-        }
-        Card card = game.getCard(targetId);
-        if (card == null) {
-            return false;
-        }
-        // a card in a graveyard: copy its printed values, as Lazav, the Multifarious does
-        Permanent blueprint = new PermanentCard(card, source.getControllerId(), game);
-        blueprint.assignNewId();
-        applier.apply(game, blueprint, source, taskmaster.getId());
-        CopyEffect copyEffect = new CopyEffect(Duration.UntilYourNextTurn, blueprint, taskmaster.getId());
-        copyEffect.setApplier(applier);
-        Ability newAbility = source.copy();
-        copyEffect.init(newAbility, game);
-        game.addEffect(copyEffect, newAbility);
-        return true;
+    public TaskmasterMercenaryMimicCopyEffect copy() {
+        return new TaskmasterMercenaryMimicCopyEffect(this);
     }
 }

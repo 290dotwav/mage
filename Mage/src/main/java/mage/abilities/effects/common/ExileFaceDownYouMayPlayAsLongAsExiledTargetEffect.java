@@ -93,12 +93,9 @@ public class ExileFaceDownYouMayPlayAsLongAsExiledTargetEffect extends OneShotEf
                         CardUtil.makeCardPlayable(game, source, card, useCastSpellOnly, Duration.Custom, true, controller.getId(), null);
                         break;
                     case WITHOUT_PAYING_MANA_COST:
-                        // you may play|cast it without paying its mana cost for as long as it remains exiled
-                        ContinuousEffect playEffect = new PlayFromNotOwnHandZoneTargetEffect(
+                        game.addEffect(new PlayFromNotOwnHandZoneTargetEffect(
                                 Zone.EXILED, TargetController.YOU, Duration.Custom, true, useCastSpellOnly
-                        );
-                        playEffect.setTargetPointer(new FixedTarget(card, game));
-                        game.addEffect(playEffect, source);
+                        ).setTargetPointer(new FixedTarget(card, game)), source);
                         break;
                     default:
                         throw new IllegalArgumentException("Wrong code usage, manaAdjustment is not yet supported: " + manaAdjustment);

@@ -2,6 +2,7 @@ package mage.cards.a;
 
 import mage.abilities.Ability;
 import mage.abilities.TriggeredAbilityImpl;
+import mage.abilities.dynamicvalue.common.StaticValue;
 import mage.abilities.effects.OneShotEffect;
 import mage.abilities.effects.common.AttachEffect;
 import mage.abilities.effects.common.DrawCardSourceControllerEffect;
@@ -24,9 +25,6 @@ import mage.target.targetpointer.FixedTarget;
 
 import java.util.UUID;
 
-/**
- * @author Claude
- */
 public final class Archnemesis extends CardImpl {
 
     public Archnemesis(UUID ownerId, CardSetInfo setInfo) {
@@ -37,14 +35,18 @@ public final class Archnemesis extends CardImpl {
         // Enchant opponent
         TargetPlayer auraTarget = new TargetOpponent();
         this.getSpellAbility().addTarget(auraTarget);
-        this.getSpellAbility().addEffect(new AttachEffect(Outcome.Damage));
+        this.getSpellAbility().addEffect(new AttachEffect(Outcome.Detriment));
         this.addAbility(new EnchantAbility(auraTarget));
 
         // Whenever you attack enchanted player, that player loses 2 life. You draw a card and gain 2 life.
-        this.addAbility(new ArchnemesisAttackTriggeredAbility());
+        Ability attackAbility = new ArchnemesisAttackTriggeredAbility();
+        attackAbility.addEffect(new LoseLifeTargetEffect(2));
+        attackAbility.addEffect(new DrawCardSourceControllerEffect(1, true));
+        attackAbility.addEffect(new GainLifeEffect(StaticValue.get(2), "and gain 2 life"));
+        this.addAbility(attackAbility);
 
         // Whenever a player attacks you, you may attach this Aura to that player.
-        this.addAbility(new ArchnemesisAttackedTriggeredAbility());
+        this.addAbility(new ArchnemesisReattachTriggeredAbility());
     }
 
     private Archnemesis(final Archnemesis card) {
@@ -60,9 +62,7 @@ public final class Archnemesis extends CardImpl {
 class ArchnemesisAttackTriggeredAbility extends TriggeredAbilityImpl {
 
     ArchnemesisAttackTriggeredAbility() {
-        super(Zone.BATTLEFIELD, new LoseLifeTargetEffect(2).setText("that player loses 2 life"));
-        this.addEffect(new DrawCardSourceControllerEffect(1, true).setText("You draw a card"));
-        this.addEffect(new GainLifeEffect(2).setText("and gain 2 life"));
+        super(Zone.BATTLEFIELD, null, false);
         setTriggerPhrase("Whenever you attack enchanted player, ");
     }
 
@@ -71,85 +71,86 @@ class ArchnemesisAttackTriggeredAbility extends TriggeredAbilityImpl {
     }
 
     @Override
-    public ArchnemesisAttackTriggeredAbility copy() {
-        return new ArchnemesisAttackTriggeredAbility(this);
-    }
-
-    @Override
     public boolean checkEventType(GameEvent event, Game game) {
-        return event.getType() == GameEvent.EventType.DEFENDER_ATTACKED;
+        return event.getType() == GameEvent.EventType.DECLARED_ATTACKERS;
     }
 
     @Override
     public boolean checkTrigger(GameEvent event, Game game) {
         Permanent aura = game.getPermanentOrLKIBattlefield(getSourceId());
         if (aura == null
-                || !isControlledBy(event.getPlayerId())
-                || !event.getTargetId().equals(aura.getAttachedTo())) {
+                || !getControllerId().equals(game.getCombat().getAttackingPlayerId())
+                || aura.getAttachedTo() == null
+                || !game.getCombat().getPlayerDefenders(game, false).contains(aura.getAttachedTo())) {
             return false;
         }
-        this.getEffects().setTargetPointer(new FixedTarget(event.getTargetId()));
+        getEffects().setTargetPointer(new FixedTarget(aura.getAttachedTo()));
         return true;
+    }
+
+    @Override
+    public ArchnemesisAttackTriggeredAbility copy() {
+        return new ArchnemesisAttackTriggeredAbility(this);
     }
 }
 
-class ArchnemesisAttackedTriggeredAbility extends TriggeredAbilityImpl {
+class ArchnemesisReattachTriggeredAbility extends TriggeredAbilityImpl {
 
-    ArchnemesisAttackedTriggeredAbility() {
-        super(Zone.BATTLEFIELD, new ArchnemesisAttachEffect(), true);
+    ArchnemesisReattachTriggeredAbility() {
+        super(Zone.BATTLEFIELD, new ArchnemesisReattachEffect(), true);
         setTriggerPhrase("Whenever a player attacks you, ");
     }
 
-    private ArchnemesisAttackedTriggeredAbility(final ArchnemesisAttackedTriggeredAbility ability) {
+    private ArchnemesisReattachTriggeredAbility(final ArchnemesisReattachTriggeredAbility ability) {
         super(ability);
     }
 
     @Override
-    public ArchnemesisAttackedTriggeredAbility copy() {
-        return new ArchnemesisAttackedTriggeredAbility(this);
-    }
-
-    @Override
     public boolean checkEventType(GameEvent event, Game game) {
-        return event.getType() == GameEvent.EventType.DEFENDER_ATTACKED;
+        return event.getType() == GameEvent.EventType.DECLARED_ATTACKERS;
     }
 
     @Override
     public boolean checkTrigger(GameEvent event, Game game) {
-        if (!isControlledBy(event.getTargetId())) {
+        UUID attackingPlayerId = game.getCombat().getAttackingPlayerId();
+        if (attackingPlayerId == null
+                || !game.getCombat().getPlayerDefenders(game, false).contains(getControllerId())) {
             return false;
         }
-        this.getEffects().setTargetPointer(new FixedTarget(event.getPlayerId()));
+        getEffects().setTargetPointer(new FixedTarget(attackingPlayerId));
         return true;
+    }
+
+    @Override
+    public ArchnemesisReattachTriggeredAbility copy() {
+        return new ArchnemesisReattachTriggeredAbility(this);
     }
 }
 
-class ArchnemesisAttachEffect extends OneShotEffect {
+class ArchnemesisReattachEffect extends OneShotEffect {
 
-    ArchnemesisAttachEffect() {
+    ArchnemesisReattachEffect() {
         super(Outcome.Benefit);
-        staticText = "you may attach this Aura to that player";
+        staticText = "attach {this} to that player";
     }
 
-    private ArchnemesisAttachEffect(final ArchnemesisAttachEffect effect) {
+    private ArchnemesisReattachEffect(final ArchnemesisReattachEffect effect) {
         super(effect);
     }
 
     @Override
-    public ArchnemesisAttachEffect copy() {
-        return new ArchnemesisAttachEffect(this);
+    public boolean apply(Game game, Ability source) {
+        Permanent permanent = source.getSourcePermanentIfItStillExists(game);
+        Player attackingPlayer = game.getPlayer(getTargetPointer().getFirst(game, source));
+        if (permanent == null || attackingPlayer == null || attackingPlayer.getId().equals(permanent.getAttachedTo())) {
+            return false;
+        }
+        // the aura leaves the old enchanted player in attachTo
+        return attackingPlayer.addAttachment(permanent.getId(), source, game);
     }
 
     @Override
-    public boolean apply(Game game, Ability source) {
-        Permanent aura = source.getSourcePermanentIfItStillExists(game);
-        Player player = game.getPlayer(getTargetPointer().getFirst(game, source));
-        // Enchant opponent: it can only be attached to an opponent of its controller (303.4)
-        if (aura == null || player == null
-                || !game.getOpponents(aura.getControllerId()).contains(player.getId())
-                || player.getId().equals(aura.getAttachedTo())) {
-            return false;
-        }
-        return player.addAttachment(aura.getId(), source, game);
+    public ArchnemesisReattachEffect copy() {
+        return new ArchnemesisReattachEffect(this);
     }
 }

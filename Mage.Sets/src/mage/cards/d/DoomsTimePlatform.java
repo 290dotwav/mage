@@ -17,9 +17,6 @@ import mage.target.common.TargetCardInYourGraveyard;
 
 import java.util.UUID;
 
-/**
- * @author Claude
- */
 public final class DoomsTimePlatform extends CardImpl {
 
     public DoomsTimePlatform(UUID ownerId, CardSetInfo setInfo) {
@@ -27,7 +24,7 @@ public final class DoomsTimePlatform extends CardImpl {
 
         // Whenever you attack, exile target nonland card from your graveyard with two time counters on it. If it doesn't have suspend, it gains suspend.
         Ability ability = new AttacksWithCreaturesTriggeredAbility(new DoomsTimePlatformEffect(), 1);
-        ability.addTarget(new TargetCardInYourGraveyard(StaticFilters.FILTER_CARD_A_NON_LAND));
+        ability.addTarget(new TargetCardInYourGraveyard(StaticFilters.FILTER_CARD_NON_LAND));
         this.addAbility(ability);
     }
 
@@ -44,10 +41,9 @@ public final class DoomsTimePlatform extends CardImpl {
 class DoomsTimePlatformEffect extends OneShotEffect {
 
     DoomsTimePlatformEffect() {
-        super(Outcome.Benefit);
+        super(Outcome.Exile);
         staticText = "exile target nonland card from your graveyard with two time counters on it. "
-                + "If it doesn't have suspend, it gains suspend. <i>(At the beginning of your upkeep, remove a time counter. "
-                + "When the last is removed, you may cast it without paying its mana cost. If it's a creature, it has haste.)</i>";
+                + "If it doesn't have suspend, it gains suspend";
     }
 
     private DoomsTimePlatformEffect(final DoomsTimePlatformEffect effect) {
@@ -55,18 +51,17 @@ class DoomsTimePlatformEffect extends OneShotEffect {
     }
 
     @Override
-    public DoomsTimePlatformEffect copy() {
-        return new DoomsTimePlatformEffect(this);
+    public boolean apply(Game game, Ability source) {
+        Card card = game.getCard(getTargetPointer().getFirst(game, source));
+        Player controller = game.getPlayer(source.getControllerId());
+        if (card == null || controller == null || !controller.moveCards(card, Zone.EXILED, source, game)) {
+            return false;
+        }
+        return SuspendAbility.addTimeCountersAndSuspend(card, 2, source, game);
     }
 
     @Override
-    public boolean apply(Game game, Ability source) {
-        Player controller = game.getPlayer(source.getControllerId());
-        Card card = game.getCard(getTargetPointer().getFirst(game, source));
-        if (controller == null || card == null) {
-            return false;
-        }
-        controller.moveCards(card, Zone.EXILED, source, game);
-        return SuspendAbility.addTimeCountersAndSuspend(card, 2, source, game);
+    public DoomsTimePlatformEffect copy() {
+        return new DoomsTimePlatformEffect(this);
     }
 }

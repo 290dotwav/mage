@@ -1,7 +1,7 @@
 package mage.cards.g;
 
 import mage.abilities.Ability;
-import mage.abilities.common.ConnivesTriggeredAbility;
+import mage.abilities.common.CreatureConnivesTriggeredAbility;
 import mage.abilities.common.PlanCounterThresholdTriggeredAbility;
 import mage.abilities.costs.common.SacrificeSourceCost;
 import mage.abilities.effects.OneShotEffect;
@@ -14,6 +14,7 @@ import mage.cards.Cards;
 import mage.cards.CardsImpl;
 import mage.constants.CardType;
 import mage.constants.Outcome;
+import mage.constants.SetTargetPointer;
 import mage.constants.SubType;
 import mage.constants.Zone;
 import mage.counters.CounterType;
@@ -25,7 +26,7 @@ import mage.util.CardUtil;
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author JayDi85
  */
 public final class GloriousPurpose extends CardImpl {
 
@@ -35,9 +36,9 @@ public final class GloriousPurpose extends CardImpl {
         this.subtype.add(SubType.PLAN);
 
         // Whenever a creature you control connives, put a +1/+1 counter on that creature and a plan counter on this enchantment.
-        Ability ability = new ConnivesTriggeredAbility(
-                new AddCountersTargetEffect(CounterType.P1P1.createInstance())
-                        .setText("put a +1/+1 counter on that creature"), false
+        Ability ability = new CreatureConnivesTriggeredAbility(
+                new AddCountersTargetEffect(CounterType.P1P1.createInstance()).withTargetDescription("that creature"),
+                SetTargetPointer.PERMANENT
         );
         ability.addEffect(new AddCountersSourceEffect(CounterType.PLAN.createInstance())
                 .setText("and a plan counter on this enchantment"));
@@ -63,8 +64,8 @@ class GloriousPurposeEffect extends OneShotEffect {
 
     GloriousPurposeEffect() {
         super(Outcome.PlayForFree);
-        staticText = "exile the top four cards of your library. You may cast any number of spells from among them " +
-                "without paying their mana costs. Put the rest into your hand";
+        staticText = "exile the top four cards of your library. You may cast any number of spells from among them "
+                + "without paying their mana costs. Put the rest into your hand";
     }
 
     private GloriousPurposeEffect(final GloriousPurposeEffect effect) {
@@ -78,19 +79,17 @@ class GloriousPurposeEffect extends OneShotEffect {
 
     @Override
     public boolean apply(Game game, Ability source) {
-        Player player = game.getPlayer(source.getControllerId());
-        if (player == null) {
+        Player controller = game.getPlayer(source.getControllerId());
+        if (controller == null) {
             return false;
         }
-        Cards cards = new CardsImpl(player.getLibrary().getTopCards(game, 4));
-        if (cards.isEmpty()) {
-            return false;
-        }
-        player.moveCards(cards, Zone.EXILED, source, game);
+        Cards cards = new CardsImpl(controller.getLibrary().getTopCards(game, 4));
+        controller.moveCards(cards, Zone.EXILED, source, game);
+        game.processAction();
         cards.retainZone(Zone.EXILED, game);
-        CardUtil.castMultipleWithAttributeForFree(player, source, game, cards, StaticFilters.FILTER_CARD);
-        cards.retainZone(Zone.EXILED, game);
-        player.moveCards(cards, Zone.HAND, source, game);
+        // cast cards are removed from the list
+        CardUtil.castMultipleWithAttributeForFree(controller, source, game, cards, StaticFilters.FILTER_CARD);
+        controller.moveCards(cards, Zone.HAND, source, game);
         return true;
     }
 }

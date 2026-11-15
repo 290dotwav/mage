@@ -7,35 +7,45 @@ import org.junit.Test;
 import org.mage.test.serverside.base.CardTestPlayerBase;
 
 /**
- * @author Claude
+ * @author JayDi85
  */
 public class IronMongerSadisticTycoonTest extends CardTestPlayerBase {
 
-    // Flying
-    // Whenever a creature you control connives, put a +1/+1 counter on each Villain you control.
-    private static final String MONGER = "Iron Monger, Sadistic Tycoon";
-    // When this creature enters, it connives.
-    private static final String INFORMANT = "Raffine's Informant";
+    /**
+     * Iron Monger, Sadistic Tycoon {2}{B}
+     * Legendary Artifact Creature - Human Villain 2/2
+     * Flying
+     * Whenever a creature you control connives, put a +1/+1 counter on each Villain you control.
+     */
+    private static final String ironMonger = "Iron Monger, Sadistic Tycoon";
 
     @Test
-    public void test_ConniveCountersOnVillains() {
-        addCard(Zone.BATTLEFIELD, playerA, MONGER);
-        addCard(Zone.BATTLEFIELD, playerA, "The Frightful Four"); // Villain
-        addCard(Zone.BATTLEFIELD, playerA, "Grizzly Bears"); // not a Villain
-        addCard(Zone.HAND, playerA, INFORMANT);
-        addCard(Zone.HAND, playerA, "Island");
-        addCard(Zone.BATTLEFIELD, playerA, "Plains", 2);
+    public void test_Connive_CountersOnEachVillainYouControl() {
+        skipInitShuffling();
+        addCard(Zone.BATTLEFIELD, playerA, ironMonger);
+        //
+        addCard(Zone.HAND, playerA, "Echo Inspector"); // {3}{U}, Bird Rogue 2/3, connives on enter
+        addCard(Zone.BATTLEFIELD, playerA, "Island", 4);
+        addCard(Zone.HAND, playerA, "Mountain"); // land card to discard, no counter from connive itself
+        addCard(Zone.LIBRARY, playerA, "Island"); // card to draw
+        //
+        addCard(Zone.BATTLEFIELD, playerA, "A.I.M. Bot"); // Robot Villain 2/3
+        addCard(Zone.BATTLEFIELD, playerB, "A.I.M. Bot"); // Robot Villain 2/3
 
-        castSpell(1, PhaseStep.PRECOMBAT_MAIN, playerA, INFORMANT);
-        setChoice(playerA, "Island"); // discard a land: no counter on the informant
+        castSpell(1, PhaseStep.PRECOMBAT_MAIN, playerA, "Echo Inspector");
+        setChoice(playerA, "Mountain"); // connive discard
 
         setStrictChooseMode(true);
         setStopAt(1, PhaseStep.END_TURN);
         execute();
 
-        assertCounterCount(playerA, MONGER, CounterType.P1P1, 1);
-        assertCounterCount(playerA, "The Frightful Four", CounterType.P1P1, 1);
-        assertCounterCount(playerA, "Grizzly Bears", CounterType.P1P1, 0);
-        assertCounterCount(playerA, INFORMANT, CounterType.P1P1, 0);
+        assertGraveyardCount(playerA, "Mountain", 1);
+        // villains you control
+        assertCounterCount(playerA, ironMonger, CounterType.P1P1, 1);
+        assertCounterCount(playerA, "A.I.M. Bot", CounterType.P1P1, 1);
+        // not a villain
+        assertCounterCount(playerA, "Echo Inspector", CounterType.P1P1, 0);
+        // opponent's villain
+        assertCounterCount(playerB, "A.I.M. Bot", CounterType.P1P1, 0);
     }
 }

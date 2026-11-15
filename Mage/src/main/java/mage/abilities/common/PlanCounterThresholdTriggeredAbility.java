@@ -20,7 +20,9 @@ import java.util.Optional;
  * <ul>
  *     <li>"When the Nth plan counter is put on {this}, sacrifice it, [effects]." - add the other effects to the ability,
  *     they apply even if the sacrifice is impossible;</li>
- *     <li>"When the Nth plan counter is put on {this}, sacrifice it. When you do, [effect]." - reflexive ability.</li>
+ *     <li>"When the Nth plan counter is put on {this}, sacrifice it. When you do, [effect]." - reflexive ability;</li>
+ *     <li>"When the Nth plan counter is put on {this}, sacrifice it. If you do, [effect]." - full effect, e.g.
+ *     DoIfCostPaid with SacrificeSourceCost.</li>
  * </ul>
  *
  * @author muz
@@ -45,11 +47,8 @@ public class PlanCounterThresholdTriggeredAbility extends TriggeredAbilityImpl {
     }
 
     /**
-     * ClaudeMTG: public, for the plan enchantments whose whole effect is the card's own
-     * (e.g. "sacrifice it. If you do, ..." with DoIfCostPaid, Glorious Purpose).
-     *
      * @param threshold the plan counter count at which this ability fires
-     * @param effect    the effect, sacrifice included
+     * @param effect    the full effect of the ability, the sacrifice included
      */
     public PlanCounterThresholdTriggeredAbility(int threshold, Effect effect) {
         super(Zone.ALL, effect, false);
