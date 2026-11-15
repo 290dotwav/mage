@@ -49,8 +49,8 @@ public final class Scenarios {
         // attack, the Elves too, is 5 when the Bears block the Giant.
         add(new Scenario("m2", DUEL)
                 .student(s -> s.life(20)
-                        .battlefield("Wind Drake", "Hill Giant", "Savannah Lions", "Llanowar Elves")
-                        .arrived("Craw Wurm")
+                        .battlefield("Wind Drake", "10E:Hill Giant", "Savannah Lions", "Llanowar Elves")
+                        .arrived("10E:Craw Wurm")
                         .tapped("Forest", "Forest", "Forest", "Forest", "Forest", "Island")
                         .hand("Giant Growth")
                         .library("Forest", "Island", "Forest", "Island", "Forest"))
@@ -59,14 +59,14 @@ public final class Scenarios {
                         .library("Forest", "Forest", "Forest", "Forest", "Forest")));
         // 3. « Tiens bon »: Claude's three attack each combat if able (10 in all, he is at 5,
         // you at 6). Walls can't block Juggernaut: the Wall takes the Cyclops, the Giant the
-        // Brigand, Juggernaut's 5 leave you at 1, and Bears and Giant are 5 next turn
+        // Dasher, Juggernaut's 5 leave you at 1, and Bears and Giant are 5 next turn
         // while his attackers are still tapped.
         add(new Scenario("m3", DUEL)
                 .student(s -> s.life(6)
-                        .battlefield("Wall of Wood", "Hill Giant", "Grizzly Bears", "Forest", "Forest", "Forest")
+                        .battlefield("10E:Wall of Wood#309", "10E:Hill Giant", "Grizzly Bears", "Forest", "Forest", "Forest")
                         .library("Forest", "Forest", "Forest", "Forest", "Forest"))
                 .opponent(o -> o.life(5)
-                        .battlefield("Juggernaut", "Bloodrock Cyclops", "Goblin Brigand", "Mountain", "Mountain", "Mountain", "Mountain")
+                        .battlefield("Juggernaut", "10E:Bloodrock Cyclops", "KTK:Valley Dasher", "Mountain", "Mountain", "Mountain", "Mountain")
                         .library("Mountain", "Mountain", "Mountain", "Mountain", "Mountain"))
                 .opponentStarts());
         // 4. « Coup fourré »: Juggernaut and the Cyclops attack each combat (8, you are at 3).
@@ -79,7 +79,7 @@ public final class Scenarios {
                         .hand("Gideon's Reproach")
                         .library("Plains", "Plains", "Plains", "Plains", "Plains"))
                 .opponent(o -> o.life(3)
-                        .battlefield("Juggernaut", "Bloodrock Cyclops", "Mountain", "Mountain", "Mountain", "Mountain")
+                        .battlefield("Juggernaut", "10E:Bloodrock Cyclops", "Mountain", "Mountain", "Mountain", "Mountain")
                         .library("Mountain", "Mountain", "Mountain", "Mountain", "Mountain"))
                 .opponentStarts());
         // 5. « La machine »: Claude at 10 behind a Craw Wurm. Siege-Gang Commander brings three
@@ -88,10 +88,10 @@ public final class Scenarios {
         add(new Scenario("m5", DUEL)
                 .student(s -> s.life(20)
                         .battlefield("TMP:Goblin Bombardment", "AVR:Blood Artist", "Mountain", "Mountain", "Mountain", "Mountain", "Mountain")
-                        .hand("SCG:Siege-Gang Commander")
+                        .hand("10E:Siege-Gang Commander")
                         .library("Mountain", "Mountain", "Mountain", "Mountain", "Mountain"))
                 .opponent(o -> o.life(10)
-                        .battlefield("Craw Wurm", "Forest", "Forest", "Forest", "Forest", "Forest", "Forest")
+                        .battlefield("10E:Craw Wurm", "Forest", "Forest", "Forest", "Forest", "Forest", "Forest")
                         .library("Forest", "Forest", "Forest", "Forest", "Forest")));
         // 6. « Ton commandant »: a short game of Commander, you at 40, Claude at 9 with a
         // Juggernaut that attacked last turn. Arni comes out of the command zone with haste;

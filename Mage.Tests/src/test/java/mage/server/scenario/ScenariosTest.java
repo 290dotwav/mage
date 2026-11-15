@@ -126,9 +126,9 @@ public class ScenariosTest extends CardTestPlayerBase {
         lesson("m3");
         // nobody tells Claude to attack: all three must, by their own text
         block(1, playerA, "Wall of Wood", "Bloodrock Cyclops");
-        block(1, playerA, "Hill Giant", "Goblin Brigand");
+        block(1, playerA, "Hill Giant", "Valley Dasher");
         // a player who has lost takes his cards with him (800.4a): looked at before
-        checkGraveyardCount("brigand died", 2, PhaseStep.PRECOMBAT_MAIN, playerB, "Goblin Brigand", 1);
+        checkGraveyardCount("dasher died", 2, PhaseStep.PRECOMBAT_MAIN, playerB, "Valley Dasher", 1);
         checkLife("at 1", 2, PhaseStep.PRECOMBAT_MAIN, playerA, 1);
         attack(2, playerA, "Hill Giant");
         attack(2, playerA, "Grizzly Bears");
@@ -144,7 +144,7 @@ public class ScenariosTest extends CardTestPlayerBase {
     @Test
     public void tiensBonGiantOnCyclopsLeavesTooLittle() {
         lesson("m3");
-        block(1, playerA, "Wall of Wood", "Goblin Brigand");
+        block(1, playerA, "Wall of Wood", "Valley Dasher");
         block(1, playerA, "Hill Giant", "Bloodrock Cyclops");
         attack(2, playerA, "Grizzly Bears");
         setStopAt(2, PhaseStep.END_TURN);
