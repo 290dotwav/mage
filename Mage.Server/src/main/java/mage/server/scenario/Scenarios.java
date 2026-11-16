@@ -191,6 +191,20 @@ public final class Scenarios {
                         at(2, PhaseStep.PRECOMBAT_MAIN).cast("Volcanic Hammer", "Hill Giant"),
                         at(2, PhaseStep.POSTCOMBAT_MAIN).castCreature("Wind Drake").waitFor("4.23"),
                         at(3, PhaseStep.DECLARE_BLOCKERS).block("Wind Drake", "Hill Giant"))));
+        // 5. « Les pouvoirs »: the Rival at 10 with nothing, and nothing done all the lesson. The student
+        // at 20 with a Prodigal Pyromancer, a Plains, a Swamp and two Mountains, Sol Ring, Raise the
+        // Alarm and Blood Artist in hand, Goblin Bombardment on top of his library. Turn 1: the
+        // Pyromancer (10 to 9), Sol Ring, Raise the Alarm, Blood Artist; turn 3: the Bombardment and a
+        // Soldier (9 to 7), then the Pyromancer, the other Soldier, the Pyromancer and the Artist (7 to 0).
+        add(new Scenario("tuto5", DUEL)
+                .student(s -> s.life(20)
+                        .battlefield("M11:Prodigal Pyromancer", "10E:Plains", "10E:Swamp", "10E:Mountain", "10E:Mountain")
+                        .hand("CMR:Sol Ring#472", "J25:Raise the Alarm", "DSC:Blood Artist")
+                        .library("C13:Goblin Bombardment", "10E:Mountain", "10E:Plains", "10E:Swamp", "10E:Mountain", "10E:Plains"))
+                .opponent(o -> o.life(10)
+                        .library("10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears"))
+                .starts("student")
+                .rival(RivalScript.script()));
     }
 
     private Scenarios() {
