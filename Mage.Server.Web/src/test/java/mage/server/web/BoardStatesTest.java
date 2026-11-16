@@ -9,6 +9,8 @@ import mage.abilities.keyword.ProtectionFromEverythingAbility;
 import mage.abilities.keyword.ShroudAbility;
 import org.junit.jupiter.api.Test;
 
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -86,5 +88,16 @@ class BoardStatesTest {
         JsonObject any = new JsonObject();
         BoardStates.markLands(any, 4, Integer.MAX_VALUE);
         assertTrue(any.get("landsPerTurn").getAsInt() == Integer.MAX_VALUE);
+    }
+
+    @Test
+    void whoTakesTheFirstTurnOnceTheEngineHasNamedHim() {
+        JsonObject toss = new JsonObject();
+        BoardStates.markStartingPlayer(toss, null);
+        assertFalse(toss.has("startingPlayerId"));
+        UUID first = UUID.randomUUID();
+        JsonObject named = new JsonObject();
+        BoardStates.markStartingPlayer(named, first);
+        assertTrue(named.get("startingPlayerId").getAsString().equals(first.toString()));
     }
 }

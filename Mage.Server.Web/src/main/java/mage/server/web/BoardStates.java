@@ -63,6 +63,13 @@ import java.util.UUID;
  * <pre>
  *   "secretOpponent": "&lt;playerId&gt;"  // on that permanent's entry; left out on every other frame
  * </pre>
+ * Who takes the first turn (103.2), once the engine has named him: their GameView has no active
+ * player until the first turn begins, so through the toss and the opening hands a screen had no way
+ * to say who plays first but the log's line, which a seat that joins the game's chat after it is
+ * said never hears (a bot that wins the toss names itself at once).
+ * <pre>
+ *   "startingPlayerId": "&lt;playerId&gt;" // on the view; left out until the starting player is named
+ * </pre>
  * Read on the game thread; a concurrent change skips the enrichment for that frame.
  */
 final class BoardStates {
@@ -83,6 +90,7 @@ final class BoardStates {
             if (game.hasDayNight()) {
                 view.addProperty("dayNight", game.checkDayNight(true) ? "day" : "night");
             }
+            markStartingPlayer(view, game.getStartingPlayerId());
             JsonElement me = view.get("myPlayerId");
             UUID viewer = me != null && me.isJsonPrimitive() ? UUID.fromString(me.getAsString()) : null;
             JsonElement playersEl = view.get("players");
@@ -137,6 +145,13 @@ final class BoardStates {
     }
 
     /** `landsPlayed` and `landsPerTurn` on a player's entry: the turn's land plays as their engine counts them (305.2). */
+    /** `startingPlayerId` on the view, once the engine has named who takes the first turn. */
+    static void markStartingPlayer(JsonObject view, UUID startingPlayerId) {
+        if (startingPlayerId != null) {
+            view.addProperty("startingPlayerId", startingPlayerId.toString());
+        }
+    }
+
     static void markLands(JsonObject entry, int played, int perTurn) {
         entry.addProperty("landsPlayed", Math.max(0, played));
         entry.addProperty("landsPerTurn", Math.max(0, perTurn));
