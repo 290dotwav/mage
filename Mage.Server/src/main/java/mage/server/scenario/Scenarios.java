@@ -143,6 +143,32 @@ public final class Scenarios {
                         .library("10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears"))
                 .starts("student")
                 .rival(RivalScript.script()));
+        // 3. « La bagarre »: the Rival starts, at 5, with two Grizzly Bears, a Goblin Assailant and six
+        // Forests, a Craw Wurm in hand; the student at 20 with a Hill Giant and a Wind Drake, his library
+        // lands he never plays. The Rival: on his turn 1, one Bears attacks, once the guide has said it
+        // (3.4); on the student's turn 2, the other Bears blocks the Giant (never the Drake, it flies:
+        // 5 to 3); on his turn 3, the Wurm, then the Assailant attacks once the guide is there (3.20:
+        // 20 to 18, the student's two creatures tapped); on turn 4 no block (the Drake alone: 3 to 1);
+        // on his turn 5 the Assailant and the Wurm attack (the Giant on the Assailant: 18 to 12);
+        // on turn 6 the Wurm is tapped and the Giant finishes him.
+        add(new Scenario("tuto3", DUEL)
+                .student(s -> s.life(20)
+                        .battlefield("10E:Hill Giant", "KLD:Wind Drake#70")
+                        .library("10E:Mountain", "10E:Island", "10E:Mountain", "10E:Island", "10E:Mountain", "10E:Island"))
+                .opponent(o -> o.life(5)
+                        .battlefield("10E:Grizzly Bears", "10E:Grizzly Bears", "M20:Goblin Assailant",
+                                "10E:Forest", "10E:Forest", "10E:Forest", "10E:Forest", "10E:Forest", "10E:Forest")
+                        .hand("10E:Craw Wurm")
+                        .library("10E:Forest", "10E:Forest", "10E:Forest", "10E:Forest", "10E:Forest", "10E:Forest"))
+                .starts("opponent")
+                .rival(RivalScript.script(
+                        at(1, PhaseStep.DECLARE_ATTACKERS).attack("Grizzly Bears").waitFor("3.4"),
+                        at(2, PhaseStep.DECLARE_BLOCKERS).block("Grizzly Bears", "Hill Giant"),
+                        at(3, PhaseStep.PRECOMBAT_MAIN).castCreature("Craw Wurm"),
+                        at(3, PhaseStep.DECLARE_ATTACKERS).attack("Goblin Assailant").waitFor("3.20"),
+                        at(4, PhaseStep.DECLARE_BLOCKERS).noBlock(),
+                        at(5, PhaseStep.DECLARE_ATTACKERS).attack("Goblin Assailant"),
+                        at(5, PhaseStep.DECLARE_ATTACKERS).attack("Craw Wurm"))));
     }
 
     private Scenarios() {
