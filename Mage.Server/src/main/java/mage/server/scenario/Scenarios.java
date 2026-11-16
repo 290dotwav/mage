@@ -205,6 +205,21 @@ public final class Scenarios {
                         .library("10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears"))
                 .starts("student")
                 .rival(RivalScript.script()));
+        // 6. « Le commandant »: a Commander duel, the Rival at 6 with nothing, and nothing done all the
+        // lesson; the student at 40 with a Plains and two Mountains, Isamaru, Hound of Konda in the command
+        // zone, Fling in hand, a Plains then Shock on top of his library. Turn 1 Isamaru; turn 3 the Plains,
+        // Isamaru attacks (6 to 4, 2 of commander damage), Fling sacrificing him (4 to 2), back to the
+        // command zone; turn 5 Isamaru again with the tax (two Plains and a Mountain), Shock (2 to 0).
+        add(new Scenario("tuto6", COMMANDER_DUEL)
+                .student(s -> s.life(40)
+                        .command("J22:Isamaru, Hound of Konda")
+                        .battlefield("10E:Plains", "10E:Mountain", "10E:Mountain")
+                        .hand("M12:Fling")
+                        .library("10E:Plains", "10E:Shock", "10E:Mountain", "10E:Plains", "10E:Mountain", "10E:Plains"))
+                .opponent(o -> o.life(6)
+                        .library("10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears"))
+                .starts("student")
+                .rival(RivalScript.script()));
     }
 
     private Scenarios() {
