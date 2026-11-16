@@ -1923,6 +1923,8 @@ public class HumanPlayer extends PlayerImpl {
             if (!possibleAttackers.isEmpty()) {
                 options.put(Constants.Option.SPECIAL_BUTTON, "All attack");
             }
+            // The site may answer with its whole declaration at once (declareAttackPlan)
+            options.put(ATTACK_PLAN_OPTION, Boolean.TRUE);
 
             prepareForResponse(game);
             if (!isExecutingMacro()) {
@@ -1956,6 +1958,9 @@ public class HumanPlayer extends PlayerImpl {
                     // attack selected default defender
                     declareAttacker(attacker.getId(), attackedDefender, game, false);
                 }
+            } else if (response.getString() != null
+                    && response.getString().startsWith(ATTACK_PLAN)) { // the site's whole declaration
+                declareAttackPlan(this, response.getString().substring(ATTACK_PLAN.length()), game);
             } else if (response.getInteger() != null) { // F-Key
                 if (checkIfAttackersValid(game)) {
                     return;
@@ -2080,7 +2085,65 @@ public class HumanPlayer extends PlayerImpl {
         return true;
     }
 
-    private void removeAttackerIfPossible(Game game, Permanent attacker) {
+    /**
+     * The site's attack declaration in one answer to "Select attackers": {@code attackPlan:} then
+     * {@code attacker=defender} pairs joined by {@code ;}, in order. One creature at a time was an
+     * answer and a whole game view each way, twice with several defenders (the creature, then
+     * "Select defender"); the owner: "Quand je declare des attaquants faut qu'ils se declarent tous
+     * en meme temps pas un par un. Imagine j'en ai 10000".
+     */
+    public static final String ATTACK_PLAN = "attackPlan:";
+    /** Put on "Select attackers" so that the site knows this server takes {@link #ATTACK_PLAN}. */
+    public static final String ATTACK_PLAN_OPTION = "attackPlan";
+
+    /**
+     * Each pair as the one-at-a-time answers would have it: a creature that may attack is declared
+     * at its defender (one of the combat's defenders, and one it is forced to attack if it is, as
+     * {@link #selectDefender} offers), an attacking creature with no defender ({@code id=}) is
+     * taken back as its id alone would. A pair that does not read, or that the rules refuse, is
+     * left out; the declaration is checked as always when the player is done.
+     */
+    public static void declareAttackPlan(Player player, String plan, Game game) {
+        for (String pair : plan.split(";")) {
+            int eq = pair.indexOf('=');
+            if (eq <= 0) {
+                continue;
+            }
+            UUID attackerId;
+            UUID defenderId = null;
+            try {
+                attackerId = UUID.fromString(pair.substring(0, eq).trim());
+                String defender = pair.substring(eq + 1).trim();
+                if (!defender.isEmpty()) {
+                    defenderId = UUID.fromString(defender);
+                }
+            } catch (IllegalArgumentException e) {
+                continue;
+            }
+            Permanent attacker = game.getPermanent(attackerId);
+            if (attacker == null) {
+                continue;
+            }
+            if (defenderId == null) {
+                if (filterAttack.match(attacker, player.getId(), null, game) && game.getStack().isEmpty()) {
+                    removeAttackerIfPossible(game, attacker);
+                }
+                continue;
+            }
+            if (!filterCreatureForCombat.match(attacker, player.getId(), null, game)
+                    || !attacker.canAttack(null, game)
+                    || !game.getCombat().getDefenders().contains(defenderId)) {
+                continue;
+            }
+            Set<UUID> forced = game.getCombat().getCreaturesForcedToAttack().get(attackerId);
+            if (forced != null && !forced.isEmpty() && !forced.contains(defenderId)) {
+                continue;
+            }
+            player.declareAttacker(attackerId, defenderId, game, true);
+        }
+    }
+
+    private static void removeAttackerIfPossible(Game game, Permanent attacker) {
         for (Map.Entry entry : game.getContinuousEffects().getApplicableRequirementEffects(attacker, false, game).entrySet()) {
             RequirementEffect effect = (RequirementEffect) entry.getKey();
             if (effect.mustAttack(game)) {
