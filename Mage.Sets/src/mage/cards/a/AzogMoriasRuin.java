@@ -20,7 +20,8 @@ import mage.target.TargetPermanent;
 import java.util.UUID;
 
 /**
- * @author Claude
+ *
+ * @author miesma
  */
 public final class AzogMoriasRuin extends CardImpl {
 
@@ -33,7 +34,9 @@ public final class AzogMoriasRuin extends CardImpl {
         this.power = new MageInt(1);
         this.toughness = new MageInt(3);
 
-        // When Azog enters, destroy up to one other target creature. Its controller amasses Goblins X, where X is that creature's power. If you controlled that creature, draw a card.
+        // When Azog enters, destroy up to one other target creature.
+        // Its controller amasses Goblins X, where X is that creature's power.
+        // If you controlled that creature, draw a card.
         Ability ability = new EntersBattlefieldTriggeredAbility(new AzogMoriasRuinEffect());
         ability.addTarget(new TargetPermanent(0, 1, StaticFilters.FILTER_ANOTHER_TARGET_CREATURE));
         this.addAbility(ability);
@@ -53,11 +56,9 @@ class AzogMoriasRuinEffect extends OneShotEffect {
 
     AzogMoriasRuinEffect() {
         super(Outcome.DestroyPermanent);
-        staticText = "destroy up to one other target creature. Its controller amasses Goblins X, " +
-                "where X is that creature's power. If you controlled that creature, draw a card. " +
-                "<i>(To amass Goblins X, that player puts X +1/+1 counters on an Army they control. " +
-                "It's also a Goblin. If they don't control an Army, they create a 0/0 black Goblin Army " +
-                "creature token first.)</i>";
+        staticText = "destroy up to one other target creature. " +
+                "Its controller amasses Goblins X, where X is that creature's power. " +
+                "If you controlled that creature, draw a card";
     }
 
     private AzogMoriasRuinEffect(final AzogMoriasRuinEffect effect) {
@@ -75,18 +76,19 @@ class AzogMoriasRuinEffect extends OneShotEffect {
         if (permanent == null) {
             return false;
         }
-        UUID controllerId = permanent.getControllerId();
-        permanent.destroy(source, game, false);
-        game.processAction();
-        // power as it last existed on the battlefield
-        Permanent lki = game.getPermanentOrLKIBattlefield(permanent.getId());
-        int power = Math.max(0, (lki != null ? lki : permanent).getPower().getValue());
-        AmassEffect.doAmass(power, SubType.GOBLIN, game, source, controllerId);
-        if (source.isControlledBy(controllerId)) {
-            Player you = game.getPlayer(source.getControllerId());
-            if (you != null) {
-                you.drawCards(1, source, game);
-            }
+        Player player = game.getPlayer(permanent.getControllerId());
+        Player controller = game.getPlayer(source.getControllerId());
+        if (player == null || controller == null) {
+            return false;
+        }
+        int xValue = permanent.getPower().getValue();
+        // Destroy up to one other target creature
+        permanent.destroy(source, game);
+        // Its controller amasses Goblins X, where X is that creature's power.
+        AmassEffect.doAmass(player, xValue, SubType.GOBLIN, game, source);
+        // If you controlled that creature, draw a card.
+        if (player.getId().equals(controller.getId())) {
+            controller.drawCards(1, source, game);
         }
         return true;
     }

@@ -1,11 +1,13 @@
 package mage.cards.w;
 
+import java.util.UUID;
 import mage.ConditionalMana;
 import mage.MageInt;
 import mage.MageObject;
 import mage.Mana;
 import mage.abilities.Ability;
-import mage.abilities.common.EntersBattlefieldControlledTriggeredAbility;
+import mage.abilities.SpellAbility;
+import mage.abilities.common.EntersBattlefieldAllTriggeredAbility;
 import mage.abilities.condition.Condition;
 import mage.abilities.costs.common.TapSourceCost;
 import mage.abilities.dynamicvalue.common.SourcePermanentPowerValue;
@@ -23,14 +25,13 @@ import mage.filter.common.FilterControlledPermanent;
 import mage.filter.predicate.mageobject.AnotherPredicate;
 import mage.game.Game;
 
-import java.util.UUID;
-
 /**
- * @author Claude
+ *
+ * @author muz
  */
 public final class WoodlandWeavemaster extends CardImpl {
 
-    private static final FilterPermanent filter = new FilterControlledPermanent(SubType.ELF, "another Elf");
+    private static final FilterPermanent filter = new FilterControlledPermanent(SubType.ELF, "another Elf you control");
 
     static {
         filter.add(AnotherPredicate.instance);
@@ -48,18 +49,18 @@ public final class WoodlandWeavemaster extends CardImpl {
         this.addAbility(VigilanceAbility.getInstance());
 
         // Whenever another Elf you control enters, this creature gets +1/+1 until end of turn.
-        this.addAbility(new EntersBattlefieldControlledTriggeredAbility(
-                new BoostSourceEffect(1, 1, Duration.EndOfTurn), filter
+        this.addAbility(new EntersBattlefieldAllTriggeredAbility(
+            new BoostSourceEffect(1, 1, Duration.EndOfTurn), filter
         ));
 
         // {T}: Add X mana of any one color, where X is this creature's power. Spend this mana only to cast Elf spells and activate abilities of Elf sources.
-        WoodlandWeavemasterManaBuilder manaBuilder = new WoodlandWeavemasterManaBuilder();
-        Ability ability = new ConditionalAnyColorManaAbility(
-                new TapSourceCost(), SourcePermanentPowerValue.NOT_NEGATIVE,
-                SourcePermanentPowerValue.NOT_NEGATIVE, manaBuilder, true
-        );
-        ability.getEffects().get(0).setText("add X mana of any one color, where X is {this}'s power. " + manaBuilder.getRule());
-        this.addAbility(ability);
+        this.addAbility(new ConditionalAnyColorManaAbility(
+            new TapSourceCost(),
+            SourcePermanentPowerValue.NOT_NEGATIVE,
+            SourcePermanentPowerValue.NOT_NEGATIVE,
+            new WoodlandWeavemasterManaBuilder(),
+            true
+        ));
     }
 
     private WoodlandWeavemaster(final WoodlandWeavemaster card) {
@@ -90,15 +91,22 @@ class WoodlandWeavemasterConditionalMana extends ConditionalMana {
     WoodlandWeavemasterConditionalMana(Mana mana) {
         super(mana);
         staticText = "Spend this mana only to cast Elf spells and activate abilities of Elf sources";
-        addCondition(WoodlandWeavemasterCondition.instance);
+        addCondition(new WoodlandWeavemasterManaCondition());
     }
 }
 
-enum WoodlandWeavemasterCondition implements Condition {
-    instance;
+class WoodlandWeavemasterManaCondition implements Condition {
 
     @Override
     public boolean apply(Game game, Ability source) {
+        if (source == null) {
+            return false;
+        }
+        boolean castSpell = source instanceof SpellAbility;
+        boolean activatingAbility = !source.isActivated() && source.isActivatedAbility();
+        if (!castSpell && !activatingAbility) {
+            return false;
+        }
         MageObject object = game.getObject(source);
         return object != null && object.hasSubtype(SubType.ELF, game);
     }

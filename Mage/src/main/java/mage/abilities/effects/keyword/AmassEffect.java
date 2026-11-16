@@ -98,25 +98,25 @@ public class AmassEffect extends OneShotEffect {
     }
 
     public static Permanent doAmass(int xValue, SubType subType, Game game, Ability source) {
-        return doAmass(xValue, subType, game, source, source.getControllerId());
+        Player player = game.getPlayer(source.getControllerId());
+        return doAmass(player, xValue, subType, game, source);
     }
 
     /**
-     * Amass for the given player (e.g. "Its controller amasses Goblins X")
+     * Amass by the given player instead of the source's controller (example: its controller amasses)
      */
-    public static Permanent doAmass(int xValue, SubType subType, Game game, Ability source, UUID playerId) {
-        Player player = game.getPlayer(playerId);
+    public static Permanent doAmass(Player player, int xValue, SubType subType, Game game, Ability source) {
         if (player == null) {
             return null;
         }
-        if (!game.getBattlefield().contains(filter, playerId, source, game, 1)) {
-            makeToken(subType).putOntoBattlefield(1, game, source, playerId);
+        if (!game.getBattlefield().contains(filter, player.getId(), source, game, 1)) {
+            makeToken(subType).putOntoBattlefield(1, game, source, player.getId());
         }
 
         Target target = new TargetPermanent(filter);
         target.withNotTarget(true);
         Permanent armyPermanent;
-        Set<UUID> possibleTargets = target.possibleTargets(playerId, source, game);
+        Set<UUID> possibleTargets = target.possibleTargets(player.getId(), source, game);
         if (possibleTargets.isEmpty()) {
             return null;
         }
@@ -139,7 +139,7 @@ public class AmassEffect extends OneShotEffect {
         if (xValue > 0) {
             armyPermanent.addCounters(
                     CounterType.P1P1.createInstance(xValue),
-                    playerId, source, game
+                    player.getId(), source, game
             );
         }
         return armyPermanent;

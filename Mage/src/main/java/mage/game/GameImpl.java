@@ -2888,7 +2888,7 @@ public abstract class GameImpl implements Game {
             if (perm.isPlaneswalker(this)) {
                 //20091005 - 704.5i
                 if (perm.getCounters(this).getCount(CounterType.LOYALTY) == 0
-                        && getContinuousEffects().asThough(perm.getId(), AsThoughEffectType.STAY_AT_ZERO_LOYALTY, null, perm.getControllerId(), this).isEmpty()) {
+                        && perm.zeroLoyaltyRuleApplies()) {
                     if (movePermanentToGraveyardWithInfo(perm, "SBA: planeswalker has loyalty 0")) {
                         somethingHappened = true;
                         continue;

@@ -414,6 +414,8 @@ public final class MarvelSuperHeroesCommander extends ExpansionSet {
         cards.add(new SetCardInfo("Lethal Scheme", 353, Rarity.RARE, mage.cards.l.LethalScheme.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Lightning Bolt", 806, Rarity.UNCOMMON, mage.cards.l.LightningBolt.class));
         cards.add(new SetCardInfo("Lightning Greaves", 202, Rarity.UNCOMMON, mage.cards.l.LightningGreaves.class));
+        cards.add(new SetCardInfo("Living Laser", 366, Rarity.RARE, mage.cards.l.LivingLaser.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Living Laser", 55, Rarity.RARE, mage.cards.l.LivingLaser.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Living Lies of Loki", 627, Rarity.UNCOMMON, mage.cards.l.LivingLiesOfLoki.class));
         cards.add(new SetCardInfo("Living Lightning, Charged Up", 764, Rarity.UNCOMMON, mage.cards.l.LivingLightningChargedUp.class));
         cards.add(new SetCardInfo("Lockjaw, Slobbering Teleporter", 36, Rarity.RARE, mage.cards.l.LockjawSlobberingTeleporter.class, NON_FULL_USE_VARIOUS));
@@ -781,6 +783,8 @@ public final class MarvelSuperHeroesCommander extends ExpansionSet {
         cards.add(new SetCardInfo("Tragic Arrogance", 323, Rarity.RARE, mage.cards.t.TragicArrogance.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Tri-Sentinel, Act of Vengeance", 115, Rarity.RARE, mage.cards.t.TriSentinelActOfVengeance.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Tri-Sentinel, Act of Vengeance", 456, Rarity.RARE, mage.cards.t.TriSentinelActOfVengeance.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Typhoid Mary, Fractured", 421, Rarity.RARE, mage.cards.t.TyphoidMaryFractured.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Typhoid Mary, Fractured", 99, Rarity.RARE, mage.cards.t.TyphoidMaryFractured.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Ultimate Alliance", 611, Rarity.COMMON, mage.cards.u.UltimateAlliance.class));
         cards.add(new SetCardInfo("Ultimate Nullification", 26, Rarity.RARE, mage.cards.u.UltimateNullification.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Ultimate Nullification", 324, Rarity.RARE, mage.cards.u.UltimateNullification.class, NON_FULL_USE_VARIOUS));
@@ -867,10 +871,6 @@ public final class MarvelSuperHeroesCommander extends ExpansionSet {
         cards.add(new SetCardInfo("Hercules, Olympian Hero", 308, Rarity.RARE, mage.cards.h.HerculesOlympianHero.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Iron Monger, Sadistic Tycoon", 45, Rarity.RARE, mage.cards.i.IronMongerSadisticTycoon.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Iron Monger, Sadistic Tycoon", 350, Rarity.RARE, mage.cards.i.IronMongerSadisticTycoon.class, NON_FULL_USE_VARIOUS));
-        cards.add(new SetCardInfo("Typhoid Mary, Fractured", 99, Rarity.RARE, mage.cards.t.TyphoidMaryFractured.class, NON_FULL_USE_VARIOUS));
-        cards.add(new SetCardInfo("Typhoid Mary, Fractured", 421, Rarity.RARE, mage.cards.t.TyphoidMaryFractured.class, NON_FULL_USE_VARIOUS));
-        cards.add(new SetCardInfo("Living Laser", 55, Rarity.RARE, mage.cards.l.LivingLaser.class, NON_FULL_USE_VARIOUS));
-        cards.add(new SetCardInfo("Living Laser", 366, Rarity.RARE, mage.cards.l.LivingLaser.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Hawkeye, Avenging Archer", 84, Rarity.RARE, mage.cards.h.HawkeyeAvengingArcher.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Hawkeye, Avenging Archer", 405, Rarity.RARE, mage.cards.h.HawkeyeAvengingArcher.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("First Family", 83, Rarity.RARE, mage.cards.f.FirstFamily.class, NON_FULL_USE_VARIOUS));

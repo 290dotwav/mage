@@ -3,6 +3,7 @@ package mage.cards.l;
 import mage.MageInt;
 import mage.abilities.Ability;
 import mage.abilities.common.AttacksTriggeredAbility;
+import mage.abilities.dynamicvalue.common.CardsDiscardedThisTurnCount;
 import mage.abilities.effects.OneShotEffect;
 import mage.abilities.effects.common.CreateTokenCopyTargetEffect;
 import mage.abilities.keyword.HasteAbility;
@@ -13,15 +14,11 @@ import mage.constants.Outcome;
 import mage.constants.SubType;
 import mage.constants.SuperType;
 import mage.game.Game;
-import mage.game.permanent.Permanent;
 import mage.target.targetpointer.FixedTarget;
 import mage.watchers.common.DiscardedCardWatcher;
 
 import java.util.UUID;
 
-/**
- * @author Claude
- */
 public final class LivingLaser extends CardImpl {
 
     public LivingLaser(UUID ownerId, CardSetInfo setInfo) {
@@ -37,7 +34,9 @@ public final class LivingLaser extends CardImpl {
         this.addAbility(HasteAbility.getInstance());
 
         // Whenever Living Laser attacks, for each card you've discarded this turn, create a token that's a copy of Living Laser, except the token isn't legendary. The tokens enter tapped and attacking. Exile the tokens at the beginning of the next end step.
-        this.addAbility(new AttacksTriggeredAbility(new LivingLaserEffect()), new DiscardedCardWatcher());
+        Ability ability = new AttacksTriggeredAbility(new LivingLaserEffect());
+        ability.addHint(CardsDiscardedThisTurnCount.getHint());
+        this.addAbility(ability, new DiscardedCardWatcher());
     }
 
     private LivingLaser(final LivingLaser card) {
@@ -70,16 +69,14 @@ class LivingLaserEffect extends OneShotEffect {
 
     @Override
     public boolean apply(Game game, Ability source) {
-        int count = DiscardedCardWatcher.getDiscarded(source.getControllerId(), game);
-        Permanent permanent = source.getSourcePermanentOrLKI(game);
-        if (count < 1 || permanent == null) {
+        int amount = CardsDiscardedThisTurnCount.SINGULAR.calculate(game, source, this);
+        if (amount < 1) {
             return false;
         }
         CreateTokenCopyTargetEffect effect = new CreateTokenCopyTargetEffect(
-                null, null, false, count, true, true
-        );
-        effect.setIsntLegendary(true);
-        effect.setSavedPermanent(permanent);
+                source.getControllerId(), null, false, amount, true, true
+        ).setIsntLegendary(true);
+        effect.setTargetPointer(new FixedTarget(source.getSourceId(), game));
         effect.apply(game, source);
         effect.exileTokensCreatedAtNextEndStep(game, source);
         return true;
