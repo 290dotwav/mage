@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import mage.game.Game;
 import mage.game.stack.PaidCost;
+import mage.game.stack.Spell;
 import mage.game.stack.StackObject;
 import mage.server.managers.ManagerFactory;
 
@@ -36,6 +37,10 @@ import java.util.UUID;
  * {@code kind} (sacrifice, discard, exile, reveal, return, tap, untap, counters), {@code names}
  * of what it took, {@code source: true} when the source itself was the price ({T}, "Sacrifice
  * {this}"), {@code amount} and {@code counter} for counters removed. Left out when none.
+ * <p>
+ * A spell's entry also gets {@code ownerId} ({@code Spell.getOwnerId()}): a card cast by a player
+ * who does not own it (stolen, cast from another's library or graveyard) is still its owner's,
+ * and the page draws it in the printing its owner's list chose.
  */
 final class StackControllers {
 
@@ -64,9 +69,9 @@ final class StackControllers {
                     continue;
                 }
                 JsonObject entry = e.getValue().getAsJsonObject();
-                if (object.getControllerId() != null) {
-                    entry.addProperty("controllerId", object.getControllerId().toString());
-                }
+                // A spell's owner: a card cast by a player who does not own it is still its owner's card
+                // (the page draws it in its owner's chosen printing); their CardView does not say whose it is.
+                mark(entry, object.getControllerId(), object instanceof Spell ? ((Spell) object).getOwnerId() : null);
                 JsonObject paid = paid(object, game);
                 if (paid != null) {
                     entry.add("manaPaid", paid);
@@ -74,6 +79,16 @@ final class StackControllers {
             }
         } catch (RuntimeException ignore) {
             // stack changed under us (not the game thread): leave the frame as their view made it
+        }
+    }
+
+    /** Writes a stack entry's {@code controllerId} and, for a spell, its {@code ownerId}; a null id writes nothing. */
+    static void mark(JsonObject entry, UUID controllerId, UUID ownerId) {
+        if (controllerId != null) {
+            entry.addProperty("controllerId", controllerId.toString());
+        }
+        if (ownerId != null) {
+            entry.addProperty("ownerId", ownerId.toString());
         }
     }
 
