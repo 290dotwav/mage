@@ -1,9 +1,12 @@
 package mage.server.web;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import mage.game.Game;
 import mage.game.GameHold;
+import mage.game.lesson.RivalScript;
+import mage.players.Player;
 import mage.view.ChatMessage.MessageColor;
 import mage.view.ChatMessage.MessageType;
 import mage.server.Session;
@@ -35,10 +38,16 @@ import java.util.UUID;
  * every game loop <i>return</i>, which {@code GameWorker} takes for the end of the game (it
  * calls {@code endGameWithResult} at once), and their {@code resume()} would run the rest of the
  * match on this door's thread. See the note on {@code GameHold} for the whole reading.
+ * <p>
+ * Ours, the site's lessons: {@code { kind: "call", method: "lessonStep", args: [gameId, stepId] }}
+ * says the site has reached that step of its lesson's script ({@link #lessonStep}).
  */
 final class GameOps {
 
     private static final Logger logger = Logger.getLogger(GameOps.class);
+
+    /** The call that says a lesson's step to the game's scripted computer player. */
+    static final String LESSON_STEP = "lessonStep";
 
     /** How long a hold lasts when the frame does not say. */
     static final int DEFAULT_SECONDS = 60;
@@ -81,6 +90,29 @@ final class GameOps {
                 break;
             default:
                 throw new IllegalArgumentException("unknown game op '" + op + "' (pause, resume, status)");
+        }
+    }
+
+    /**
+     * The site has reached step {@code stepId} of its lesson's script in game {@code gameId}: the
+     * game's scripted computer player (RivalScript) plays what waited for it. Only a human seated
+     * at that game may say it; a game with no script, or a step no line waits for, changes nothing.
+     */
+    void lessonStep(WebSession web, JsonArray args) {
+        if (args.size() != 2 || args.get(0).isJsonNull() || args.get(1).isJsonNull()) {
+            throw new IllegalArgumentException("lessonStep takes [gameId, stepId]");
+        }
+        UUID gameId = UUID.fromString(args.get(0).getAsString());
+        String stepId = args.get(1).getAsString();
+        Seat seat = seatOf(web, gameId);
+        Player player = seat.game.getPlayer(seat.playerId);
+        if (player == null || !player.isHuman()) {
+            throw new IllegalStateException("only the human seated at game " + gameId + " says its lesson's steps");
+        }
+        RivalScript script = seat.game.getOptions() == null ? null : seat.game.getOptions().rivalScript;
+        if (script != null) {
+            script.reached(stepId);
+            logger.info("Web door: " + seat.playerName + " reached lesson step " + stepId + " in game " + gameId);
         }
     }
 

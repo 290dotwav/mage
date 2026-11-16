@@ -136,6 +136,12 @@ final class WebSession implements AsynchInvokerCallbackHandler {
                     what = "call " + method;
                     JsonElement a = frame.get("args");
                     JsonArray args = a != null && a.isJsonArray() ? a.getAsJsonArray() : new JsonArray();
+                    // Ours, the site's lessons: { kind: "call", method: "lessonStep", args: [gameId, stepId] }
+                    if (GameOps.LESSON_STEP.equals(method)) {
+                        games.lessonStep(this, args);
+                        send(Frames.result(method, null, id));
+                        break;
+                    }
                     // A table made by the raw call goes through the same gate as `table create`
                     Object result = MAKES_A_TABLE.contains(method)
                             ? gate.create(sessionId, () -> wire.invoke(method, frame.get("gameId"), args, sessionId, identity))

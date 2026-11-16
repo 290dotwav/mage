@@ -53,6 +53,12 @@ public class GameOptions implements Serializable, Copyable<GameOptions> {
     public boolean scenario = false;
 
     /**
+     * Ours: what the computer player of a lesson does (mage.game.lesson.RivalScript, set by the
+     * table's scenario); null for every other game. Shared by the copies of these options.
+     */
+    public mage.game.lesson.RivalScript rivalScript = null;
+
+    /**
      * If true, players can rollback turn if all players agree
      */
     public boolean rollbackTurnsAllowed = true;
@@ -90,6 +96,7 @@ public class GameOptions implements Serializable, Copyable<GameOptions> {
         this.stopAtStep = options.stopAtStep;
         this.skipInitShuffling = options.skipInitShuffling;
         this.scenario = options.scenario;
+        this.rivalScript = options.rivalScript;
         this.rollbackTurnsAllowed = options.rollbackTurnsAllowed;
         this.bannedUsers.addAll(options.bannedUsers);
         this.planeChase = options.planeChase;

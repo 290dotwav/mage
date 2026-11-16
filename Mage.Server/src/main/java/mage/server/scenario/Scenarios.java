@@ -3,20 +3,26 @@ package mage.server.scenario;
 import mage.cards.Card;
 import mage.cards.repository.CardInfo;
 import mage.cards.repository.CardRepository;
+import mage.constants.PhaseStep;
 import mage.constants.Zone;
 import mage.game.Game;
 import mage.game.GameOptions;
 import mage.game.PutToBattlefieldInfo;
+import mage.game.lesson.RivalScript;
 import mage.players.Player;
+import mage.util.RandomUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+
+import static mage.game.lesson.RivalScript.at;
 
 /**
  * The site's lessons, the only positions a table can be set up with: a browser sends an id of
@@ -120,6 +126,25 @@ public final class Scenarios {
                         .library("10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears")));
     }
 
+    // The tutorial (the site's TUTO.md, CONSTRUIRE.md): tuto1 to tuto7, the Rival a script of his own
+    // (RivalScript, the opponent seat's "Computer - simple" playing nothing else). Its cards are the
+    // printings of the script's table « Les cartes du tutoriel ».
+    static {
+        // 2. « Le mana »: the Rival at 6 with nothing, and nothing done all the lesson. The student
+        // starts (no draw on his first turn) with a Plains, Savannah Lions and Grizzly Bears: the
+        // Plains and the Lions on turn 1, the Bears refused (one land, no green); on turn 3 the Forest
+        // drawn pays the Bears and the Lions hit (6 to 4); on turn 5, the Plains drawn, both attack
+        // (4 to 0). The Rival's library is cards he would not play anyway (no land).
+        add(new Scenario("tuto2", DUEL)
+                .student(s -> s.life(20)
+                        .hand("10E:Plains", "9ED:Savannah Lions", "10E:Grizzly Bears")
+                        .library("10E:Forest", "10E:Plains", "10E:Plains", "10E:Plains", "10E:Plains", "10E:Plains"))
+                .opponent(o -> o.life(6)
+                        .library("10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears"))
+                .starts("student")
+                .rival(RivalScript.script()));
+    }
+
     private Scenarios() {
     }
 
@@ -153,6 +178,22 @@ public final class Scenarios {
         if (student == null || opponent == null || game.getPlayers().size() != 2) {
             throw new IllegalStateException("scenario " + scenario.getId() + " needs two players, the student " + studentId + " one of them");
         }
+        if (scenario.getRival() != null) {
+            // the computer player follows the scenario: this game's own copy of its script
+            options.rivalScript = scenario.getRival().forPlayer(opponent.getId());
+        }
+        if (scenario.isDealt()) {
+            // a normal game's start from the scenario's decks: shuffled, seven cards, the mulligan
+            Map<UUID, Integer> placed = new LinkedHashMap<>();
+            deal(scenario.getStudent(), student, game, placed);
+            deal(scenario.getOpponent(), opponent, game, placed);
+            if (!placed.isEmpty()) {
+                game.getState().addWatcher(new ScenarioPlacedWatcher(placed));
+            }
+            // who starts, at random, without asking the toss's winner (the tutorial: « c'est le hasard »)
+            game.setStartingPlayerId(RandomUtil.nextBoolean() ? student.getId() : opponent.getId());
+            return;
+        }
         Set<UUID> arrived = new HashSet<>();
         Set<UUID> tapped = new HashSet<>();
         setUp(scenario.getStudent(), student, game, arrived, tapped);
@@ -165,8 +206,8 @@ public final class Scenarios {
         options.skipInitShuffling = true;
     }
 
-    private static void setUp(Scenario.Side side, Player player, Game game, Set<UUID> arrived, Set<UUID> tapped) {
-        // The cards the deck brought stay known to the game but in no zone
+    /** The zones emptied of what the player joined with, as {@link #setUp} does. */
+    private static void clear(Player player, Game game) {
         for (UUID id : player.getLibrary().getCardList()) {
             game.getState().setZone(id, Zone.OUTSIDE);
         }
@@ -176,6 +217,37 @@ public final class Scenarios {
             game.getState().setZone(id, Zone.OUTSIDE);
         }
         player.getSideboard().clear();
+    }
+
+    /** A dealt side: its deck as the library (the game shuffles it), its placed cards set aside. */
+    private static void deal(Scenario.Side side, Player player, Game game, Map<UUID, Integer> placed) {
+        clear(player, game);
+        player.initLife(side.getLife() < 0 ? game.getStartingLife() : side.getLife());
+        player.updateRange(game);
+        List<String> library = new ArrayList<>(side.getDeck());
+        List<Card> aside = new ArrayList<>();
+        for (int i = 0; i < side.getPlaced().size(); i++) {
+            String name = side.getPlaced().get(i);
+            if (!library.remove(name)) {
+                throw new IllegalStateException("placed card " + name + " is not in the deck");
+            }
+            Card card = cards(Collections.singletonList(name)).get(0);
+            aside.add(card);
+            placed.put(card.getId(), side.getPlacedWithin().get(i));
+        }
+        game.cheat(player.getId(), cards(library), new ArrayList<>(), new ArrayList<>(),
+                new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        if (!aside.isEmpty()) {
+            game.loadCards(new LinkedHashSet<>(aside), player.getId());
+            for (Card card : aside) {
+                game.getState().setZone(card.getId(), Zone.OUTSIDE);
+            }
+        }
+    }
+
+    private static void setUp(Scenario.Side side, Player player, Game game, Set<UUID> arrived, Set<UUID> tapped) {
+        // The cards the deck brought stay known to the game but in no zone
+        clear(player, game);
         player.initLife(side.getLife() < 0 ? game.getStartingLife() : side.getLife());
         player.updateRange(game);
 
