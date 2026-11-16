@@ -11,7 +11,9 @@ import mage.constants.RangeOfInfluence;
 import mage.constants.SkillLevel;
 import mage.game.Seat;
 import mage.game.Table;
+import mage.game.match.Match;
 import mage.game.match.MatchOptions;
+import mage.game.match.MatchPlayer;
 import mage.game.mulligan.MulliganType;
 import mage.players.PlayerType;
 import mage.players.net.SkipPrioritySteps;
@@ -151,6 +153,27 @@ final class TableOps {
      * out of the game, and the door sat him back down at a game he was no longer in. A socket without
      * the header (the chairs on the loopback, a harness) keeps the three minutes.
      */
+    /**
+     * What a join answers for a name still on a chair whose player has left the match: the site reads these
+     * words and says them in its own (« Tu as été retiré de cette partie après 30 minutes d'absence. Elle
+     * continue sans toi. »). On 15 November the door answered « re-seated (reconnection) » instead, nothing
+     * was replayed, and the owner's page showed a guest's waiting room over his running game.
+     */
+    static final String TAKEN_OUT = "taken out of this game";
+
+    /**
+     * Whether the player seated as {@code playerId} has left {@code match}: his session expired after the
+     * grace (User.removeUserFromAllTables quits his matches), or he quit it. His name stays on the table's
+     * chair, which is why a join under it looked like a reconnection.
+     */
+    static boolean leftTheMatch(Match match, UUID playerId) {
+        if (match == null || playerId == null) {
+            return false;
+        }
+        MatchPlayer player = match.getPlayer(playerId);
+        return player != null && player.hasQuit();
+    }
+
     static boolean keptWhileAway(DoorIdentity identity) {
         return identity.player != null;
     }
@@ -370,6 +393,13 @@ final class TableOps {
             leaveOldTables(web, name, tableId);
             ensureConnected(web, name);
             UUID seated = playerId(tableId, name);
+            Table at = managerFactory.tableManager().getTable(tableId);
+            if (seated != null && leftTheMatch(at == null ? null : at.getMatch(), seated)) {
+                // his name is still on the chair, but the match let him go (his session expired after the
+                // grace, half an hour away): there is nothing to take back, and onReconnect replays nothing
+                logger.info("Web door: " + name + " asks for his chair at table " + tableId + ", but he was taken out of this game");
+                throw new MageException(TAKEN_OUT + " (" + name + ", table " + tableId + ")");
+            }
             if (seated != null) {
                 // already at this table: a reconnection, not a second seat. onReconnect (started by
                 // connectUser above) replays the table and game to this socket; nothing to join.
