@@ -51,6 +51,20 @@ final class Frames {
     }
 
     /**
+     * { kind: "elsewhere" } - sent to a socket just before the door closes it (code {@link #ELSEWHERE_CODE}) because
+     * the same name has connected on another socket (another device, another tab): the page says the game goes on
+     * elsewhere and does not reconnect, which would take the seat back and ping-pong between the two.
+     */
+    static String elsewhere() {
+        JsonObject o = new JsonObject();
+        o.addProperty("kind", "elsewhere");
+        return GSON.toJson(o);
+    }
+
+    /** The close code of a socket whose name has connected elsewhere (4000-4999: the application's own). */
+    static final int ELSEWHERE_CODE = 4000;
+
+    /**
      * { kind: "joined", tableId, playerId, name, reconnected, deckWarnings[], deckReplaced, id? }
      * reconnected: the name was already seated there, no new seat was taken (User.onReconnect
      * replays JOINED_TABLE, START_GAME, GAME_INIT and the open question). deckReplaced counts

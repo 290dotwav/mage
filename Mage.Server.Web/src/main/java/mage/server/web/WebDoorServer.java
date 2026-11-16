@@ -48,6 +48,8 @@ final class WebDoorServer extends WebSocketServer {
         this.wire = new Wire(server);
         this.gate = new TableGate(managerFactory);
         this.tables = new TableOps(managerFactory, server, gate);
+        // a name that connects on a new socket: its old socket, if still open, is told and closed
+        this.tables.whenMoved(this::movedElsewhere);
         this.games = new GameOps(managerFactory);
         setReuseAddr(true);
         setConnectionLostTimeout(PING_SECONDS);
@@ -86,6 +88,17 @@ final class WebDoorServer extends WebSocketServer {
         session.open();
         logger.info("Web door: " + session.sessionId + " opened from " + conn.getRemoteSocketAddress()
                 + (identity.restricted() ? " as " + identity.player : ""));
+    }
+
+    /** The socket of session {@code sessionId}, still open, whose name has just connected on another one. */
+    private void movedElsewhere(String sessionId) {
+        for (WebSession session : sessions.values()) {
+            if (session.sessionId.equals(sessionId)) {
+                logger.info("Web door: " + sessionId + " closed, its name connected on another socket");
+                session.movedElsewhere();
+                return;
+            }
+        }
     }
 
     @Override

@@ -186,6 +186,20 @@ final class WebSession implements AsynchInvokerCallbackHandler {
         }
     }
 
+    /**
+     * The name of this socket connected on another one (TableOps.ensureConnected): say so, then close with
+     * {@link Frames#ELSEWHERE_CODE}. Closing is safe for the user: close() sees he moved and reports no lost
+     * connection on his behalf.
+     */
+    void movedElsewhere() {
+        send(Frames.elsewhere());
+        try {
+            conn.close(Frames.ELSEWHERE_CODE, "connected elsewhere");
+        } catch (Exception ex) {
+            logger.warn("Web door: " + sessionId + " close failed: " + ex);
+        }
+    }
+
     void send(String json) {
         try {
             if (conn.isOpen()) {
