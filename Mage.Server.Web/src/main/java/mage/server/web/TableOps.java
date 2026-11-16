@@ -311,6 +311,10 @@ final class TableOps {
         // A scenario's position replaces the decks: whatever the seats bring is accepted
         String deckType = scenario != null ? SCENARIO_DECK_TYPE : Frames.optString(frame, "deckType", defaultDeckType(gameType));
         MulliganType mulliganType = mulliganType(Frames.optString(frame, "mulliganType", MulliganType.LONDON.name()));
+        if (scenario != null && scenario.isDealt()) {
+            // a lesson dealt as a normal game teaches the London mulligan (one card under per hand changed)
+            mulliganType = MulliganType.LONDON;
+        }
         // 901 Planechase: their engine deals the first plane to the starting player and rolls
         // the die as an ability of the plane (GameImpl, TableController: MatchOptions.planeChase
         // becomes GameOptions.planeChase); their own client sets it in its new table dialog.
