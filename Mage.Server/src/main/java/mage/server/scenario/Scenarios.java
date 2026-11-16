@@ -126,7 +126,7 @@ public final class Scenarios {
                         .library("10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears")));
     }
 
-    // The tutorial (the site's TUTO.md, CONSTRUIRE.md): tuto1 to tuto7, the Rival a script of his own
+    // The tutorial (the site's TUTO.md, CONSTRUIRE.md): tuto2 to tuto7, the Rival a script of his own
     // (RivalScript, the opponent seat's "Computer - simple" playing nothing else). Its cards are the
     // printings of the script's table « Les cartes du tutoriel ».
     static {
@@ -169,6 +169,28 @@ public final class Scenarios {
                         at(4, PhaseStep.DECLARE_BLOCKERS).noBlock(),
                         at(5, PhaseStep.DECLARE_ATTACKERS).attack("Goblin Assailant"),
                         at(5, PhaseStep.DECLARE_ATTACKERS).attack("Craw Wurm"))));
+        // 4. « Les cartes rapides »: the student's turn, the Rival at 9 with two Mountains and four
+        // Islands, Shock, Volcanic Hammer and Wind Drake in hand; the student at 20 with a Hill Giant,
+        // two Forests and two Mountains, Volcanic Hammer and Giant Growth in hand, Shock on top of his
+        // library. The Hammer on the Rival and the Giant are 9 to 3. On his turn 2 the Rival casts Shock
+        // on the student (20 to 18), once it has resolved his Hammer on the Giant, which the Growth
+        // saves; in his second main phase the Drake, once the guide is there (4.23). On turn 3 the
+        // Drake blocks the Giant if it is still there: the Shock on the Drake, then the Giant, is 3 to 0.
+        add(new Scenario("tuto4", DUEL)
+                .student(s -> s.life(20)
+                        .battlefield("10E:Hill Giant", "10E:Forest", "10E:Forest", "10E:Mountain", "10E:Mountain")
+                        .hand("9ED:Volcanic Hammer", "10E:Giant Growth")
+                        .library("10E:Shock", "10E:Forest", "10E:Mountain", "10E:Forest", "10E:Mountain", "10E:Forest"))
+                .opponent(o -> o.life(9)
+                        .battlefield("10E:Mountain", "10E:Mountain", "10E:Island", "10E:Island", "10E:Island", "10E:Island")
+                        .hand("10E:Shock", "9ED:Volcanic Hammer", "KLD:Wind Drake#70")
+                        .library("10E:Island", "10E:Island", "10E:Island", "10E:Island", "10E:Island", "10E:Island"))
+                .starts("student")
+                .rival(RivalScript.script(
+                        at(2, PhaseStep.PRECOMBAT_MAIN).cast("Shock", RivalScript.STUDENT),
+                        at(2, PhaseStep.PRECOMBAT_MAIN).cast("Volcanic Hammer", "Hill Giant"),
+                        at(2, PhaseStep.POSTCOMBAT_MAIN).castCreature("Wind Drake").waitFor("4.23"),
+                        at(3, PhaseStep.DECLARE_BLOCKERS).block("Wind Drake", "Hill Giant"))));
     }
 
     private Scenarios() {
