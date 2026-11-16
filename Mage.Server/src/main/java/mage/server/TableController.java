@@ -688,6 +688,8 @@ public class TableController {
 
     private void startGame(UUID choosingPlayerId) throws GameException {
         try {
+            // Ours: the turn goes round in the order of the seats (Match.seatPlayers)
+            match.seatPlayers(table.seatedPlayerIds());
             match.startGame();
             table.initGame();
             GameOptions gameOptions = new GameOptions();
@@ -992,17 +994,9 @@ public class TableController {
         tournament.nextStep();
     }
 
-    public void swapSeats(int seatNum1, int seatNum2) {
-        if (table.getState() == TableState.READY_TO_START) {
-            if (seatNum1 >= 0 && seatNum2 >= 0 && seatNum1 < table.getSeats().length && seatNum2 < table.getSeats().length) {
-                Player swapPlayer = table.getSeats()[seatNum1].getPlayer();
-                PlayerType swapType = table.getSeats()[seatNum1].getPlayerType();
-                table.getSeats()[seatNum1].setPlayer(table.getSeats()[seatNum2].getPlayer());
-                table.getSeats()[seatNum1].setPlayerType(table.getSeats()[seatNum2].getPlayerType());
-                table.getSeats()[seatNum2].setPlayer(swapPlayer);
-                table.getSeats()[seatNum2].setPlayerType(swapType);
-            }
-        }
+    // synchronized like joinTable: a join holds the seat it found until the player is on it
+    public synchronized void swapSeats(int seatNum1, int seatNum2) {
+        table.swapSeats(seatNum1, seatNum2);
     }
 
     public boolean isOwner(UUID userId) {

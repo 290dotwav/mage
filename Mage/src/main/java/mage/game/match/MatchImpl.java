@@ -13,7 +13,6 @@ import mage.game.result.ResultProtos.MatchQuitStatus;
 import mage.players.Player;
 import mage.util.CardUtil;
 import mage.util.DateFormat;
-import mage.util.RandomUtil;
 import mage.util.ThreadUtils;
 import org.apache.log4j.Logger;
 
@@ -71,6 +70,15 @@ public abstract class MatchImpl implements Match {
         MatchPlayer matchPlayer = new MatchPlayer(player, deck, this);
         player.setMatchPlayer(matchPlayer);
         players.add(matchPlayer);
+    }
+
+    @Override
+    public void seatPlayers(List<UUID> playerIdsBySeat) {
+        // a stable sort: whoever is not seated keeps his place among the others, after the seated
+        players.sort(Comparator.comparingInt(p -> {
+            int seat = playerIdsBySeat.indexOf(p.getPlayer().getId());
+            return seat < 0 ? Integer.MAX_VALUE : seat;
+        }));
     }
 
     @Override
@@ -194,8 +202,14 @@ public abstract class MatchImpl implements Match {
     protected void initGame(Game game) throws GameException {
         game.setTableId(this.tableId);
         addGame(); // raises only the number
-        shufflePlayers();
-        for (MatchPlayer matchPlayer : this.players) {
+        // Ours: the players sit as the table seats them (seatPlayers, called by the table before each
+        // game) and the turn passes from each seat to the next, as round a real table; upstream
+        // shuffled them here at every game. Only who starts is drawn, by the toss (GameImpl.init,
+        // 103.2). Their PlayerList puts each player added in front of those before him
+        // (CircularList.add) and the turn goes through it forwards, so the last seat is added first.
+        List<MatchPlayer> lastSeatFirst = new ArrayList<>(this.players);
+        Collections.reverse(lastSeatFirst);
+        for (MatchPlayer matchPlayer : lastSeatFirst) {
             if (!matchPlayer.hasQuit() && matchPlayer.getDeck() != null) {
                 matchPlayer.getPlayer().init(game);
                 game.loadCards(matchPlayer.getDeck().getCards(), matchPlayer.getPlayer().getId());
@@ -220,10 +234,6 @@ public abstract class MatchImpl implements Match {
         }
         game.setPriorityTime(options.getMatchTimeLimit().getPrioritySecs());
         game.setBufferTime(options.getMatchBufferTime().getBufferSecs());
-    }
-
-    protected void shufflePlayers() {
-        Collections.shuffle(this.players, RandomUtil.getRandom());
     }
 
     @Override

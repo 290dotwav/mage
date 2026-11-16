@@ -204,6 +204,43 @@ public class Table implements Serializable {
         return seats;
     }
 
+    /**
+     * The players seated, first seat first: the order the turn goes round in (Match.seatPlayers).
+     */
+    public List<UUID> seatedPlayerIds() {
+        List<UUID> ids = new ArrayList<>();
+        for (Seat seat : seats) {
+            if (seat.getPlayer() != null) {
+                ids.add(seat.getPlayer().getId());
+            }
+        }
+        return ids;
+    }
+
+    /**
+     * Two seats change places, with whoever sits there and the kind of player each seat is for, before
+     * the match starts: when the table is full (READY_TO_START, as upstream) and, ours, while it still
+     * waits for players (WAITING), so an empty seat moves too and the next to join takes the first
+     * free seat of his kind where it now is. Nothing once the match has started.
+     *
+     * @return false when nothing was swapped
+     */
+    public boolean swapSeats(int seatNum1, int seatNum2) {
+        if (getState() != TableState.WAITING && getState() != TableState.READY_TO_START) {
+            return false;
+        }
+        if (seatNum1 < 0 || seatNum2 < 0 || seatNum1 >= numSeats || seatNum2 >= numSeats || seatNum1 == seatNum2) {
+            return false;
+        }
+        Player swapPlayer = seats[seatNum1].getPlayer();
+        PlayerType swapType = seats[seatNum1].getPlayerType();
+        seats[seatNum1].setPlayer(seats[seatNum2].getPlayer());
+        seats[seatNum1].setPlayerType(seats[seatNum2].getPlayerType());
+        seats[seatNum2].setPlayer(swapPlayer);
+        seats[seatNum2].setPlayerType(swapType);
+        return true;
+    }
+
     public int getNumberOfSeats() {
         return numSeats;
     }

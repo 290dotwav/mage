@@ -37,6 +37,13 @@ public interface Match {
 
     void addPlayer(Player player, Deck deck);
 
+    /**
+     * Ours: put the players in the order of the table's seats (player ids, first seat first) before
+     * a game starts; the turn then goes from each seat to the next. Ids not seated keep their place
+     * after the seated ones.
+     */
+    void seatPlayers(List<UUID> playerIdsBySeat);
+
     boolean quitMatch(UUID playerId);
 
     void submitDeck(UUID playerId, Deck deck);
