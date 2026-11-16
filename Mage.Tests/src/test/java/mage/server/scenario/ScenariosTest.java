@@ -27,6 +27,34 @@ public class ScenariosTest extends CardTestPlayerBase {
     }
 
     @Test
+    public void bienvenueTwoAttacksOnTwoTurns() {
+        lesson("tuto1");
+        attack(1, playerA, "Grizzly Bears");
+        setStopAt(2, PhaseStep.END_TURN);
+        execute();
+
+        assertLife(playerB, 2);
+        assertPermanentCount(playerA, "Grizzly Bears", 1);
+        assertPermanentCount(playerB, 0);
+        assertHandCount(playerA, 0);
+        assertLibraryCount(playerA, 5);
+        assertLife(playerA, 20);
+    }
+
+    @Test
+    public void bienvenueSecondAttackWins() {
+        lesson("tuto1");
+        attack(1, playerA, "Grizzly Bears");
+        attack(3, playerA, "Grizzly Bears");
+        setStopAt(3, PhaseStep.END_TURN);
+        execute();
+
+        assertLife(playerB, 0);
+        assertHandCount(playerA, "Grizzly Bears", 1);
+        Assert.assertTrue("the Rival has lost", currentGame.hasEnded() || !playerB.isInGame());
+    }
+
+    @Test
     public void coupDeGracePositionAsWritten() {
         lesson("m1");
         setStopAt(1, PhaseStep.PRECOMBAT_MAIN);

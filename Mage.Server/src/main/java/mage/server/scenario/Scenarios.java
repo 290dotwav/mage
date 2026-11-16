@@ -107,6 +107,17 @@ public final class Scenarios {
                         .tapped("Juggernaut")
                         .battlefield("Mountain", "Mountain", "Mountain", "Mountain")
                         .library("Mountain", "Mountain", "Mountain", "Mountain", "Mountain")));
+
+        // The tutorial (the site's TUTO.md), lesson 1, « Bienvenue »: the Rival at 4 with nothing, the student's
+        // Grizzly Bears ready. Two attacks, one on each of the student's turns, take him to 0; the student's draw on
+        // his second turn is another Grizzly Bears, which he cannot cast (no land). The Rival's library holds cards
+        // he cannot play either (no land), so his turns pass with nothing on the table.
+        add(new Scenario("tuto1", DUEL)
+                .student(s -> s.life(20)
+                        .battlefield("10E:Grizzly Bears")
+                        .library("10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears"))
+                .opponent(o -> o.life(4)
+                        .library("10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears", "10E:Grizzly Bears")));
     }
 
     private Scenarios() {
