@@ -36,6 +36,7 @@ public final class Scenario {
         final List<String> deck = new ArrayList<>();
         final List<String> placed = new ArrayList<>();
         final List<Integer> placedWithin = new ArrayList<>();
+        int skippedDraws = 0;
 
         public Side life(int life) {
             this.life = life;
@@ -150,6 +151,20 @@ public final class Scenario {
 
         public List<String> getCommand() {
             return Collections.unmodifiableList(command);
+        }
+
+        /**
+         * This side's first {@code count} draw steps skipped: nothing drawn on those turns (the
+         * tutorial's « La bagarre », where a card drawn would only take the student's mind off the
+         * combat). Its library stays, for a game that goes on longer.
+         */
+        public Side skipDraws(int count) {
+            this.skippedDraws = count;
+            return this;
+        }
+
+        public int getSkippedDraws() {
+            return skippedDraws;
         }
     }
 

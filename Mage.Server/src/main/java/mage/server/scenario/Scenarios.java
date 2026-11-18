@@ -9,6 +9,7 @@ import mage.game.Game;
 import mage.game.GameOptions;
 import mage.game.PutToBattlefieldInfo;
 import mage.game.lesson.RivalScript;
+import mage.game.turn.TurnMod;
 import mage.players.Player;
 import mage.util.RandomUtil;
 
@@ -144,8 +145,8 @@ public final class Scenarios {
                 .starts("student")
                 .rival(RivalScript.script()));
         // 3. « La bagarre »: the Rival starts, at 5, with two Grizzly Bears, a Goblin Assailant and six
-        // Forests, a Craw Wurm in hand; the student at 20 with a Hill Giant and a Wind Drake, his library
-        // lands he never plays. The Rival: on his turn 1, one Bears attacks, once the guide has said it
+        // Forests, a Craw Wurm in hand; the student at 20 with a Hill Giant and a Wind Drake, who draws
+        // nothing all the lesson (his draw steps skipped: « on se concentre sur le principal »). The Rival: on his turn 1, one Bears attacks, once the guide has said it
         // (3.4); on the student's turn 2, the other Bears blocks the Giant (never the Drake, it flies:
         // 5 to 3); on his turn 3, the Wurm, then the Assailant attacks once the guide is there (3.20:
         // 20 to 18, the student's two creatures tapped); on turn 4 no block (the Drake alone: 3 to 1);
@@ -154,7 +155,8 @@ public final class Scenarios {
         add(new Scenario("tuto3", DUEL)
                 .student(s -> s.life(20)
                         .battlefield("10E:Hill Giant", "KLD:Wind Drake#70")
-                        .library("10E:Mountain", "10E:Island", "10E:Mountain", "10E:Island", "10E:Mountain", "10E:Island"))
+                        .library("10E:Mountain", "10E:Island", "10E:Mountain", "10E:Island", "10E:Mountain", "10E:Island")
+                        .skipDraws(20))
                 .opponent(o -> o.life(5)
                         .battlefield("10E:Grizzly Bears", "10E:Grizzly Bears", "M20:Goblin Assailant",
                                 "10E:Forest", "10E:Forest", "10E:Forest", "10E:Forest", "10E:Forest", "10E:Forest")
@@ -362,6 +364,10 @@ public final class Scenarios {
         }
         game.cheat(player.getId(), library, cards(side.getHand()), battlefield,
                 cards(side.getGraveyard()), cards(side.getCommand()), new ArrayList<>());
+        // each skip is used by one of the player's draw steps (TurnMods.useNextSkipStep)
+        for (int i = 0; i < side.getSkippedDraws(); i++) {
+            game.getState().getTurnMods().add(new TurnMod(player.getId()).withSkipStep(PhaseStep.DRAW));
+        }
     }
 
     private static List<Card> cards(List<String> names) {

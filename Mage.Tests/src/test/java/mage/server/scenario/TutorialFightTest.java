@@ -75,6 +75,9 @@ public class TutorialFightTest extends TutorialTestBase {
         setStopAt(6, PhaseStep.END_TURN);
         execute();
         site.join(5000);
+        // he draws nothing all the lesson: his hand stays empty, his library whole
+        assertHandCount(playerA, 0);
+        assertLibraryCount(playerA, 6);
 
         Assert.assertEquals(2, seen.size());
         Assert.assertEquals("3.4 at 1 Declare Attackers: student 20, attackers 0, wurm 0", seen.get(0));
