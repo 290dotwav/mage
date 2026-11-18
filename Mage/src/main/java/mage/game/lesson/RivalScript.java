@@ -30,7 +30,7 @@ import java.util.function.BooleanSupplier;
  * moment has passed (an attacker that never came, a turn gone by) is dropped.
  * <p>
  * {@link #free()} is the other kind: the computer player plays as it always does, and with
- * {@link #noMultiBlock()} never puts two blockers on one attacker.
+ * {@link #noMultiBlock()} never puts two blockers on one attacker, with {@link #noBlock()} never blocks.
  * <p>
  * The scenarios hold a script as a template; {@link #forPlayer(UUID)} makes the copy one game
  * plays, with its own progress. The progress is not part of the game state: a rollback does not
@@ -188,12 +188,12 @@ public final class RivalScript implements Serializable {
                 throw new IllegalArgumentException("a line of a rival script has no action: " + line);
             }
         }
-        return new RivalScript(null, false, false, Arrays.asList(lines));
+        return new RivalScript(null, false, false, false, Arrays.asList(lines));
     }
 
     /** The computer player plays freely. */
     public static RivalScript free() {
-        return new RivalScript(null, true, false, Collections.emptyList());
+        return new RivalScript(null, true, false, false, Collections.emptyList());
     }
 
     /** Free play, but never two blockers (or more) on one attacker. */
@@ -201,28 +201,38 @@ public final class RivalScript implements Serializable {
         if (!free) {
             throw new IllegalStateException("noMultiBlock is for a free rival");
         }
-        return new RivalScript(playerId, true, true, lines);
+        return new RivalScript(playerId, true, true, noBlock, lines);
+    }
+
+    /** Free play, but never a blocker: the first game's Rival, who races (tuto7). */
+    public RivalScript noBlock() {
+        if (!free) {
+            throw new IllegalStateException("noBlock is for a free rival");
+        }
+        return new RivalScript(playerId, true, noMultiBlock, true, lines);
     }
 
     private final UUID playerId;
     private final boolean free;
     private final boolean noMultiBlock;
+    private final boolean noBlock;
     private final List<Line> lines;
     // progress, one game's copy only
     private int next = 0;
     private UUID lastSpellId = null;
     private final Set<String> reached = ConcurrentHashMap.newKeySet();
 
-    private RivalScript(UUID playerId, boolean free, boolean noMultiBlock, List<Line> lines) {
+    private RivalScript(UUID playerId, boolean free, boolean noMultiBlock, boolean noBlock, List<Line> lines) {
         this.playerId = playerId;
         this.free = free;
         this.noMultiBlock = noMultiBlock;
+        this.noBlock = noBlock;
         this.lines = Collections.unmodifiableList(new ArrayList<>(lines));
     }
 
     /** The copy one game plays, for its computer player {@code playerId}, from the first line. */
     public RivalScript forPlayer(UUID playerId) {
-        return new RivalScript(playerId, free, noMultiBlock, lines);
+        return new RivalScript(playerId, free, noMultiBlock, noBlock, lines);
     }
 
     /** The scripted player (null on a scenario's template). */
@@ -236,6 +246,10 @@ public final class RivalScript implements Serializable {
 
     public boolean isNoMultiBlock() {
         return noMultiBlock;
+    }
+
+    public boolean isNoBlock() {
+        return noBlock;
     }
 
     public List<Line> getLines() {

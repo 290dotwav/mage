@@ -56,6 +56,7 @@ public class TutorialFirstGameTest extends TutorialTestBase {
         RivalScript script = tuto7.getRival();
         Assert.assertTrue(script.isFree());
         Assert.assertTrue(script.isNoMultiBlock());
+        Assert.assertTrue("the Rival of the first game races, he never blocks", script.isNoBlock());
     }
 
     private void dealtAsANormalGame() {

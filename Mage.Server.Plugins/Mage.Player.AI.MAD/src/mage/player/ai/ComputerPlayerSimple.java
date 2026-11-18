@@ -45,7 +45,8 @@ import java.util.UUID;
  * <p>
  * Ours, the site's lessons: in a game whose options carry a {@link RivalScript} for this player, it
  * plays the script and nothing else (priority, attackers, blockers); a free script with
- * {@code noMultiBlock} keeps its own play but never puts two blockers on one attacker.
+ * {@code noMultiBlock} keeps its own play but never puts two blockers on one attacker, with {@code noBlock}
+ * never blocks.
  */
 public class ComputerPlayerSimple extends ComputerPlayerControllableProxy {
 
@@ -305,6 +306,9 @@ public class ComputerPlayerSimple extends ComputerPlayerControllableProxy {
     @Override
     public void selectBlockers(Ability source, Game game, UUID defendingPlayerId) {
         RivalScript script = scriptOf(game);
+        if (script != null && script.isNoBlock() && isUnderMe(game)) {
+            return; // the first game's Rival races and never blocks
+        }
         if (script == null || script.isFree() || !isUnderMe(game)
                 || (defendingPlayerId != null && !defendingPlayerId.equals(playerId))) {
             super.selectBlockers(source, game, defendingPlayerId);

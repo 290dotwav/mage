@@ -224,21 +224,22 @@ public final class Scenarios {
                 .rival(RivalScript.script()));
         // 7. « Ta première partie »: a real game, dealt as a normal one (shuffled, seven cards, the London
         // mulligan, who starts at random), 20 life each. The student's 40: Mountains and Forests, and the
-        // cards he has read (Grizzly Bears, Hill Giant, Goblin Assailant, Giant Growth, Shock, Volcanic
-        // Hammer); the Rival's 40 in white and blue, his Serra Angel placed among the first five cards of
-        // his library once the hands are kept. The Rival plays freely, but never blocks with two.
+        // cards he has read (8 Grizzly Bears, Hill Giant, Goblin Assailant, Shock, Volcanic Hammer: no
+        // Giant Growth, a card a beginner keeps in hand, 18 November); the Rival's 40 in white and blue, his Serra Angel placed among the first five cards of
+        // his library once the hands are kept. The Rival plays freely and races: he never blocks
+        // (noBlock, 18 November: 2 games won of 8 before, 8 of 8 after, the site's automatic player).
         add(new Scenario("tuto7", DUEL)
                 .dealt()
                 .student(s -> s
                         .deck(9, "10E:Mountain").deck(8, "10E:Forest")
-                        .deck(4, "10E:Grizzly Bears").deck(4, "10E:Hill Giant").deck(4, "M20:Goblin Assailant")
-                        .deck(4, "10E:Giant Growth").deck(4, "10E:Shock").deck(3, "9ED:Volcanic Hammer"))
+                        .deck(8, "10E:Grizzly Bears").deck(4, "10E:Hill Giant").deck(4, "M20:Goblin Assailant")
+                        .deck(4, "10E:Shock").deck(3, "9ED:Volcanic Hammer"))
                 .opponent(o -> o
                         .deck(9, "10E:Plains").deck(8, "10E:Island")
                         .deck(8, "9ED:Savannah Lions").deck(7, "KLD:Wind Drake#70").deck(7, "J25:Raise the Alarm")
                         .deck(1, "CMD:Serra Angel")
                         .placed("CMD:Serra Angel", 5))
-                .rival(RivalScript.free().noMultiBlock()));
+                .rival(RivalScript.free().noMultiBlock().noBlock()));
     }
 
     private Scenarios() {

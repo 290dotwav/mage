@@ -172,6 +172,26 @@ public class RivalScriptTest extends TutorialTestBase {
         assertLife(playerB, 3);
     }
 
+    @Test
+    public void theRivalOfTheFirstGameNeverBlocks() {
+        // the same 3/3 into two 2/2s, the Rival at 3: with noBlock he takes it and dies, both Bears untouched
+        lesson(new Scenario("test-noblock", Scenarios.DUEL)
+                .student(s -> s.life(20)
+                        .battlefield("10E:Hill Giant")
+                        .library("Forest", "Forest", "Forest", "Forest", "Forest"))
+                .opponent(o -> o.life(3)
+                        .battlefield("10E:Grizzly Bears", "10E:Grizzly Bears")
+                        .library("Island", "Island", "Island", "Island", "Island"))
+                .rival(RivalScript.free().noMultiBlock().noBlock()));
+        attack(1, playerA, "Hill Giant");
+        setStopAt(1, PhaseStep.END_TURN);
+        execute();
+
+        assertPermanentCount(playerA, "Hill Giant", 1);
+        assertPermanentCount(playerB, "Grizzly Bears", 2);
+        assertLife(playerB, 0);
+    }
+
     private static Scenario menaceInto(RivalScript script) {
         return new Scenario("test-menace", Scenarios.DUEL)
                 .student(s -> s.life(20)
