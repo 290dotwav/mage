@@ -4,14 +4,18 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import mage.cards.Card;
 import mage.cards.decks.Deck;
+import mage.game.Game;
 import mage.game.Table;
 import mage.game.match.MatchPlayer;
 import mage.server.managers.ManagerFactory;
 import mage.view.TableClientMessage;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.UUID;
 
 /**
@@ -29,6 +33,11 @@ import java.util.UUID;
  * what the game is dealt from), the printings are the cards' ({@code Card.getExpansionSetCode()}
  * / {@code getCardNumber()}, the pair the GameView carries and the site's picture URL is built from).
  * Sent to every seat alike: the AI seats hear nothing (they have no socket).
+ * <p>
+ * A table that plays a scenario (a lesson of the site's tutorial, {@code MatchOptions.getScenario()}) is joined with
+ * any deck ("1 Island"), and the scenario puts its own cards in the game in place of it: there each seat's cards are
+ * the game's cards it owns ({@link #owned}), so the site looks up the lesson's cards ahead too (the Rival's Shock of
+ * mission 4 was drawn in English on the stack, never seen before).
  */
 final class Decks {
 
@@ -49,14 +58,22 @@ final class Decks {
             return null;
         }
         JsonArray decks = new JsonArray();
+        Game scenario = table.getMatch().getOptions() != null && table.getMatch().getOptions().getScenario() != null
+                ? table.getMatch().getGame() : null;
         for (MatchPlayer player : table.getMatch().getPlayers()) {
-            Deck deck = player.getDeck();
-            if (deck == null) {
-                continue;
+            JsonArray cards;
+            if (scenario != null && player.getPlayer() != null) {
+                cards = owned(scenario.getCards(), player.getPlayer().getId());
+            } else {
+                Deck deck = player.getDeck();
+                if (deck == null) {
+                    continue;
+                }
+                cards = cards(deck);
             }
             JsonObject one = new JsonObject();
             one.addProperty("player", player.getName());
-            one.add("cards", cards(deck));
+            one.add("cards", cards);
             decks.add(one);
         }
         JsonObject o = new JsonObject();
@@ -73,6 +90,22 @@ final class Decks {
         JsonArray out = new JsonArray();
         add(out, seen, deck.getCards());
         add(out, seen, deck.getSideboard());
+        return out;
+    }
+
+    /** A scenario's seat: the game's cards {@code owner} owns, each (name, set, number) once. */
+    static JsonArray owned(Collection<Card> cards, UUID owner) {
+        Set<String> seen = new LinkedHashSet<>();
+        JsonArray out = new JsonArray();
+        List<Card> his = new ArrayList<>();
+        if (cards != null) {
+            for (Card card : cards) {
+                if (card != null && owner.equals(card.getOwnerId())) {
+                    his.add(card);
+                }
+            }
+        }
+        add(out, seen, his);
         return out;
     }
 
