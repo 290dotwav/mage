@@ -879,8 +879,6 @@ public final class MarvelSuperHeroesCommander extends ExpansionSet {
         cards.add(new SetCardInfo("First Family", 401, Rarity.RARE, mage.cards.f.FirstFamily.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Strategic Intervention", 609, Rarity.UNCOMMON, mage.cards.s.StrategicIntervention.class));
         cards.add(new SetCardInfo("Nick Fury, Spymaster", 603, Rarity.RARE, mage.cards.n.NickFurySpymaster.class));
-        cards.add(new SetCardInfo("Photon, Mighty Marvel", 58, Rarity.RARE, mage.cards.p.PhotonMightyMarvel.class, NON_FULL_USE_VARIOUS));
-        cards.add(new SetCardInfo("Photon, Mighty Marvel", 369, Rarity.RARE, mage.cards.p.PhotonMightyMarvel.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Willie Lumpkin, Postman", 101, Rarity.RARE, mage.cards.w.WillieLumpkinPostman.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Willie Lumpkin, Postman", 425, Rarity.RARE, mage.cards.w.WillieLumpkinPostman.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Archnemesis", 74, Rarity.RARE, mage.cards.a.Archnemesis.class, NON_FULL_USE_VARIOUS));
