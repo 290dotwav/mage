@@ -11,7 +11,6 @@ import mage.abilities.keyword.StationLevelAbility;
 import mage.cards.CardImpl;
 import mage.cards.CardSetInfo;
 import mage.constants.CardType;
-import mage.constants.Duration;
 import mage.constants.SubType;
 import mage.filter.StaticFilters;
 import mage.target.common.TargetCreaturePermanent;
@@ -19,7 +18,7 @@ import mage.target.common.TargetCreaturePermanent;
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author DarioBarrabinoDev
  */
 public final class TranswarpHub extends CardImpl {
 
@@ -31,14 +30,14 @@ public final class TranswarpHub extends CardImpl {
         // When this Spacecraft enters, mill five cards. You may put up to two artifact cards from among them into your hand.
         this.addAbility(new EntersBattlefieldTriggeredAbility(new MillThenPutInHandEffect(
                 5, StaticFilters.FILTER_CARD_ARTIFACTS, null, true, 2
-        ).setText("mill five cards. You may put up to two artifact cards from among them into your hand")));
+        ).withTextOptions("them")));
 
         // Station
         this.addAbility(new StationAbility());
 
         // STATION 3+
         // {T}: Target creature can't be blocked this turn.
-        Ability ability = new SimpleActivatedAbility(new CantBeBlockedTargetEffect(Duration.EndOfTurn), new TapSourceCost());
+        Ability ability = new SimpleActivatedAbility(new CantBeBlockedTargetEffect(), new TapSourceCost());
         ability.addTarget(new TargetCreaturePermanent());
         this.addAbility(new StationLevelAbility(3).withLevelAbility(ability));
     }

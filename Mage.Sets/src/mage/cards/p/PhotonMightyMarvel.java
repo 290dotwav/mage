@@ -1,9 +1,9 @@
 package mage.cards.p;
 
 import mage.MageInt;
-import mage.Mana;
 import mage.abilities.Ability;
 import mage.abilities.common.DealsCombatDamageToAPlayerTriggeredAbility;
+import mage.abilities.dynamicvalue.common.SavedDamageValue;
 import mage.abilities.effects.OneShotEffect;
 import mage.abilities.keyword.FlyingAbility;
 import mage.cards.CardImpl;
@@ -19,7 +19,7 @@ import mage.players.Player;
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author DarioBarrabinoDev
  */
 public final class PhotonMightyMarvel extends CardImpl {
 
@@ -52,8 +52,9 @@ public final class PhotonMightyMarvel extends CardImpl {
 class PhotonMightyMarvelEffect extends OneShotEffect {
 
     PhotonMightyMarvelEffect() {
-        super(Outcome.PutManaInPool);
-        staticText = "add that much mana of any one color. Until end of turn, you don't lose this mana as steps and phases end";
+        super(Outcome.Benefit);
+        staticText = "add that much mana of any one color. " +
+                "Until end of turn, you don't lose this mana as steps and phases end";
     }
 
     private PhotonMightyMarvelEffect(final PhotonMightyMarvelEffect effect) {
@@ -68,16 +69,13 @@ class PhotonMightyMarvelEffect extends OneShotEffect {
     @Override
     public boolean apply(Game game, Ability source) {
         Player player = game.getPlayer(source.getControllerId());
-        Integer damage = (Integer) getValue("damage");
-        if (player == null || damage == null || damage < 1) {
+        int amount = SavedDamageValue.AMOUNT.calculate(game, source, this);
+        if (player == null || amount < 1) {
             return false;
         }
-        ChoiceColor choice = new ChoiceColor();
-        if (!player.choose(outcome, choice, game)) {
-            return false;
-        }
-        Mana mana = choice.getMana(damage);
-        player.getManaPool().addMana(mana, game, source, true);
+        ChoiceColor choice = new ChoiceColor(true, "Choose a color of mana to add");
+        player.choose(outcome, choice, game);
+        player.getManaPool().addMana(choice.getMana(amount), game, source, true);
         return true;
     }
 }
