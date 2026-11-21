@@ -1,8 +1,13 @@
 package mage.cards.h;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import mage.MageInt;
-import mage.abilities.TriggeredAbilityImpl;
+import mage.MageObjectReference;
+import mage.abilities.Ability;
 import mage.abilities.common.AttacksTriggeredAbility;
+import mage.abilities.common.DealtDamageToSourceTriggeredAbility;
 import mage.abilities.dynamicvalue.common.SavedDamageValue;
 import mage.abilities.effects.common.continuous.GainAbilitySourceEffect;
 import mage.abilities.effects.common.counter.AddCountersSourceEffect;
@@ -13,17 +18,14 @@ import mage.constants.CardType;
 import mage.constants.Duration;
 import mage.constants.SubType;
 import mage.constants.SuperType;
-import mage.constants.Zone;
+import mage.constants.WatcherScope;
 import mage.counters.CounterType;
 import mage.game.Game;
 import mage.game.events.GameEvent;
-import mage.game.permanent.Permanent;
-import mage.watchers.common.DamageDoneWatcher;
-
-import java.util.UUID;
+import mage.watchers.Watcher;
 
 /**
- * @author Claude
+ * @author DarioBarrabinoDev
  */
 public final class HerculesOlympianHero extends CardImpl {
 
@@ -38,15 +40,14 @@ public final class HerculesOlympianHero extends CardImpl {
         this.toughness = new MageInt(3);
 
         // Whenever Hercules attacks, put a +1/+1 counter on him. He gains indestructible until end of turn.
-        AttacksTriggeredAbility ability = new AttacksTriggeredAbility(
-                new AddCountersSourceEffect(CounterType.P1P1.createInstance()).setText("put a +1/+1 counter on him")
-        );
+        Ability ability = new AttacksTriggeredAbility(new AddCountersSourceEffect(CounterType.P1P1.createInstance())
+                .setText("put a +1/+1 counter on him"));
         ability.addEffect(new GainAbilitySourceEffect(IndestructibleAbility.getInstance(), Duration.EndOfTurn)
                 .setText("He gains indestructible until end of turn"));
         this.addAbility(ability);
 
         // Whenever Hercules is dealt damage for the first time each turn, put that many +1/+1 counters on him.
-        this.addAbility(new HerculesOlympianHeroTriggeredAbility(), new DamageDoneWatcher());
+        this.addAbility(new HerculesOlympianHeroTriggeredAbility());
     }
 
     private HerculesOlympianHero(final HerculesOlympianHero card) {
@@ -59,12 +60,13 @@ public final class HerculesOlympianHero extends CardImpl {
     }
 }
 
-class HerculesOlympianHeroTriggeredAbility extends TriggeredAbilityImpl {
+class HerculesOlympianHeroTriggeredAbility extends DealtDamageToSourceTriggeredAbility {
 
     HerculesOlympianHeroTriggeredAbility() {
-        super(Zone.BATTLEFIELD, new AddCountersSourceEffect(CounterType.P1P1.createInstance(), SavedDamageValue.MANY)
-                .setText("put that many +1/+1 counters on him. <i>(He must survive the damage to get the counters.)</i>"));
+        super(new AddCountersSourceEffect(CounterType.P1P1.createInstance(), SavedDamageValue.MANY)
+                .setText("put that many +1/+1 counters on him"), false);
         setTriggerPhrase("Whenever {this} is dealt damage for the first time each turn, ");
+        addWatcher(new HerculesOlympianHeroWatcher());
     }
 
     private HerculesOlympianHeroTriggeredAbility(final HerculesOlympianHeroTriggeredAbility ability) {
@@ -77,25 +79,39 @@ class HerculesOlympianHeroTriggeredAbility extends TriggeredAbilityImpl {
     }
 
     @Override
-    public boolean checkEventType(GameEvent event, Game game) {
-        return event.getType() == GameEvent.EventType.DAMAGED_BATCH_FOR_ONE_PERMANENT;
+    public boolean checkTrigger(GameEvent event, Game game) {
+        HerculesOlympianHeroWatcher watcher = game.getState().getWatcher(HerculesOlympianHeroWatcher.class);
+        return watcher != null
+                && watcher.checkEvent(getSourceId(), event, game)
+                && super.checkTrigger(event, game);
+    }
+}
+
+class HerculesOlympianHeroWatcher extends Watcher {
+
+    // which permanent was dealt damage by which event first this turn
+    private final Map<MageObjectReference, UUID> damagedMap = new HashMap<>();
+
+    HerculesOlympianHeroWatcher() {
+        super(WatcherScope.GAME);
     }
 
     @Override
-    public boolean checkTrigger(GameEvent event, Game game) {
-        if (!getSourceId().equals(event.getTargetId())) {
-            return false;
+    public void watch(GameEvent event, Game game) {
+        if (event.getType() != GameEvent.EventType.DAMAGED_BATCH_FOR_ONE_PERMANENT
+                || event.getAmount() < 1) {
+            return;
         }
-        Permanent permanent = game.getPermanentOrLKIBattlefield(getSourceId());
-        DamageDoneWatcher watcher = game.getState().getWatcher(DamageDoneWatcher.class);
-        if (permanent == null || watcher == null) {
-            return false;
-        }
-        // the watcher already counts this batch: it is the first time only if it is all the damage dealt to him this turn
-        if (watcher.damageDoneTo(permanent.getId(), permanent.getZoneChangeCounter(game), game) != event.getAmount()) {
-            return false;
-        }
-        this.getEffects().setValue("damage", event.getAmount());
-        return true;
+        damagedMap.putIfAbsent(new MageObjectReference(event.getTargetId(), game), event.getId());
+    }
+
+    @Override
+    public void reset() {
+        super.reset();
+        damagedMap.clear();
+    }
+
+    boolean checkEvent(UUID permanentId, GameEvent event, Game game) {
+        return event.getId().equals(damagedMap.getOrDefault(new MageObjectReference(permanentId, game), null));
     }
 }
