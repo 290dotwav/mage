@@ -40,10 +40,16 @@ public class MulliganTestBase {
         private final List<Step> steps = new ArrayList<>();
 
         private MulliganStubPlayer player1;
+        private boolean human = false;
 
         public MulliganScenarioTest(MulliganType mulliganType, int freeMulligans) {
             this.mulliganType = mulliganType;
             this.freeMulligans = freeMulligans;
+        }
+
+        /** The player under test is a person (a human seat), not a computer. */
+        public void asHuman() {
+            this.human = true;
         }
 
         public void mulligan(MulliganStep step) {
@@ -75,6 +81,7 @@ public class MulliganTestBase {
             game.setGameOptions(options);
 
             this.player1 = new MulliganStubPlayer("p1", ONE);
+            player1.setHuman(human);
             player1.setSteps(steps);
             Deck deck1 = generateDeck(player1.getId(), 40);
             game.loadCards(deck1.getCards(), player1.getId());
@@ -181,6 +188,10 @@ public class MulliganTestBase {
 
         public MulliganStubPlayer(String name, RangeOfInfluence range) {
             super(name, range);
+        }
+
+        public void setHuman(boolean human) {
+            this.human = human;
         }
 
         @Override

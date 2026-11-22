@@ -22,9 +22,12 @@ import java.util.UUID;
  * that is 10, 10, 9, 9, 8, 8, then 7. The first two mulligans therefore cost nothing (see 10,
  * keep 7, as the opening hand did); {@code freeMulligans} is ignored.
  * <p>
- * A player may take at most {@link #MAX_MULLIGANS} mulligans: that is where London leaves a
- * player with no cards, and it keeps an AI that always mulligans (a land-only deck) from
- * looping forever - London's {@code openingHandSizes > 0} guard plays the same role.
+ * A computer player may take at most {@link #MAX_MULLIGANS} mulligans: it keeps an AI that
+ * always mulligans (a land-only deck) from looping forever - London's {@code openingHandSizes > 0}
+ * guard plays the same role. A person (a human seat, Claude's chairs included) has no cap: from
+ * the 7th mulligan on every redraw is a free seven, and the hand is theirs to keep. The cap used
+ * to apply to everybody, and kept a novice player's hand after their 7th mulligan, without a
+ * question (22 November, the owner: « Son mulligan a ete selectionne automatiquement »).
  */
 public class TenMulligan extends Mulligan {
 
@@ -238,7 +241,7 @@ public class TenMulligan extends Mulligan {
 
     @Override
     public boolean canTakeMulligan(Game game, Player player) {
-        return super.canTakeMulligan(game, player) && taken(player.getId()) < MAX_MULLIGANS;
+        return super.canTakeMulligan(game, player) && (player.isHuman() || taken(player.getId()) < MAX_MULLIGANS);
     }
 
     @Override

@@ -142,6 +142,31 @@ public class TenMulliganTest extends MulliganTestBase {
         scenario.run(() -> scenario.assertSizes(7, 33));
     }
 
+    /**
+     * A person is never kept for: past the computer's cap of seven mulligans, they are still
+     * asked, and every redraw from there is a free seven.
+     */
+    @Test
+    public void testTenMulligan_Human_AskedPastTheCap() {
+        MulliganScenarioTest scenario = new MulliganScenarioTest(MulliganType.TEN, 0);
+        scenario.asHuman();
+        // the opening hand, then what mulligans 1..9 drew
+        int[] seen = {10, 10, 10, 9, 9, 8, 8, 7, 7, 7};
+        for (int size : seen) {
+            final int handSize = size;
+            scenario.mulligan(() -> {
+                scenario.assertSizes(handSize, 40 - handSize);
+                return true;
+            });
+        }
+        // the 11th question: kept by the player, seven cards, nothing to bottom
+        scenario.mulligan(() -> {
+            scenario.assertSizes(7, 33);
+            return false;
+        });
+        scenario.run(() -> scenario.assertSizes(7, 33));
+    }
+
     @Test
     public void testTenMulligan_FreeMulliganOptionIgnored() {
         MulliganScenarioTest scenario = new MulliganScenarioTest(MulliganType.TEN, 1);
