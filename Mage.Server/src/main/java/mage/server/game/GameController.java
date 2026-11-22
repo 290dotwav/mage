@@ -593,7 +593,7 @@ public class GameController implements GameCallback {
         }
         managerFactory.userManager().getUser(userId).ifPresent(user -> {
             GameSessionWatcher gameWatcher = new GameSessionWatcher(managerFactory.userManager(), userId, game, false);
-            gameWatcher.startWithGameView(this.defaultGameViews.get(WATCHER_SESSION_FAKE_PLAYER_ID));
+            gameWatcher.startWithGameView(currentWatcherView(userId));
             final Lock w = gameWatchersLock.writeLock();
             w.lock();
             try {
@@ -606,6 +606,38 @@ public class GameController implements GameCallback {
             managerFactory.chatManager().broadcast(chatId, user.getName(), " has started watching", MessageColor.BLUE, true, game, ChatMessage.MessageType.STATUS, null);
         });
         return true;
+    }
+
+    /**
+     * The view a new watcher opens the game on: the game as it is now.
+     * <p>
+     * The default watcher view is built once, when the game starts, and a watcher's
+     * first view is read from its cache off the game thread. So whoever came to watch
+     * a game already under way saw it as it was dealt (empty boards, every library
+     * full, nobody's turn: the site says « Mulligan en cours ») until the game next
+     * moved, which at a table whose next move is a long think is minutes. The owner,
+     * 22 November, watching a game near its end: « La je spectate et ça me met ça ».
+     * <p>
+     * Built here, off the game thread, which their cache avoids for fear of a
+     * {@code ConcurrentModificationException} while the game thread changes the state:
+     * tried a few times, then another watcher's latest view (kept by the game thread),
+     * then the one from the start. The next update replaces it either way.
+     */
+    private GameView currentWatcherView(UUID userId) {
+        for (int attempt = 0; attempt < 3; attempt++) {
+            try {
+                return new GameView(game.getState(), game, null, userId);
+            } catch (RuntimeException ex) {
+                logger.debug("watcher view for game " + game.getId() + " not built (attempt " + (attempt + 1) + "): " + ex);
+            }
+        }
+        for (GameSessionWatcher other : getGameSessionWatchers()) {
+            GameView latest = other.getGameView();
+            if (latest != null) {
+                return latest;
+            }
+        }
+        return this.defaultGameViews.get(WATCHER_SESSION_FAKE_PLAYER_ID);
     }
 
     public void stopWatching(UUID userId) {
