@@ -526,6 +526,9 @@ public final class ZonesHandler {
             } else if (!(card instanceof Permanent)) {
                 card.updateZoneChangeCounter(game, event);
             }
+            if (event.getToZone() == Zone.HAND && card.getMainCard() != null) {
+                game.getState().noteHandEntry(card.getMainCard().getId()); // ClaudeMTG: GameState.noteRevealed
+            }
         }
         return success;
     }

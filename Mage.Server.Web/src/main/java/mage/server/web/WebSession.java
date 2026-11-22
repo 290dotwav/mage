@@ -259,6 +259,7 @@ final class WebSession implements AsynchInvokerCallbackHandler {
                 Companions.enrich(frame, copy.getObjectId(), managerFactory);
                 Planechase.enrich(frame, copy.getObjectId(), managerFactory);
                 BoardStates.enrich(frame, copy.getObjectId(), managerFactory);
+                KnownHands.enrich(frame, copy.getObjectId(), managerFactory);
                 Rollbacks.enrich(frame, copy.getObjectId(), managerFactory);
                 ControlledViews.enrich(frame, copy.getObjectId(), managerFactory);
                 DialogOwners.enrich(frame, copy.getObjectId(), managerFactory);

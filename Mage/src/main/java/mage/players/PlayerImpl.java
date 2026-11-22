@@ -1974,6 +1974,8 @@ public abstract class PlayerImpl implements Player, Serializable {
     public void shuffleLibrary(Ability source, Game game) {
         if (!game.replaceEvent(GameEvent.getEvent(GameEvent.EventType.SHUFFLE_LIBRARY, playerId, source, playerId))) {
             this.library.shuffle();
+            // ClaudeMTG: a card revealed in this library is no longer known once it is shuffled (GameState.noteRevealed)
+            game.getState().forgetKnown(this.library.getCardList());
             if (!game.isSimulation()) {
                 game.informPlayers(getLogName() + "'s library is shuffled" + CardUtil.getSourceLogName(game, source));
             }
@@ -2010,6 +2012,10 @@ public abstract class PlayerImpl implements Player, Serializable {
             game.getState().getRevealed().add(CardUtil.createObjectRelatedWindowTitle(source, game, titleSuffix), cards);
         } else {
             game.getState().getRevealed().update(CardUtil.createObjectRelatedWindowTitle(source, game, titleSuffix), cards);
+        }
+        // ClaudeMTG: a card revealed and put into a hand stays known there (GameState.noteRevealed)
+        for (Card card : cards.getCards(game)) {
+            game.getState().noteRevealed(card);
         }
         if (postToLog && !game.isSimulation()) {
             StringBuilder sb = new StringBuilder(getLogName()).append(" reveals ");

@@ -115,6 +115,12 @@ public class GameState implements Serializable, Copyable<GameState> {
 
     private int applyEffectsCounter; // Upcounting number of each applyEffects execution
 
+    // ClaudeMTG: the cards the whole table knows in a hand: revealed, then put into it, or put into it and revealed
+    // by the same effect (a tutor's "reveal it, put it into your hand"). Main card id -> the applyEffects count when
+    // it last entered a hand, and main card id -> the zone change counter at which it is known in its hand.
+    private final Map<UUID, Integer> handEntries = new HashMap<>();
+    private final Map<UUID, Integer> knownInHand = new HashMap<>();
+
     public GameState() {
         players = new Players();
         playerList = new PlayerList();
@@ -181,6 +187,8 @@ public class GameState implements Serializable, Copyable<GameState> {
         this.copiedCards.putAll(state.copiedCards);
         this.permanentOrderNumber = state.permanentOrderNumber;
         this.applyEffectsCounter = state.applyEffectsCounter;
+        this.handEntries.putAll(state.handEntries);
+        this.knownInHand.putAll(state.knownInHand);
         state.usePowerInsteadOfToughnessForDamageLethalityFilters.forEach((uuid, filter)
                 -> this.usePowerInsteadOfToughnessForDamageLethalityFilters.put(uuid, filter.copy()));
         this.commandersToStay.addAll(state.commandersToStay);
@@ -240,6 +248,8 @@ public class GameState implements Serializable, Copyable<GameState> {
         copiedCards.clear();
         usePowerInsteadOfToughnessForDamageLethalityFilters.clear();
         permanentOrderNumber = 0;
+        handEntries.clear();
+        knownInHand.clear();
     }
 
     public void restoreForRollBack(GameState state) {
@@ -293,6 +303,10 @@ public class GameState implements Serializable, Copyable<GameState> {
         this.copiedCards = state.copiedCards;
         this.permanentOrderNumber = state.permanentOrderNumber;
         this.applyEffectsCounter = state.applyEffectsCounter;
+        this.handEntries.clear();
+        this.handEntries.putAll(state.handEntries);
+        this.knownInHand.clear();
+        this.knownInHand.putAll(state.knownInHand);
         state.usePowerInsteadOfToughnessForDamageLethalityFilters.forEach((uuid, filter)
                 -> this.usePowerInsteadOfToughnessForDamageLethalityFilters.put(uuid, filter.copy()));
         this.commandersToStay = state.commandersToStay;
@@ -1665,6 +1679,51 @@ public class GameState implements Serializable, Copyable<GameState> {
 
     public int getApplyEffectsCounter() {
         return applyEffectsCounter;
+    }
+
+    /** ClaudeMTG: a card has just entered a hand (ZonesHandler), its main card's id. */
+    public void noteHandEntry(UUID mainCardId) {
+        if (mainCardId != null) {
+            handEntries.put(mainCardId, applyEffectsCounter);
+        }
+    }
+
+    /**
+     * ClaudeMTG: a card is being revealed (PlayerImpl.revealCards). Out of a hand, it will be known in the hand it
+     * may go to next (zone change counter + 1); in a hand it entered during this same effect (no applyEffects
+     * since), it is known there now. A card revealed from a hand it was already in is not kept known.
+     */
+    public void noteRevealed(Card card) {
+        if (card == null || card.getMainCard() == null) {
+            return;
+        }
+        UUID id = card.getMainCard().getId();
+        int zcc = getZoneChangeCounter(id);
+        if (getZone(id) == Zone.HAND) {
+            Integer entered = handEntries.get(id);
+            if (entered != null && entered == applyEffectsCounter) {
+                knownInHand.put(id, zcc);
+            }
+        } else {
+            knownInHand.put(id, zcc + 1);
+        }
+    }
+
+    /** ClaudeMTG: these cards were shuffled (a library): what was revealed of them is no longer known. */
+    public void forgetKnown(Collection<UUID> cardIds) {
+        if (cardIds != null && !knownInHand.isEmpty()) {
+            cardIds.forEach(knownInHand::remove);
+        }
+    }
+
+    /** ClaudeMTG: this card is in a hand and the whole table knows it there (noteRevealed). */
+    public boolean isKnownInHand(Card card) {
+        if (card == null || card.getMainCard() == null) {
+            return false;
+        }
+        UUID id = card.getMainCard().getId();
+        Integer known = knownInHand.get(id);
+        return known != null && getZone(id) == Zone.HAND && known == getZoneChangeCounter(id);
     }
 
     public void addPowerInsteadOfToughnessForDamageLethalityFilter(UUID source, FilterCreaturePermanent filter) {
