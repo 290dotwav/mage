@@ -40,6 +40,13 @@ public class ChatSession {
     private final ConcurrentMap<UUID, String> users = new ConcurrentHashMap<>(); // active users
     private final Set<UUID> usersHistory = new HashSet<>(); // all users that was here (need for system messages like connection problem)
     private final UUID chatId;
+    /**
+     * A game chat as it was said: its log and its talk, whispers left out, for whoever comes in
+     * after it began (the site's door, {@code game past}). The owner, 22 November, watching a game
+     * near its end: « il faut que le chat et les logs précédents soient visibles ».
+     */
+    private static final int PAST_KEPT = 2000;
+    private final Deque<ChatMessage> past = new ArrayDeque<>();
     private final Date createTime;
     private final String info;
 
@@ -179,6 +186,15 @@ public class ChatSession {
                     throw new IllegalStateException("Unsupported message type " + messageType);
             }
 
+            if (this.gameId != null) {
+                synchronized (past) {
+                    past.addLast(chatMessage);
+                    while (past.size() > PAST_KEPT) {
+                        past.removeFirst();
+                    }
+                }
+            }
+
             // TODO: wtf, remove all that locks/tries and make it simpler
             Set<UUID> clientsToRemove = new HashSet<>();
             List<UUID> chatUserIds = new ArrayList<>();
@@ -224,6 +240,16 @@ public class ChatSession {
 
     public boolean hasUser(UUID userId, boolean useHistory) {
         return useHistory ? usersHistory.contains(userId) : users.containsKey(userId);
+    }
+
+    /** What this game chat has said so far (oldest first), for a user who joined it; empty for anyone else. */
+    public List<ChatMessage> getPast(UUID userId) {
+        if (this.gameId == null || !hasUser(userId, true)) {
+            return new ArrayList<>();
+        }
+        synchronized (past) {
+            return new ArrayList<>(past);
+        }
     }
 
     public ConcurrentMap<UUID, String> getUsers() {
