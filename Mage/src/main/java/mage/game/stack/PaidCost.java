@@ -8,6 +8,7 @@ import mage.game.Game;
 import mage.game.permanent.Permanent;
 import mage.target.Target;
 import mage.abilities.Ability;
+import mage.abilities.AbilityImpl;
 import mage.abilities.costs.Cost;
 import mage.abilities.costs.Costs;
 import mage.abilities.costs.SacrificeCost;
@@ -141,26 +142,11 @@ public final class PaidCost {
      * off {@code game} when the cost keeps only their ids (null: only the names a cost keeps itself).
      */
     public static PaidCost of(StackObject object, Game game) {
-        if (object == null || object.isCopy()) {
-            return null;
-        }
-        Ability ability;
-        boolean spell;
-        if (object instanceof Spell) {
-            ability = ((Spell) object).getSpellAbility();
-            spell = true;
-        } else if (object instanceof StackAbility) {
-            ability = ((StackAbility) object).getStackAbility();
-            spell = false;
-            if (ability == null || !ability.getAbilityType().isActivatedAbility()) {
-                return null;
-            }
-        } else {
-            return null;
-        }
+        Ability ability = paidAbility(object);
         if (ability == null) {
             return null;
         }
+        boolean spell = object instanceof Spell;
         ManaCosts<ManaCost> paid = ability.getManaCostsToPay();
         if (!paid.isPaid()) {
             // 601.2a puts the spell on the stack before its costs are paid (601.2g-h): while the
@@ -199,6 +185,58 @@ public final class PaidCost {
         }
         String text = (anyGeneric && (generic > 0 || rest.length() == 0) ? "{" + generic + "}" : "") + rest;
         return new PaidCost(text, x, symbols(used), life, Collections.unmodifiableList(others));
+    }
+
+    /**
+     * The mana cost {@code object} is being paid for, while its mana is still asked for: the total cost
+     * as 601.2f determined it (increases, reductions, commander tax, X by its value), written as
+     * {@link #getCost()} will be once it is paid. « quand j'ai demandé à ce qu'on affiche le coût payé
+     * c'est explicite... si je voulais le coût de la carte je peux lire moi même la carte » (the owner,
+     * 23 November): what the other seats see before the payment ends is the cost to pay, not the
+     * printed one.
+     * <p>
+     * {@code null} once paid (then {@link #of} answers), before 601.2f (modes, X, targets still being
+     * chosen: the cost is not determined yet), and for whatever {@link #of} says nothing about.
+     */
+    public static String toPay(StackObject object) {
+        Ability ability = paidAbility(object);
+        if (!(ability instanceof AbilityImpl) || !((AbilityImpl) ability).isTotalCostDetermined()) {
+            return null;
+        }
+        ManaCosts<ManaCost> costs = ability.getManaCostsToPay();
+        if (costs.isPaid()) {
+            return null;
+        }
+        int generic = 0;
+        boolean anyGeneric = false;
+        StringBuilder rest = new StringBuilder();
+        for (ManaCost part : costs) {
+            if (part instanceof VariableManaCost) {
+                continue;
+            }
+            if (part instanceof GenericManaCost) {
+                generic += part.manaValue();
+                anyGeneric = true;
+                continue;
+            }
+            rest.append(part.getText());
+        }
+        return (anyGeneric && (generic > 0 || rest.length() == 0) ? "{" + generic + "}" : "") + rest;
+    }
+
+    /** The ability whose costs were paid to put {@code object} on the stack, or null when nothing is paid for it. */
+    private static Ability paidAbility(StackObject object) {
+        if (object == null || object.isCopy()) {
+            return null;
+        }
+        if (object instanceof Spell) {
+            return ((Spell) object).getSpellAbility();
+        }
+        if (object instanceof StackAbility) {
+            Ability ability = ((StackAbility) object).getStackAbility();
+            return ability != null && ability.getAbilityType().isActivatedAbility() ? ability : null;
+        }
+        return null;
     }
 
     /** The life paid among {@code costs}: each paid {@link PayLifeCost}, nested cost lists included. */

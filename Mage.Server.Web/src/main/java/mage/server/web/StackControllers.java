@@ -33,6 +33,11 @@ import java.util.UUID;
  * "pay N life" cost, K'rrik), only when some was. Left out for a triggered ability, a copy, and an activated ability
  * whose cost holds no mana and no life: nothing was paid for those.
  * <p>
+ * While its mana is still being asked for, an entry gets {@code manaToPay} instead: the total cost
+ * being paid ({@link PaidCost#toPay}, "{3}{G}{U}{R}" for a Dragon under The Ur-Dragon), written as
+ * {@code manaPaid.cost} will be; left out before 601.2f has determined that cost (modes, X, targets
+ * still being chosen) and for what {@code manaPaid} never says.
+ * <p>
  * And {@code others}, every other cost paid ({@link PaidCost#getOthers()}): one entry each,
  * {@code kind} (sacrifice, discard, exile, reveal, return, tap, untap, counters), {@code names}
  * of what it took, {@code source: true} when the source itself was the price ({T}, "Sacrifice
@@ -75,6 +80,12 @@ final class StackControllers {
                 JsonObject paid = paid(object, game);
                 if (paid != null) {
                     entry.add("manaPaid", paid);
+                } else {
+                    // still being paid: the cost being paid, once 601.2f has determined it
+                    String toPay = PaidCost.toPay(object);
+                    if (toPay != null) {
+                        entry.addProperty("manaToPay", toPay);
+                    }
                 }
             }
         } catch (RuntimeException ignore) {

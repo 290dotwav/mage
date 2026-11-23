@@ -98,6 +98,8 @@ public abstract class AbilityImpl implements Ability {
     private String appendToRule = null;
     private int sourcePermanentTransformCount = 0;
     private Map<String, Object> costsTagMap = null;
+    // 601.2f reached: its total cost is locked in (increases, reductions, commander tax applied), read by PaidCost.toPay
+    private boolean totalCostDetermined = false;
 
     protected AbilityImpl(AbilityType abilityType, Zone zone) {
         this.id = UUID.randomUUID();
@@ -146,6 +148,7 @@ public abstract class AbilityImpl implements Ability {
         this.appendToRule = ability.appendToRule;
         this.sourcePermanentTransformCount = ability.sourcePermanentTransformCount;
         this.costsTagMap = CardUtil.deepCopyObject(ability.costsTagMap);
+        this.totalCostDetermined = ability.totalCostDetermined;
     }
 
     @Override
@@ -285,6 +288,8 @@ public abstract class AbilityImpl implements Ability {
         if (controller == null) {
             return false;
         }
+        // an ability activated again starts with its cost not yet determined (601.2f comes later)
+        totalCostDetermined = false;
         game.applyEffects();
 
         MageObject sourceObject = getSourceObject(game);
@@ -460,6 +465,8 @@ public abstract class AbilityImpl implements Ability {
             // adjustX already called before any announces
             game.getContinuousEffects().costModification(this, game);
         }
+        // 601.2f: the total cost is determined, the mana is asked for from here on
+        totalCostDetermined = true;
 
         //20100716 - 601.2f  (noMana is not used here, because mana costs were cleared for this ability before adding additional costs and applying cost modification effects)
         if (!getManaCostsToPay().pay(this, game, this, controllerId, false, null)) {
@@ -651,6 +658,15 @@ public abstract class AbilityImpl implements Ability {
      * @param game
      * @return announce message
      */
+    /**
+     * Whether its total cost is determined (601.2f): every increase, reduction and commander tax is in
+     * {@link #getManaCostsToPay()}, the mana is being asked for or has been paid. False while modes, X,
+     * targets are still being chosen, when the cost is still the printed one.
+     */
+    public boolean isTotalCostDetermined() {
+        return totalCostDetermined;
+    }
+
     protected String handleOtherXCosts(Game game, Player controller) {
         StringBuilder announceString = new StringBuilder();
         for (VariableCost variableCost : this.getCosts().getVariableCosts()) {
