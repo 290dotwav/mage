@@ -7,14 +7,18 @@ import mage.game.Game;
 import mage.game.GameHold;
 import mage.game.lesson.RivalScript;
 import mage.players.Player;
+import mage.view.ChatMessage;
 import mage.view.ChatMessage.MessageColor;
 import mage.view.ChatMessage.MessageType;
+import mage.server.ChatSession;
 import mage.server.Session;
 import mage.server.User;
 import mage.server.game.GameController;
 import mage.server.managers.ManagerFactory;
 import org.apache.log4j.Logger;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -61,6 +65,10 @@ final class GameOps {
     void handle(WebSession web, JsonObject frame, JsonElement id) throws Exception {
         String op = Frames.requireString(frame, "op");
         UUID gameId = UUID.fromString(Frames.requireString(frame, "gameId"));
+        if ("past".equals(op)) {
+            web.send(Frames.result("game.past", past(web, gameId), id));
+            return;
+        }
         Seat seat = seatOf(web, gameId);
         switch (op) {
             case "pause": {
@@ -89,7 +97,7 @@ final class GameOps {
                 web.send(Frames.result("game.status", state(gameId), id));
                 break;
             default:
-                throw new IllegalArgumentException("unknown game op '" + op + "' (pause, resume, status)");
+                throw new IllegalArgumentException("unknown game op '" + op + "' (pause, resume, status, past)");
         }
     }
 
@@ -130,6 +138,30 @@ final class GameOps {
     }
 
     /** The seat this socket holds at that game, or an exception naming why it holds none. */
+    /**
+     * {@code { kind: "game", op: "past", gameId }}: what the game's chat has said since it began, its log
+     * and its talk (ChatSession.getPast), for a socket whose user has joined that chat - a watcher who
+     * came in late reads the game from its start (the owner, 22 November: « il faut que le chat et les
+     * logs précédents soient visibles »). Seated or watching: the chat is the same for both.
+     */
+    private List<ChatMessage> past(WebSession web, UUID gameId) {
+        GameController controller = managerFactory.gameManager().getGameController().get(gameId);
+        if (controller == null) {
+            throw new IllegalStateException("no controller for game " + gameId);
+        }
+        Session session = managerFactory.sessionManager().getSession(web.sessionId).orElse(null);
+        if (session == null || session.getUserId() == null) {
+            throw new IllegalStateException("this socket has no user: connect (table create/join/watch) first");
+        }
+        UUID chatId = controller.getChatId();
+        for (ChatSession chat : managerFactory.chatManager().getChatSessions()) {
+            if (chat.getChatId().equals(chatId)) {
+                return chat.getPast(session.getUserId());
+            }
+        }
+        return new ArrayList<>();
+    }
+
     private Seat seatOf(WebSession web, UUID gameId) {
         Game game = LiveGame.of(gameId, managerFactory);
         if (game == null) {
