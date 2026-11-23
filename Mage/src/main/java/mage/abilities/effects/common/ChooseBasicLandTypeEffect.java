@@ -41,6 +41,7 @@ public class ChooseBasicLandTypeEffect extends OneShotEffect {
         }
         if (controller != null && mageObject != null) {
             ChoiceImpl choices = new ChoiceBasicLandType();
+            choices.setSubMessage(mageObject.getIdName());
             if (controller.choose(Outcome.Neutral, choices, game)) {
                 game.informPlayers(mageObject.getName() + ":  Chosen basic land type is " + choices.getChoice());
                 game.getState().setValue(mageObject.getId().toString() + VALUE_KEY, choices.getChoice());

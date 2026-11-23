@@ -53,6 +53,7 @@ public class ChooseCardTypeEffect extends OneShotEffect {
         }
         if (controller != null && mageObject != null) {
             Choice typeChoice = new ChoiceCardType(true, cardTypes);
+            typeChoice.setSubMessage(mageObject.getIdName());
             if (controller.choose(outcome, typeChoice, game)) {
                 game.informPlayers(mageObject.getLogName() + ": " + controller.getLogName() + " has chosen: " + typeChoice.getChoice());
                 game.getState().setValue(source.getSourceId() + "_type", typeChoice.getChoice());

@@ -43,6 +43,10 @@ public class ChooseColorEffect extends OneShotEffect {
             mageObject = game.getObject(source);
         }
         ChoiceColor choice = new ChoiceColor();
+        if (mageObject != null) {
+            // the card this is asked for, named on the question: it may be on its way in, on no board yet
+            choice.setSubMessage(mageObject.getIdName());
+        }
         if (exceptColor != null) {
             choice.removeColorFromChoices(exceptColor);
         }

@@ -38,6 +38,7 @@ public class ChooseLandTypeEffect extends OneShotEffect {
         if (controller != null && mageObject != null) {
             Choice typeChoice = new ChoiceImpl(true);
             typeChoice.setMessage("Choose land type");
+            typeChoice.setSubMessage(mageObject.getIdName());
             typeChoice.setChoices(SubType.getLandTypes().stream().map(SubType::toString).collect(Collectors.toSet()));
             if (controller.choose(outcome, typeChoice, game)) {
                 if (!game.isSimulation()) {

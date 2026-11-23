@@ -74,14 +74,18 @@ public class ChooseACardNameEffect extends OneShotEffect {
                 return null;
             }
             Choice cardChoice = makeChoiceObject();
+            MageObject sourceObject = game.getPermanentEntering(source.getSourceId());
+            if (sourceObject == null) {
+                sourceObject = source.getSourceObject(game);
+            }
+            if (sourceObject != null) {
+                // the card this is asked for, named on the question: it may be on its way in, on no board yet
+                cardChoice.setSubMessage(sourceObject.getIdName());
+            }
             player.choose(Outcome.Detriment, cardChoice, game);
             String cardName = cardChoice.getChoice();
             if (cardName == null) {
                 return null;
-            }
-            MageObject sourceObject = game.getPermanentEntering(source.getSourceId());
-            if (sourceObject == null) {
-                sourceObject = source.getSourceObject(game);
             }
             if (sourceObject == null) {
                 return cardName;
