@@ -3,14 +3,18 @@ package mage.server.web;
 import com.google.gson.JsonObject;
 import mage.abilities.Ability;
 import mage.abilities.AbilitiesImpl;
+import mage.abilities.effects.ChangeSources;
 import mage.abilities.keyword.FlyingAbility;
 import mage.abilities.keyword.HexproofAbility;
 import mage.abilities.keyword.ProtectionFromEverythingAbility;
 import mage.abilities.keyword.ShroudAbility;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -99,5 +103,22 @@ class BoardStatesTest {
         JsonObject named = new JsonObject();
         BoardStates.markStartingPlayer(named, first);
         assertTrue(named.get("startingPlayerId").getAsString().equals(first.toString()));
+    }
+
+    @Test
+    void whatChangedAPermanentWithWhereItComesFrom() {
+        JsonObject bears = new JsonObject();
+        BoardStates.markChangedBy(bears, Arrays.asList(
+                new ChangeSources.Change("Glorious Anthem", 1, 1, Collections.emptyList(), Collections.emptyList()),
+                new ChangeSources.Change("Behemoth Sledge", 2, 2, Arrays.asList("Trample", "Lifelink"), Collections.emptyList()),
+                new ChangeSources.Change("Humility", -5, -5, Collections.emptyList(), Collections.singletonList("Flying"))));
+        assertEquals("[{\"from\":\"Glorious Anthem\",\"power\":1,\"toughness\":1},"
+                + "{\"from\":\"Behemoth Sledge\",\"power\":2,\"toughness\":2,\"gained\":[\"Trample\",\"Lifelink\"]},"
+                + "{\"from\":\"Humility\",\"power\":-5,\"toughness\":-5,\"lost\":[\"Flying\"]}]",
+                bears.get("changedBy").toString());
+        JsonObject plain = new JsonObject();
+        BoardStates.markChangedBy(plain, null);
+        BoardStates.markChangedBy(plain, Collections.emptyList());
+        assertFalse(plain.has("changedBy"));
     }
 }

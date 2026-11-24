@@ -1,9 +1,11 @@
 package mage.server.web;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import mage.abilities.Abilities;
 import mage.abilities.Ability;
+import mage.abilities.effects.ChangeSources;
 import mage.abilities.effects.common.ChooseSecretOpponentEffect;
 import mage.abilities.keyword.HexproofAbility;
 import mage.abilities.keyword.ProtectionFromEverythingAbility;
@@ -14,6 +16,7 @@ import mage.game.permanent.Permanent;
 import mage.players.Player;
 import mage.server.managers.ManagerFactory;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -70,6 +73,20 @@ import java.util.UUID;
  * <pre>
  *   "startingPlayerId": "&lt;playerId&gt;" // on the view; left out until the starting player is named
  * </pre>
+ * What changed a permanent, by where it comes from (613, layers 6 and 7: "a +1/+1, where does
+ * it come from?"): their PermanentView carries the power, toughness and rules as they are now,
+ * not who made them so. Their engine records it as it applies the continuous effects
+ * ({@code ChangeSources}), for this game only: the door turns the record on with its first
+ * frame. Counters are not in it, a screen reads them off the permanent.
+ * <pre>
+ *   "changedBy": [{ "from": "Glorious Anthem", "power": 1, "toughness": 1 },
+ *                 { "from": "Behemoth Sledge", "power": 2, "toughness": 2, "gained": ["Trample", "Lifelink"] },
+ *                 { "from": "Humility", "power": -5, "toughness": -5, "lost": ["Flying"] }]
+ *                                    // on that permanent's entry; left out when nothing changed it
+ * </pre>
+ * A field that is zero, a list that is empty, is left out. {@code gained} and {@code lost} are
+ * in the words of the permanent's {@code rules}.
+ * <p>
  * Read on the game thread; a concurrent change skips the enrichment for that frame.
  */
 final class BoardStates {
@@ -87,6 +104,10 @@ final class BoardStates {
             if (game == null) {
                 return;
             }
+            if (!game.isRecordingChangeSources()) {
+                game.setRecordingChangeSources(true); // from the next application of the effects on
+            }
+            Map<UUID, List<ChangeSources.Change>> changes = game.getChangeSources();
             if (game.hasDayNight()) {
                 view.addProperty("dayNight", game.checkDayNight(true) ? "day" : "night");
             }
@@ -122,6 +143,7 @@ final class BoardStates {
                     if (permanent == null) {
                         continue;
                     }
+                    markChangedBy(e.getValue().getAsJsonObject(), changes.get(permanent.getId()));
                     if (permanent.hasSubtype(SubType.CLASS, game)) {
                         e.getValue().getAsJsonObject().addProperty("classLevel", permanent.getClassLevel());
                     }
@@ -155,6 +177,36 @@ final class BoardStates {
     static void markLands(JsonObject entry, int played, int perTurn) {
         entry.addProperty("landsPlayed", Math.max(0, played));
         entry.addProperty("landsPerTurn", Math.max(0, perTurn));
+    }
+
+    /** `changedBy` on a permanent's entry: each source of a change, what it added to its size, the abilities it gave and took. */
+    static void markChangedBy(JsonObject entry, List<ChangeSources.Change> changes) {
+        if (changes == null || changes.isEmpty()) {
+            return;
+        }
+        JsonArray list = new JsonArray();
+        for (ChangeSources.Change change : changes) {
+            JsonObject one = new JsonObject();
+            one.addProperty("from", change.getFrom());
+            if (change.getPower() != 0) {
+                one.addProperty("power", change.getPower());
+            }
+            if (change.getToughness() != 0) {
+                one.addProperty("toughness", change.getToughness());
+            }
+            if (!change.getGained().isEmpty()) {
+                JsonArray gained = new JsonArray();
+                change.getGained().forEach(gained::add);
+                one.add("gained", gained);
+            }
+            if (!change.getLost().isEmpty()) {
+                JsonArray lost = new JsonArray();
+                change.getLost().forEach(lost::add);
+                one.add("lost", lost);
+            }
+            list.add(one);
+        }
+        entry.add("changedBy", list);
     }
 
     /** `secretOpponent` on a permanent's entry, for the player who chose it only. */

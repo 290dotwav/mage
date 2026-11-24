@@ -169,6 +169,9 @@ public abstract class GameImpl implements Game {
      * ability is put on the stack (its targets) from one asked while it resolves.
      */
     private transient UUID resolvingId = null;
+    // ClaudeMTG fork: where each change of a permanent comes from (ChangeSources), for the game the door serves; not copied
+    private transient volatile boolean recordingChangeSources = false;
+    private transient volatile Map<UUID, List<mage.abilities.effects.ChangeSources.Change>> changeSources = Collections.emptyMap();
     private boolean scopeRelevant = false; // replacement effects: used to indicate that currently applied replacement effects have to check for scope relevance (614.12 13/01/18)
     private boolean saveGame = false; // replay code, not done
     private int priorityTime; // Match time limit (per player). Set at the start of the match and only goes down.
@@ -2031,6 +2034,30 @@ public abstract class GameImpl implements Game {
             resetLKI();
             clearAllBookmarks();
         }
+    }
+
+    @Override
+    public boolean isRecordingChangeSources() {
+        return recordingChangeSources;
+    }
+
+    @Override
+    public void setRecordingChangeSources(boolean recording) {
+        this.recordingChangeSources = recording;
+        if (!recording) {
+            this.changeSources = Collections.emptyMap();
+        }
+    }
+
+    @Override
+    public Map<UUID, List<mage.abilities.effects.ChangeSources.Change>> getChangeSources() {
+        Map<UUID, List<mage.abilities.effects.ChangeSources.Change>> changes = changeSources;
+        return changes == null ? Collections.emptyMap() : changes;
+    }
+
+    @Override
+    public void setChangeSources(Map<UUID, List<mage.abilities.effects.ChangeSources.Change>> changes) {
+        this.changeSources = changes == null ? Collections.emptyMap() : changes;
     }
 
     /** The stack object being resolved right now, null outside a resolution ({@link #resolve()}). */

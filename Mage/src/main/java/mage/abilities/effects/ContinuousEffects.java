@@ -1031,6 +1031,8 @@ public class ContinuousEffects implements Serializable {
     public synchronized void apply(Game game) {
         removeInactiveEffects(game);
         List<ContinuousEffect> activeLayerEffects = getLayeredEffects(game); // main call
+        // ClaudeMTG fork: where each change of a permanent in layers 6 and 7 comes from, for the game that asks
+        ChangeSources sources = game.isRecordingChangeSources() ? new ChangeSources() : null;
 
         List<ContinuousEffect> layer = filterLayeredEffects(activeLayerEffects, Layer.CopyEffects_1);
         for (ContinuousEffect effect : layer) {
@@ -1139,7 +1141,13 @@ public class ContinuousEffects implements Serializable {
                         appliedEffectAbilities.put(effect, appliedAbilities);
                     }
                     appliedAbilities.add(ability);
+                    if (sources != null) {
+                        sources.before(game, true);
+                    }
                     effect.apply(Layer.AbilityAddingRemovingEffects_6, SubLayer.NA, ability, game);
+                    if (sources != null) {
+                        sources.after(ability, game);
+                    }
                     // It took its own ability away (Humility made a creature by Opalescence): it goes on
                     // in the later layers (613.6). One whose ability another effect of this layer takes
                     // away depended on that effect (613.8) and is dropped, as before (Turn to Frog on a lord).
@@ -1172,7 +1180,13 @@ public class ContinuousEffects implements Serializable {
                             appliedEffectAbilities.put(entry.getKey(), appliedAbilities);
                         }
                         appliedAbilities.add(ability);
+                        if (sources != null) {
+                            sources.before(game, true);
+                        }
                         entry.getKey().apply(Layer.AbilityAddingRemovingEffects_6, SubLayer.NA, ability, game);
+                        if (sources != null) {
+                            sources.after(ability, game);
+                        }
                         if (!isActive(entry.getKey(), game)) {
                             startedEffects.add(entry.getKey().getId());
                         }
@@ -1198,13 +1212,25 @@ public class ContinuousEffects implements Serializable {
         for (ContinuousEffect effect : layer) {
             Set<Ability> abilities = layeredEffects.getAbility(effect.getId());
             for (Ability ability : abilities) {
+                if (sources != null) {
+                    sources.before(game, false);
+                }
                 effect.apply(Layer.PTChangingEffects_7, SubLayer.SetPT_7b, ability, game);
+                if (sources != null) {
+                    sources.after(ability, game);
+                }
             }
         }
         for (ContinuousEffect effect : layer) {
             Set<Ability> abilities = layeredEffects.getAbility(effect.getId());
             for (Ability ability : abilities) {
+                if (sources != null) {
+                    sources.before(game, false);
+                }
                 effect.apply(Layer.PTChangingEffects_7, SubLayer.ModifyPT_7c, ability, game);
+                if (sources != null) {
+                    sources.after(ability, game);
+                }
             }
         }
 
@@ -1215,7 +1241,13 @@ public class ContinuousEffects implements Serializable {
         for (ContinuousEffect effect : layer) {
             Set<Ability> abilities = layeredEffects.getAbility(effect.getId());
             for (Ability ability : abilities) {
+                if (sources != null) {
+                    sources.before(game, false);
+                }
                 effect.apply(Layer.PTChangingEffects_7, SubLayer.SwitchPT_e, ability, game);
+                if (sources != null) {
+                    sources.after(ability, game);
+                }
             }
         }
         layer = filterLayeredEffects(activeLayerEffects, Layer.PlayerEffects);
@@ -1231,6 +1263,9 @@ public class ContinuousEffects implements Serializable {
             for (Ability ability : abilities) {
                 effect.apply(Layer.RulesEffects, SubLayer.NA, ability, game);
             }
+        }
+        if (sources != null) {
+            game.setChangeSources(sources.result());
         }
     }
 
