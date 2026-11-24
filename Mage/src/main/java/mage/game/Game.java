@@ -729,6 +729,30 @@ public interface Game extends MageItem, Serializable, Copyable<Game> {
     }
 
     /**
+     * ClaudeMTG fork: whether {@code ContinuousEffects.apply} records where each change of a
+     * permanent in layers 6 and 7 comes from ({@link mage.abilities.effects.ChangeSources}). Off
+     * by default and never carried by a copy (the AI's simulations): the web door turns it on
+     * for the game it serves.
+     */
+    default boolean isRecordingChangeSources() {
+        return false;
+    }
+
+    default void setRecordingChangeSources(boolean recording) {
+    }
+
+    /**
+     * The changes of the last application of the continuous effects, by permanent id, each with
+     * the name of what made it (empty until recording is on and the effects were applied once).
+     */
+    default Map<UUID, List<mage.abilities.effects.ChangeSources.Change>> getChangeSources() {
+        return Collections.emptyMap();
+    }
+
+    default void setChangeSources(Map<UUID, List<mage.abilities.effects.ChangeSources.Change>> changes) {
+    }
+
+    /**
      * Add counters to permanent before ETB. Use it before put real permanent to battlefield.
      */
     void setEnterWithCounters(UUID sourceId, Counters counters);

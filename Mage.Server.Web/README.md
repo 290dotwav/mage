@@ -155,6 +155,17 @@ Protection, The One Ring), absent otherwise; `hexproof: true` and `shroud: true`
 player's entry the same way while he has hexproof (702.11c: Leyline of Sanctity, Shalai) or
 shroud (702.18a: True Believer).
 
+`changedBy` on a permanent's entry of a player's `battlefield`: where each change of it comes
+from (« Un +1 d'où il vient ? »), `[{ from, power?, toughness?, gained?, lost? }]`, `from` the
+English name of the source, `power` and `toughness` what it added (negative when it took, a
+Humility on a 6/6 says -5/-5), `gained` and `lost` the abilities in the words of `rules`.
+Recorded by their engine as it applies layers 6 and 7b, 7c, 7e (`mage.abilities.effects.ChangeSources`,
+around each `effect.apply` of `ContinuousEffects.apply`), for this game only: the door turns
+the record on with its first frame (`Game.setRecordingChangeSources`), a copy (the AI's
+simulations) never carries it. Counters and characteristic-defining abilities are not in it.
+Absent when nothing changed the permanent. Measured: about 80 µs more per `applyEffects` on a
+62-permanent board (from about 350 µs).
+
 ## Holding the game (`game` frames)
 
 `pause` holds the running game for every seat but the one asking, `resume`
