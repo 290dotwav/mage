@@ -805,7 +805,9 @@ public class HumanPlayer extends PlayerImpl {
 
                 prepareForResponse(game);
                 if (!isExecutingMacro()) {
-                    game.fireSelectTargetEvent(getId(), new MessageToClient(target.getMessage(game), getRelatedObjectName(source, game)), possibleTargets, required, getOptions(target, options));
+                    Map<String, Serializable> questionOptions = getOptions(target, options);
+                    DamagePreview.putInto(questionOptions, target, source, game); // ClaudeMTG fork: damage to the target
+                    game.fireSelectTargetEvent(getId(), new MessageToClient(target.getMessage(game), getRelatedObjectName(source, game)), possibleTargets, required, questionOptions);
                 }
                 waitForResponse(game);
                 responseId = getFixedResponseUUID(game);
@@ -876,8 +878,10 @@ public class HumanPlayer extends PlayerImpl {
 
                 prepareForResponse(game);
                 if (!isExecutingMacro()) {
+                    Map<String, Serializable> questionOptions = getOptions(target, options);
+                    DamagePreview.putInto(questionOptions, target, source, game); // ClaudeMTG fork: damage to the target
                     game.fireSelectTargetEvent(getId(), new MessageToClient(target.getMessage(game), getRelatedObjectName(source, game)),
-                            possibleTargets, required, getOptions(target, options));
+                            possibleTargets, required, questionOptions);
                 }
                 waitForResponse(game);
                 responseId = getFixedResponseUUID(game);
