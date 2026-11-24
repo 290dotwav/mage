@@ -11,8 +11,11 @@ import mage.constants.Outcome;
 import mage.game.Game;
 import mage.game.permanent.Permanent;
 import mage.players.Player;
+import mage.target.Target;
 import mage.target.common.TargetAnyTarget;
 import mage.util.CardUtil;
+import mage.util.DamagePreview;
+import mage.util.DamagePreviewing;
 
 import java.util.*;
 
@@ -53,7 +56,7 @@ enum FireballAdjuster implements CostAdjuster {
     }
 }
 
-class FireballEffect extends OneShotEffect {
+class FireballEffect extends OneShotEffect implements DamagePreviewing {
 
     FireballEffect() {
         super(Outcome.Damage);
@@ -63,6 +66,15 @@ class FireballEffect extends OneShotEffect {
 
     private FireballEffect(final FireballEffect effect) {
         super(effect);
+    }
+
+    @Override
+    public DamagePreview previewDamage(Target target, Ability source, Game game) {
+        // ClaudeMTG fork: X divided evenly among the targets chosen so far and
+        // the one being chosen; a further target lowers it
+        int numTargets = target.getTargets().size() + 1;
+        int damage = CardUtil.getSourceCostsTag(game, source, "X", 0);
+        return new DamagePreview(Math.max(0, damage / numTargets), null, true);
     }
 
     @Override

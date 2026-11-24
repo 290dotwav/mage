@@ -53,6 +53,13 @@ public class DamageTargetEffect extends OneShotEffect {
         return this;
     }
 
+    /**
+     * ClaudeMTG fork: the amount, read by DamagePreview while the target is chosen.
+     */
+    public DynamicValue getAmount() {
+        return amount;
+    }
+
     @Override
     public DamageTargetEffect copy() {
         return new DamageTargetEffect(this);

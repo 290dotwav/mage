@@ -13,7 +13,10 @@ import mage.game.Game;
 import mage.game.events.GameEvent;
 import mage.game.permanent.Permanent;
 import mage.players.Player;
+import mage.target.Target;
 import mage.target.common.TargetAnyTarget;
+import mage.util.DamagePreview;
+import mage.util.DamagePreviewing;
 
 import java.util.UUID;
 
@@ -80,7 +83,7 @@ class WarstormSurgeTriggeredAbility extends TriggeredAbilityImpl {
     }
 }
 
-class WarstormSurgeEffect extends OneShotEffect {
+class WarstormSurgeEffect extends OneShotEffect implements DamagePreviewing {
 
     WarstormSurgeEffect() {
         super(Outcome.Damage);
@@ -94,6 +97,20 @@ class WarstormSurgeEffect extends OneShotEffect {
     @Override
     public WarstormSurgeEffect copy() {
         return new WarstormSurgeEffect(this);
+    }
+
+    @Override
+    public DamagePreview previewDamage(Target target, Ability source, Game game) {
+        // ClaudeMTG fork: the entering creature's power now, as apply reads it
+        Object creatureId = getValue("damageSource");
+        if (!(creatureId instanceof UUID)) {
+            return null;
+        }
+        Permanent creature = game.getPermanentOrLKIBattlefield((UUID) creatureId);
+        if (creature == null) {
+            return null;
+        }
+        return new DamagePreview(Math.max(0, creature.getPower().getValue()), DamagePreview.nameOf(creature), true);
     }
 
     @Override
