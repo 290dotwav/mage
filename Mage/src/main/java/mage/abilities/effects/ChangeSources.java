@@ -95,7 +95,36 @@ public final class ChangeSources {
     private Ability[][] abilities = null;
 
     /** Read the battlefield before an effect applies; its abilities too when the effect is a layer 6 one. */
+    /** Set once a reading failed: what was recorded is dropped, and the game goes on untouched. */
+    private boolean broken;
+
+    /**
+     * Never lets a failure of its own reach the game: this is only a reading for the screen, run inside the
+     * application of the layers (613), where an exception would stop the game itself.
+     */
     void before(Game game, boolean withAbilities) {
+        if (broken) {
+            return;
+        }
+        try {
+            readBefore(game, withAbilities);
+        } catch (RuntimeException e) {
+            broken = true;
+        }
+    }
+
+    void after(Ability source, Game game) {
+        if (broken) {
+            return;
+        }
+        try {
+            readAfter(source, game);
+        } catch (RuntimeException e) {
+            broken = true;
+        }
+    }
+
+    private void readBefore(Game game, boolean withAbilities) {
         Collection<Permanent> all = game.getBattlefield().getAllPermanents();
         int n = all.size();
         if (permanents.length != n) {
@@ -123,7 +152,7 @@ public final class ChangeSources {
     }
 
     /** After the effect applied: what moved, on the name of the object its ability comes from. */
-    void after(Ability source, Game game) {
+    private void readAfter(Ability source, Game game) {
         String from = null;
         boolean named = false;
         for (int i = 0; i < permanents.length; i++) {
@@ -179,6 +208,9 @@ public final class ChangeSources {
 
     /** The record: permanent id -> its changes, each source once, those that came to nothing left out. */
     Map<UUID, List<Change>> result() {
+        if (broken) {
+            return new HashMap<>();
+        }
         Map<UUID, List<Change>> result = new HashMap<>(changes.size() * 2);
         for (Map.Entry<UUID, Map<String, Change>> entry : changes.entrySet()) {
             List<Change> list = new ArrayList<>(entry.getValue().size());
