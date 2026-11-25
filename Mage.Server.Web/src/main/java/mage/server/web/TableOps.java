@@ -24,6 +24,7 @@ import mage.server.Main;
 import mage.server.Session;
 import mage.server.User;
 import mage.server.managers.ManagerFactory;
+import mage.collectors.services.GameStatsDataCollector;
 import mage.server.scenario.Scenario;
 import mage.server.scenario.Scenarios;
 import mage.view.TableView;
@@ -397,6 +398,7 @@ final class TableOps {
             server.tableRemove(web.sessionId, roomId, table.getTableId());
             throw new MageException("creator could not take a seat at the new table (see callbacks); table removed");
         }
+        GameStatsDataCollector.noteSeat(table.getTableId(), name, !web.identity.restricted());
         logger.info("Web door: " + name + " created table " + table.getTableId() + " (" + gameType + ", " + seats + " seats, mulligan " + mulliganType.name() + (planechase ? ", Planechase" : "") + (scenario != null ? ", scenario " + scenario.getId() : "") + ")");
         web.send(Frames.joined(table.getTableId(), playerId(table.getTableId(), name), name, false, deck, id));
     }
@@ -438,6 +440,10 @@ final class TableOps {
         boolean ok = server.roomJoinTable(web.sessionId, roomId(), tableId, name, playerType, skill, deck.deck, password);
         if (!ok) {
             throw new MageException("join refused for " + name + " at table " + tableId + " (no free seat of type " + playerType + ", bad password, or see callbacks)");
+        }
+        if (playerType == PlayerType.HUMAN) {
+            // the leaderboard tells the machine's own Claude chairs (no account of the site) from the site's players
+            GameStatsDataCollector.noteSeat(tableId, name, !web.identity.restricted());
         }
         logger.info("Web door: " + name + " (" + playerType + ") joined table " + tableId);
         if (playerType != PlayerType.HUMAN && thinkSeconds > 0) {
