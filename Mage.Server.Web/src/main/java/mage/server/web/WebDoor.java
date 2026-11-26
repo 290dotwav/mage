@@ -1,5 +1,6 @@
 package mage.server.web;
 
+import mage.collectors.services.GameStatsDataCollector;
 import mage.server.MageServerImpl;
 import mage.server.ServerExtension;
 import mage.server.managers.ManagerFactory;
@@ -16,6 +17,7 @@ import java.net.InetSocketAddress;
  * <li>{@code -Dxmage.web.port=17172} - listening port (default 17172)</li>
  * <li>{@code -Dxmage.web.host=0.0.0.0} - bind address</li>
  * <li>{@code -Dxmage.web.enabled=false} - keep the jar on the classpath but do not listen</li>
+ * <li>{@code -Dxmage.stats.port=17174} - the finished games' numbers over HTTP ({@link GameStatsHttp}), 0 to keep it shut</li>
  * </ul>
  */
 public final class WebDoor implements ServerExtension {
@@ -37,5 +39,6 @@ public final class WebDoor implements ServerExtension {
         server = new WebDoorServer(new InetSocketAddress(host, port), managerFactory, mageServer);
         server.start(); // its own selector thread; onStart logs the bound address
         logger.info("Web door starting on " + host + ":" + port + " (WebSocket, JSON)");
+        GameStatsHttp.start(host, GameStatsDataCollector.statsFile());
     }
 }

@@ -1,5 +1,6 @@
 package mage.collectors;
 
+import mage.collectors.services.GameStatsDataCollector;
 import mage.collectors.services.PrintGameLogsDataCollector;
 import mage.collectors.services.SaveGameHistoryDataCollector;
 import mage.game.Game;
@@ -53,6 +54,8 @@ final public class DataCollectorServices implements DataCollector {
         // fill all possible services
         getInstance().allServices.add(new PrintGameLogsDataCollector());
         getInstance().allServices.add(new SaveGameHistoryDataCollector());
+        // the leaderboard's numbers, -Dxmage.dataCollectors.gameStats=true (off by default)
+        getInstance().allServices.add(new GameStatsDataCollector());
         logger.info(String.format("Data collectors: found %d services", getInstance().allServices.size()));
 
         // enable only needed
