@@ -49,7 +49,8 @@ class GiftOfPerfectionEffect extends OneShotEffect {
         staticText = "each opponent reveals cards from the top of their library until they reveal a creature card. "
                 + "Assimilate one of the creature cards revealed this way. Then each opponent puts the other cards "
                 + "they revealed this way on the bottom of their library in a random order. "
-                + AssimilateTargetEffect.CARD_REMINDER;
+                + "<i>(Put it onto the battlefield under your control with a +1/+1 counter. "
+                + "It's a Borg artifact creature and loses all other creature types.)</i>";
     }
 
     private GiftOfPerfectionEffect(final GiftOfPerfectionEffect effect) {
@@ -94,7 +95,7 @@ class GiftOfPerfectionEffect extends OneShotEffect {
             controller.choose(Outcome.PutCreatureInPlay, creatures, target, source, game);
             Card chosen = game.getCard(target.getFirstTarget());
             if (chosen != null) {
-                AssimilateTargetEffect.assimilateCard(chosen, controller, source, game);
+                AssimilateTargetEffect.assimilateCard(controller, chosen, source, game);
             }
         }
         for (Map.Entry<UUID, Cards> entry : revealedBy.entrySet()) {

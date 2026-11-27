@@ -3,45 +3,36 @@ package mage.abilities.effects.common;
 import mage.MageObjectReference;
 import mage.abilities.Ability;
 import mage.abilities.Mode;
-import mage.abilities.effects.ContinuousEffect;
 import mage.abilities.effects.OneShotEffect;
-import mage.abilities.effects.common.continuous.BecomesBorgEffect;
-import mage.abilities.effects.common.continuous.GainControlTargetEffect;
+import mage.abilities.effects.common.continuous.AssimilateContinuousEffect;
 import mage.cards.Card;
-import mage.constants.Duration;
 import mage.constants.Outcome;
 import mage.constants.Zone;
 import mage.counters.CounterType;
 import mage.counters.Counters;
 import mage.game.Game;
-import mage.game.permanent.Permanent;
 import mage.players.Player;
-import mage.target.Target;
-import mage.target.TargetPermanent;
-import mage.target.targetpointer.FixedTarget;
+import mage.util.CardUtil;
 
-import java.util.UUID;
+import java.util.*;
 
 /**
- * Assimilate (Star Trek keyword action).
+ * 701.72. Assimilate
  * <p>
- * A card: "Put it onto the battlefield under your control with a +1/+1
- * counter. It's a Borg artifact creature and loses all other creature types."
- * A permanent: "Gain control of it and put a +1/+1 counter on it. It's a Borg
- * artifact creature and loses all other creature types."
+ * 701.72a To assimilate a permanent, gain control of it and put a +1/+1 counter on it. It becomes
+ * a Borg artifact creature.
  * <p>
- * The effect assimilates every object its target pointer names; the static
- * helpers serve the cards that find what they assimilate some other way
- * (revealed, exiled with the source).
+ * 701.72b To assimilate a permanent card that’s in a zone other than the battlefield, put it onto
+ * the battlefield under your control with a +1/+1 counter on it. It’s a Borg artifact creature.
+ * <p>
+ * 701.72c An object may have an ability printed on it that assimilates another object and another
+ * ability that refers to permanents “assimilated with [this object].” These abilities are linked;
+ * the second refers only to permanents that have been assimilated due to the first. See rule 607,
+ * “Linked Abilities.”
  *
- * @author Claude
+ * @author muz, JayDi85
  */
 public class AssimilateTargetEffect extends OneShotEffect {
-
-    public static final String CARD_REMINDER = "<i>(Put it onto the battlefield under your control with a +1/+1 counter. "
-            + "It's a Borg artifact creature and loses all other creature types.)</i>";
-    public static final String PERMANENT_REMINDER = "<i>(Gain control of it and put a +1/+1 counter on it. "
-            + "It's a Borg artifact creature and loses all other creature types.)</i>";
 
     public AssimilateTargetEffect() {
         super(Outcome.PutCreatureInPlay);
@@ -62,59 +53,41 @@ public class AssimilateTargetEffect extends OneShotEffect {
         if (controller == null) {
             return false;
         }
-        boolean done = false;
-        for (UUID id : getTargetPointer().getTargets(game, source)) {
-            Permanent permanent = game.getPermanent(id);
-            if (permanent != null) {
-                done |= assimilatePermanent(permanent, controller, source, game);
-                continue;
-            }
-            Card card = game.getCard(id);
-            if (card != null) {
-                done |= assimilateCard(card, controller, source, game) != null;
+
+        Set<Card> cardsToMove = new LinkedHashSet<>();
+        for (UUID targetId : getTargetPointer().getTargets(game, source)) {
+            Card card = game.getCard(targetId);
+            if (card != null && game.getState().getZone(card.getId()) != Zone.BATTLEFIELD) {
+                cardsToMove.add(card);
             }
         }
-        return done;
+        return assimilateCards(controller, cardsToMove, source, game);
     }
 
-    /**
-     * Puts the card onto the battlefield under the player's control with a
-     * +1/+1 counter, a Borg artifact creature as it enters.
-     *
-     * @return the permanent it became, or null when it did not arrive
-     */
-    public static Permanent assimilateCard(Card card, Player player, Ability source, Game game) {
-        if (card == null || player == null) {
-            return null;
-        }
-        MageObjectReference arriving = new MageObjectReference(card, game, 1);
-        BecomesBorgEffect borg = new BecomesBorgEffect(arriving);
-        game.addEffect(borg, source);
-        game.setEnterWithCounters(card.getId(), new Counters().addCounter(CounterType.P1P1.createInstance()));
-        player.moveCards(card, Zone.BATTLEFIELD, source, game);
-        Permanent permanent = arriving.getPermanent(game);
-        if (permanent == null) {
-            // it stayed where it was (Grafdigger's Cage...): nothing waits for it any more
-            game.setEnterWithCounters(card.getId(), null);
-            borg.cancelArrival(game);
-        }
-        return permanent;
-    }
-
-    /**
-     * The player gains control of the permanent for good and puts a +1/+1
-     * counter on it; it's a Borg artifact creature.
-     */
-    public static boolean assimilatePermanent(Permanent permanent, Player player, Ability source, Game game) {
-        if (permanent == null || player == null) {
+    public static boolean assimilateCard(Player controller, Card card, Ability source, Game game) {
+        if (controller == null || card == null) {
             return false;
         }
-        ContinuousEffect control = new GainControlTargetEffect(Duration.Custom, true, player.getId());
-        control.setTargetPointer(new FixedTarget(permanent, game));
-        game.addEffect(control, source);
-        permanent.addCounters(CounterType.P1P1.createInstance(), player.getId(), source, game);
-        game.addEffect(new BecomesBorgEffect(new MageObjectReference(permanent, game)), source);
-        return true;
+        return assimilateCards(controller, Collections.singleton(card), source, game);
+    }
+
+    public static boolean assimilateCards(Player controller, Set<Card> cardsToMove, Ability source, Game game) {
+        if (controller == null || cardsToMove.isEmpty()) {
+            return false;
+        }
+
+        Counters counters = new Counters();
+        counters.addCounter(CounterType.P1P1.createInstance());
+
+        for (Card card : cardsToMove) {
+            Card enterCard = CardUtil.getDefaultCardSideForBattlefield(game, card);
+            game.setEnterWithCounters(enterCard.getId(), counters.copy());
+
+            // Apply the continuous effect before moving the card to have the proper types on entering.
+            game.addEffect(new AssimilateContinuousEffect(new MageObjectReference(enterCard, game, 1)), source);
+        }
+
+        return controller.moveCards(cardsToMove, Zone.BATTLEFIELD, source, game, false, false, false, null);
     }
 
     @Override
@@ -122,9 +95,9 @@ public class AssimilateTargetEffect extends OneShotEffect {
         if (staticText != null && !staticText.isEmpty()) {
             return staticText;
         }
-        Target target = mode.getTargets().isEmpty() ? null : mode.getTargets().get(0);
-        boolean onBattlefield = target instanceof TargetPermanent;
-        return "assimilate " + getTargetPointer().describeTargets(mode.getTargets(), "it")
-                + ". " + (onBattlefield ? PERMANENT_REMINDER : CARD_REMINDER);
+        return "assimilate "
+                + getTargetPointer().describeTargets(mode.getTargets(), "that card")
+                + ". <i>(Put it onto the battlefield under your control with a +1/+1 counter. "
+                + "It's a Borg artifact creature and loses all other creature types.)</i>";
     }
 }

@@ -7,7 +7,7 @@ import mage.constants.CardType;
 import mage.filter.FilterCard;
 import mage.filter.common.FilterCreatureCard;
 import mage.filter.predicate.card.PutIntoGraveFromBattlefieldThisTurnPredicate;
-import mage.target.common.TargetCardInGraveyard;
+import mage.target.common.TargetCardInOpponentsGraveyard;
 import mage.target.targetadjustment.ForEachPlayerTargetsAdjuster;
 import mage.target.targetpointer.EachTargetPointer;
 import mage.watchers.common.CardsPutIntoGraveyardWatcher;
@@ -15,7 +15,7 @@ import mage.watchers.common.CardsPutIntoGraveyardWatcher;
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author JayDi85
  */
 public final class AssimilateTheWounded extends CardImpl {
 
@@ -33,9 +33,11 @@ public final class AssimilateTheWounded extends CardImpl {
         // For each opponent, assimilate up to one target creature card from that player's graveyard that was put there from the battlefield this turn.
         this.getSpellAbility().addEffect(new AssimilateTargetEffect()
                 .setTargetPointer(new EachTargetPointer())
-                .setText("for each opponent, assimilate up to one target creature card from that player's graveyard "
-                        + "that was put there from the battlefield this turn. " + AssimilateTargetEffect.CARD_REMINDER));
-        this.getSpellAbility().addTarget(new TargetCardInGraveyard(0, 1, filter));
+                .setText("For each opponent, assimilate up to one target creature card from that player's graveyard "
+                        + "that was put there from the battlefield this turn. "
+                        + "<i>(Put it onto the battlefield under your control with a +1/+1 counter. "
+                        + "It's a Borg artifact creature and loses all other creature types.)</i>"));
+        this.getSpellAbility().addTarget(new TargetCardInOpponentsGraveyard(0, 1, filter));
         this.getSpellAbility().setTargetAdjuster(new ForEachPlayerTargetsAdjuster(true, true));
         this.getSpellAbility().addWatcher(new CardsPutIntoGraveyardWatcher());
     }

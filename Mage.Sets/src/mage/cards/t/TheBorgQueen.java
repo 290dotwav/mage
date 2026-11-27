@@ -1,5 +1,6 @@
 package mage.cards.t;
 
+import java.util.UUID;
 import mage.MageInt;
 import mage.abilities.Ability;
 import mage.abilities.common.EntersBattlefieldOrAttacksSourceTriggeredAbility;
@@ -23,10 +24,9 @@ import mage.game.Game;
 import mage.players.Player;
 import mage.target.common.TargetOpponent;
 
-import java.util.UUID;
-
 /**
- * @author Claude
+ *
+ * @author muz, JayDi85
  */
 public final class TheBorgQueen extends CardImpl {
 
@@ -41,11 +41,14 @@ public final class TheBorgQueen extends CardImpl {
 
         // Artifact creatures you control get +2/+2.
         this.addAbility(new SimpleStaticAbility(new BoostControlledEffect(
-                2, 2, Duration.WhileOnBattlefield, StaticFilters.FILTER_PERMANENTS_ARTIFACT_CREATURE
+                2, 2, Duration.WhileOnBattlefield,
+                StaticFilters.FILTER_PERMANENTS_ARTIFACT_CREATURE
         )));
 
         // Whenever The Borg Queen enters or attacks, target opponent exiles cards from the top of their library until they exile a creature card. Assimilate that card. They put the rest on the bottom in a random order.
-        Ability ability = new EntersBattlefieldOrAttacksSourceTriggeredAbility(new TheBorgQueenEffect());
+        Ability ability = new EntersBattlefieldOrAttacksSourceTriggeredAbility(
+                new TheBorgQueenEffect()
+        );
         ability.addTarget(new TargetOpponent());
         this.addAbility(ability);
     }
@@ -66,7 +69,8 @@ class TheBorgQueenEffect extends OneShotEffect {
         super(Outcome.PutCreatureInPlay);
         staticText = "target opponent exiles cards from the top of their library until they exile a creature card. "
                 + "Assimilate that card. They put the rest on the bottom in a random order. "
-                + AssimilateTargetEffect.CARD_REMINDER;
+                + "<i>(To assimilate a card, put it onto the battlefield under your control with a +1/+1 counter. "
+                + "It's a Borg artifact creature and loses all other creature types.)</i>";
     }
 
     private TheBorgQueenEffect(final TheBorgQueenEffect effect) {
@@ -85,22 +89,32 @@ class TheBorgQueenEffect extends OneShotEffect {
         if (controller == null || opponent == null) {
             return false;
         }
-        Cards exiled = new CardsImpl();
-        Card creature = null;
+
+        Cards cards = new CardsImpl();
+        Card creatureCard = null;
         for (Card card : opponent.getLibrary().getCards(game)) {
-            exiled.add(card);
+            cards.add(card);
             opponent.moveCards(card, Zone.EXILED, source, game);
+            game.processAction();
             if (card.isCreature(game)) {
-                creature = card;
+                creatureCard = card;
                 break;
             }
         }
-        if (creature != null && game.getState().getZone(creature.getId()) == Zone.EXILED) {
-            exiled.remove(creature);
-            AssimilateTargetEffect.assimilateCard(creature, controller, source, game);
+        if (cards.isEmpty()) {
+            return false;
         }
-        exiled.retainZone(Zone.EXILED, game);
-        opponent.putCardsOnBottomOfLibrary(exiled, game, source, false);
+
+        // Exiled face up is public information, but everything resolves at once, so show the cards to the table
+        opponent.revealCards(source, cards, game);
+
+        if (creatureCard != null && game.getState().getZone(creatureCard.getId()) == Zone.EXILED) {
+            cards.remove(creatureCard);
+            AssimilateTargetEffect.assimilateCard(controller, creatureCard, source, game);
+        }
+
+        cards.retainZone(Zone.EXILED, game);
+        opponent.putCardsOnBottomOfLibrary(cards, game, source, false);
         return true;
     }
 }

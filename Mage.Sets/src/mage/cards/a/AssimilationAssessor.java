@@ -6,6 +6,7 @@ import mage.abilities.common.AttacksTriggeredAbility;
 import mage.abilities.common.EntersBattlefieldTriggeredAbility;
 import mage.abilities.effects.OneShotEffect;
 import mage.abilities.effects.common.AssimilateTargetEffect;
+import mage.abilities.effects.common.ExileGraveyardAllTargetPlayerEffect;
 import mage.cards.Card;
 import mage.cards.CardImpl;
 import mage.cards.CardSetInfo;
@@ -14,19 +15,19 @@ import mage.cards.CardsImpl;
 import mage.constants.CardType;
 import mage.constants.Outcome;
 import mage.constants.SubType;
-import mage.constants.Zone;
 import mage.filter.StaticFilters;
 import mage.game.ExileZone;
 import mage.game.Game;
 import mage.players.Player;
 import mage.target.TargetCard;
+import mage.target.common.TargetCardInExile;
 import mage.target.common.TargetOpponent;
 import mage.util.CardUtil;
 
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author JayDi85
  */
 public final class AssimilationAssessor extends CardImpl {
 
@@ -38,12 +39,12 @@ public final class AssimilationAssessor extends CardImpl {
         this.toughness = new MageInt(5);
 
         // When this creature enters, exile target opponent's graveyard.
-        Ability ability = new EntersBattlefieldTriggeredAbility(new AssimilationAssessorExileEffect());
+        Ability ability = new EntersBattlefieldTriggeredAbility(new ExileGraveyardAllTargetPlayerEffect(true));
         ability.addTarget(new TargetOpponent());
         this.addAbility(ability);
 
         // Whenever this creature attacks, assimilate a creature card exiled with it.
-        this.addAbility(new AttacksTriggeredAbility(new AssimilationAssessorAssimilateEffect()));
+        this.addAbility(new AttacksTriggeredAbility(new AssimilationAssessorEffect()));
     }
 
     private AssimilationAssessor(final AssimilationAssessor card) {
@@ -56,54 +57,22 @@ public final class AssimilationAssessor extends CardImpl {
     }
 }
 
-class AssimilationAssessorExileEffect extends OneShotEffect {
+class AssimilationAssessorEffect extends OneShotEffect {
 
-    AssimilationAssessorExileEffect() {
-        super(Outcome.Exile);
-        staticText = "exile target opponent's graveyard";
-    }
-
-    private AssimilationAssessorExileEffect(final AssimilationAssessorExileEffect effect) {
-        super(effect);
-    }
-
-    @Override
-    public AssimilationAssessorExileEffect copy() {
-        return new AssimilationAssessorExileEffect(this);
-    }
-
-    @Override
-    public boolean apply(Game game, Ability source) {
-        Player controller = game.getPlayer(source.getControllerId());
-        Player opponent = game.getPlayer(getTargetPointer().getFirst(game, source));
-        if (controller == null || opponent == null) {
-            return false;
-        }
-        Cards cards = new CardsImpl(opponent.getGraveyard());
-        if (cards.isEmpty()) {
-            return true;
-        }
-        return controller.moveCardsToExile(
-                cards.getCards(game), source, game, true,
-                CardUtil.getExileZoneId(game, source), CardUtil.getSourceName(game, source)
-        );
-    }
-}
-
-class AssimilationAssessorAssimilateEffect extends OneShotEffect {
-
-    AssimilationAssessorAssimilateEffect() {
+    AssimilationAssessorEffect() {
         super(Outcome.PutCreatureInPlay);
-        staticText = "assimilate a creature card exiled with it. " + AssimilateTargetEffect.CARD_REMINDER;
+        staticText = "assimilate a creature card exiled with it. "
+                + "<i>(Put it onto the battlefield under your control with a +1/+1 counter. "
+                + "It's a Borg artifact creature and loses all other creature types.)</i>";
     }
 
-    private AssimilationAssessorAssimilateEffect(final AssimilationAssessorAssimilateEffect effect) {
+    private AssimilationAssessorEffect(final AssimilationAssessorEffect effect) {
         super(effect);
     }
 
     @Override
-    public AssimilationAssessorAssimilateEffect copy() {
-        return new AssimilationAssessorAssimilateEffect(this);
+    public AssimilationAssessorEffect copy() {
+        return new AssimilationAssessorEffect(this);
     }
 
     @Override
@@ -113,23 +82,21 @@ class AssimilationAssessorAssimilateEffect extends OneShotEffect {
         if (controller == null || exileZone == null) {
             return false;
         }
-        Cards creatures = new CardsImpl();
-        for (Card card : exileZone.getCards(game)) {
-            if (card.isCreature(game)) {
-                creatures.add(card);
-            }
+        Cards creatureCards = new CardsImpl(exileZone.getCards(StaticFilters.FILTER_CARD_CREATURE, game));
+        Card card;
+        switch (creatureCards.size()) {
+            case 0:
+                return false;
+            case 1:
+                card = creatureCards.getCards(game).iterator().next();
+                break;
+            default:
+                TargetCard target = new TargetCardInExile(StaticFilters.FILTER_CARD_CREATURE, exileZone.getId());
+                target.withNotTarget(true);
+                target.withChooseHint("to assimilate");
+                controller.choose(outcome, creatureCards, target, source, game);
+                card = game.getCard(target.getFirstTarget());
         }
-        if (creatures.isEmpty()) {
-            return false;
-        }
-        TargetCard target = new TargetCard(Zone.EXILED, StaticFilters.FILTER_CARD_CREATURE);
-        target.withNotTarget(true);
-        target.withChooseHint("to assimilate");
-        controller.choose(Outcome.PutCreatureInPlay, creatures, target, source, game);
-        Card card = game.getCard(target.getFirstTarget());
-        if (card == null) {
-            return false;
-        }
-        return AssimilateTargetEffect.assimilateCard(card, controller, source, game) != null;
+        return AssimilateTargetEffect.assimilateCard(controller, card, source, game);
     }
 }

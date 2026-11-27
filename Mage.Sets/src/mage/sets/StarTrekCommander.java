@@ -34,10 +34,10 @@ public final class StarTrekCommander extends ExpansionSet {
         cards.add(new SetCardInfo("Anguished Unmaking", 472, Rarity.RARE, mage.cards.a.AnguishedUnmaking.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Arcane Sanctum", 513, Rarity.UNCOMMON, mage.cards.a.ArcaneSanctum.class));
         cards.add(new SetCardInfo("Arcane Signet", 485, Rarity.UNCOMMON, mage.cards.a.ArcaneSignet.class));
-        cards.add(new SetCardInfo("Assimilate the Wounded", 55, Rarity.RARE, mage.cards.a.AssimilateTheWounded.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Assimilate the Wounded", 269, Rarity.RARE, mage.cards.a.AssimilateTheWounded.class, NON_FULL_USE_VARIOUS));
-        cards.add(new SetCardInfo("Assimilation Assessor", 56, Rarity.RARE, mage.cards.a.AssimilationAssessor.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Assimilate the Wounded", 55, Rarity.RARE, mage.cards.a.AssimilateTheWounded.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Assimilation Assessor", 270, Rarity.RARE, mage.cards.a.AssimilationAssessor.class, NON_FULL_USE_VARIOUS));
+        cards.add(new SetCardInfo("Assimilation Assessor", 56, Rarity.RARE, mage.cards.a.AssimilationAssessor.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Astral Cornucopia", 338, Rarity.RARE, mage.cards.a.AstralCornucopia.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Astral Cornucopia", 486, Rarity.RARE, mage.cards.a.AstralCornucopia.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Augur of Autumn", 299, Rarity.RARE, mage.cards.a.AugurOfAutumn.class, NON_FULL_USE_VARIOUS));
@@ -61,6 +61,7 @@ public final class StarTrekCommander extends ExpansionSet {
         cards.add(new SetCardInfo("Borg Incursion", 12, Rarity.RARE, mage.cards.b.BorgIncursion.class));
         cards.add(new SetCardInfo("Borg Incursion", 215, Rarity.RARE, mage.cards.b.BorgIncursion.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Borg Queen, One Who Is Many", 131, Rarity.RARE, mage.cards.b.BorgQueenOneWhoIsMany.class));
+        cards.add(new SetCardInfo("Borg Queen, Perfection Manifest", 197, Rarity.MYTHIC, mage.cards.b.BorgQueenPerfectionManifest.class));
         cards.add(new SetCardInfo("Borg Scout Sphere", 248, Rarity.RARE, mage.cards.b.BorgScoutSphere.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Borg Scout Sphere", 36, Rarity.RARE, mage.cards.b.BorgScoutSphere.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Brainstorm", 434, Rarity.COMMON, mage.cards.b.Brainstorm.class));

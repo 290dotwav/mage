@@ -4,8 +4,12 @@ import mage.MageObjectReference;
 import mage.abilities.Ability;
 import mage.abilities.common.SagaAbility;
 import mage.abilities.effects.OneShotEffect;
-import mage.abilities.effects.common.AssimilateTargetEffect;
+import mage.abilities.effects.ContinuousEffect;
+import mage.abilities.effects.common.continuous.BecomesBorgEffect;
 import mage.abilities.effects.common.continuous.BoostControlledEffect;
+import mage.abilities.effects.common.continuous.GainControlTargetEffect;
+import mage.counters.CounterType;
+import mage.target.targetpointer.FixedTarget;
 import mage.cards.Card;
 import mage.cards.CardImpl;
 import mage.cards.CardSetInfo;
@@ -84,7 +88,8 @@ class TheBestOfBothWorldsAssimilateEffect extends OneShotEffect {
 
     TheBestOfBothWorldsAssimilateEffect() {
         super(Outcome.GainControl);
-        staticText = "assimilate target nonartifact creature an opponent controls. " + AssimilateTargetEffect.PERMANENT_REMINDER;
+        staticText = "assimilate target nonartifact creature an opponent controls. " + "<i>(Gain control of it and put a +1/+1 counter on it. "
+                + "It's a Borg artifact creature and loses all other creature types.)</i>";
     }
 
     private TheBestOfBothWorldsAssimilateEffect(final TheBestOfBothWorldsAssimilateEffect effect) {
@@ -103,7 +108,12 @@ class TheBestOfBothWorldsAssimilateEffect extends OneShotEffect {
         if (controller == null || permanent == null) {
             return false;
         }
-        AssimilateTargetEffect.assimilatePermanent(permanent, controller, source, game);
+        // 701.72a: gain control of it for good, put a +1/+1 counter on it, it's a Borg artifact creature
+        ContinuousEffect control = new GainControlTargetEffect(Duration.Custom, true, controller.getId());
+        control.setTargetPointer(new FixedTarget(permanent, game));
+        game.addEffect(control, source);
+        permanent.addCounters(CounterType.P1P1.createInstance(), controller.getId(), source, game);
+        game.addEffect(new BecomesBorgEffect(new MageObjectReference(permanent, game)), source);
         game.getState().setValue(TheBestOfBothWorlds.key(game, source), new MageObjectReference(permanent, game));
         return true;
     }

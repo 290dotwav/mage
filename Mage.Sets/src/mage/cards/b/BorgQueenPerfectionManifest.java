@@ -1,29 +1,27 @@
 package mage.cards.b;
 
+import java.util.UUID;
 import mage.MageInt;
 import mage.abilities.Ability;
 import mage.abilities.common.EntersBattlefieldTriggeredAbility;
 import mage.abilities.common.SimpleStaticAbility;
 import mage.abilities.effects.common.AssimilateTargetEffect;
 import mage.abilities.effects.common.continuous.BoostControlledEffect;
-import mage.cards.CardImpl;
-import mage.cards.CardSetInfo;
-import mage.constants.CardType;
-import mage.constants.Duration;
 import mage.constants.SubType;
 import mage.constants.SuperType;
 import mage.filter.StaticFilters;
 import mage.filter.common.FilterCreatureCard;
 import mage.target.common.TargetCardInOpponentsGraveyard;
-
-import java.util.UUID;
+import mage.cards.CardImpl;
+import mage.cards.CardSetInfo;
+import mage.constants.CardType;
+import mage.constants.Duration;
 
 /**
- * @author Claude
+ *
+ * @author muz
  */
 public final class BorgQueenPerfectionManifest extends CardImpl {
-
-    private static final FilterCreatureCard filter = new FilterCreatureCard("creature card from an opponent's graveyard");
 
     public BorgQueenPerfectionManifest(UUID ownerId, CardSetInfo setInfo) {
         super(ownerId, setInfo, new CardType[]{CardType.ARTIFACT, CardType.CREATURE}, "{4}{B}{B}");
@@ -36,12 +34,13 @@ public final class BorgQueenPerfectionManifest extends CardImpl {
 
         // Artifact creatures you control get +2/+0.
         this.addAbility(new SimpleStaticAbility(new BoostControlledEffect(
-                2, 0, Duration.WhileOnBattlefield, StaticFilters.FILTER_PERMANENTS_ARTIFACT_CREATURE
+            2, 0, Duration.WhileOnBattlefield,
+            StaticFilters.FILTER_PERMANENTS_ARTIFACT_CREATURE
         )));
 
         // When Borg Queen enters, assimilate target creature card from an opponent's graveyard.
         Ability ability = new EntersBattlefieldTriggeredAbility(new AssimilateTargetEffect());
-        ability.addTarget(new TargetCardInOpponentsGraveyard(filter));
+        ability.addTarget(new TargetCardInOpponentsGraveyard(new FilterCreatureCard("target creature card from an opponent's graveyard")));
         this.addAbility(ability);
     }
 
