@@ -1,38 +1,37 @@
 package mage.cards.t;
 
-import mage.MageObjectReference;
 import mage.abilities.Ability;
 import mage.abilities.common.SagaAbility;
 import mage.abilities.effects.OneShotEffect;
-import mage.abilities.effects.ContinuousEffect;
-import mage.abilities.effects.common.continuous.BecomesBorgEffect;
+import mage.abilities.effects.common.AssimilateTargetEffect;
 import mage.abilities.effects.common.continuous.BoostControlledEffect;
-import mage.abilities.effects.common.continuous.GainControlTargetEffect;
-import mage.counters.CounterType;
-import mage.target.targetpointer.FixedTarget;
+import mage.abilities.hint.common.AssimilatedBySourceHint;
 import mage.cards.Card;
 import mage.cards.CardImpl;
 import mage.cards.CardSetInfo;
+import mage.cards.Cards;
+import mage.cards.CardsImpl;
 import mage.constants.CardType;
 import mage.constants.Duration;
 import mage.constants.Outcome;
 import mage.constants.SagaChapter;
 import mage.constants.SubType;
+import mage.constants.TargetController;
 import mage.constants.Zone;
 import mage.filter.StaticFilters;
 import mage.filter.common.FilterCreaturePermanent;
 import mage.filter.predicate.Predicates;
-import mage.constants.TargetController;
 import mage.game.Game;
 import mage.game.permanent.Permanent;
 import mage.players.Player;
 import mage.target.TargetPermanent;
 import mage.util.CardUtil;
 
+import java.util.Set;
 import java.util.UUID;
 
 /**
- * @author Claude
+ * @author JayDi85
  */
 public final class TheBestOfBothWorlds extends CardImpl {
 
@@ -51,20 +50,23 @@ public final class TheBestOfBothWorlds extends CardImpl {
         // (As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)
         SagaAbility sagaAbility = new SagaAbility(this);
 
-        // I -- Assimilate target nonartifact creature an opponent controls.
+        // I — Assimilate target nonartifact creature an opponent controls.
         sagaAbility.addChapterEffect(
                 this, SagaChapter.CHAPTER_I,
-                new TheBestOfBothWorldsAssimilateEffect(), new TargetPermanent(filter)
+                new AssimilateTargetEffect(),
+                new TargetPermanent(filter)
         );
 
-        // II -- Artifact creatures you control get +2/+2 until end of turn.
+        // II — Artifact creatures you control get +2/+2 until end of turn.
         sagaAbility.addChapterEffect(
                 this, SagaChapter.CHAPTER_II,
                 new BoostControlledEffect(2, 2, Duration.EndOfTurn, StaticFilters.FILTER_PERMANENTS_ARTIFACT_CREATURE)
         );
 
-        // III -- Exile the Borg assimilated with this Saga, then return it to the battlefield under its owner's control.
-        sagaAbility.addChapterEffect(this, SagaChapter.CHAPTER_III, new TheBestOfBothWorldsReturnEffect());
+        // III — Exile the Borg assimilated with this Saga, then return it to the battlefield under its owner's control.
+        sagaAbility.addChapterEffect(this, SagaChapter.CHAPTER_III, new TheBestOfBothWorldsEffect());
+
+        sagaAbility.addHint(AssimilatedBySourceHint.instance);
         this.addAbility(sagaAbility);
     }
 
@@ -76,84 +78,43 @@ public final class TheBestOfBothWorlds extends CardImpl {
     public TheBestOfBothWorlds copy() {
         return new TheBestOfBothWorlds(this);
     }
-
-    /** Where chapter I keeps the Borg it assimilated, for chapter III: per Saga, per time on the battlefield. */
-    static String key(Game game, Ability source) {
-        return CardUtil.getObjectZoneString("assimilatedBorg", source.getSourceId(), game,
-                source.getStackMomentSourceZCC(), false);
-    }
 }
 
-class TheBestOfBothWorldsAssimilateEffect extends OneShotEffect {
+class TheBestOfBothWorldsEffect extends OneShotEffect {
 
-    TheBestOfBothWorldsAssimilateEffect() {
-        super(Outcome.GainControl);
-        staticText = "assimilate target nonartifact creature an opponent controls. " + "<i>(Gain control of it and put a +1/+1 counter on it. "
-                + "It's a Borg artifact creature and loses all other creature types.)</i>";
-    }
-
-    private TheBestOfBothWorldsAssimilateEffect(final TheBestOfBothWorldsAssimilateEffect effect) {
-        super(effect);
-    }
-
-    @Override
-    public TheBestOfBothWorldsAssimilateEffect copy() {
-        return new TheBestOfBothWorldsAssimilateEffect(this);
-    }
-
-    @Override
-    public boolean apply(Game game, Ability source) {
-        Player controller = game.getPlayer(source.getControllerId());
-        Permanent permanent = game.getPermanent(getTargetPointer().getFirst(game, source));
-        if (controller == null || permanent == null) {
-            return false;
-        }
-        // 701.72a: gain control of it for good, put a +1/+1 counter on it, it's a Borg artifact creature
-        ContinuousEffect control = new GainControlTargetEffect(Duration.Custom, true, controller.getId());
-        control.setTargetPointer(new FixedTarget(permanent, game));
-        game.addEffect(control, source);
-        permanent.addCounters(CounterType.P1P1.createInstance(), controller.getId(), source, game);
-        game.addEffect(new BecomesBorgEffect(new MageObjectReference(permanent, game)), source);
-        game.getState().setValue(TheBestOfBothWorlds.key(game, source), new MageObjectReference(permanent, game));
-        return true;
-    }
-}
-
-class TheBestOfBothWorldsReturnEffect extends OneShotEffect {
-
-    TheBestOfBothWorldsReturnEffect() {
+    TheBestOfBothWorldsEffect() {
         super(Outcome.Neutral);
         staticText = "exile the Borg assimilated with this Saga, then return it to the battlefield under its owner's control";
     }
 
-    private TheBestOfBothWorldsReturnEffect(final TheBestOfBothWorldsReturnEffect effect) {
+    private TheBestOfBothWorldsEffect(final TheBestOfBothWorldsEffect effect) {
         super(effect);
     }
 
     @Override
-    public TheBestOfBothWorldsReturnEffect copy() {
-        return new TheBestOfBothWorldsReturnEffect(this);
+    public TheBestOfBothWorldsEffect copy() {
+        return new TheBestOfBothWorldsEffect(this);
     }
 
     @Override
     public boolean apply(Game game, Ability source) {
         Player controller = game.getPlayer(source.getControllerId());
-        Object value = game.getState().getValue(TheBestOfBothWorlds.key(game, source));
-        if (controller == null || !(value instanceof MageObjectReference)) {
+        if (controller == null) {
             return false;
         }
-        Permanent permanent = ((MageObjectReference) value).getPermanent(game);
-        if (permanent == null) {
+        Set<Permanent> toFlicker = AssimilateTargetEffect.getAssimilatedPermanents(game, source);
+        if (toFlicker.isEmpty()) {
             return false;
         }
-        Card card = permanent.getMainCard();
-        controller.moveCards(permanent, Zone.EXILED, source, game);
-        if (card == null || game.getState().getZone(card.getId()) != Zone.EXILED) {
-            return true;
+        controller.moveCards(toFlicker, Zone.EXILED, source, game);
+        game.processAction();
+        Cards cardsToReturn = new CardsImpl();
+        for (Card card : CardUtil.getAllCardsFromPermanentsLeftBattlefield(toFlicker, game)) {
+            cardsToReturn.add(card.getMainCard());
         }
-        Player owner = game.getPlayer(card.getOwnerId());
-        if (owner != null) {
-            owner.moveCards(card, Zone.BATTLEFIELD, source, game);
+        cardsToReturn.retainZone(Zone.EXILED, game);
+        if (!cardsToReturn.isEmpty()) {
+            controller.moveCards(cardsToReturn.getCards(game), Zone.BATTLEFIELD, source, game, false, false, true, null);
         }
         return true;
     }
